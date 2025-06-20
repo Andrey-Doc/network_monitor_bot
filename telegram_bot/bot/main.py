@@ -33,6 +33,10 @@ class ScanDevicesState(StatesGroup):
     waiting_for_network = State()
     waiting_for_file_request = State()
 
+class ScanMinersState(StatesGroup):
+    waiting_for_network = State()
+    waiting_for_file_request = State()
+
 @dp.message_handler(commands=['start', 'menu'])
 async def send_welcome(message: Message):
     await message.answer("Привет! Я бот для мониторинга и сканирования.", reply_markup=main_menu_keyboard())
@@ -131,7 +135,7 @@ async def process_csv_file(message: Message):
 @dp.message_handler(lambda m: m.text == 'Сканировать майнеров')
 async def handle_scan_miners(message: Message):
     await message.answer("Введите сеть и маску для поиска майнеров (например, 192.168.1.0/24):")
-    await ScanDevicesState.waiting_for_network.set()
+    await ScanMinersState.waiting_for_network.set()
 
 @dp.message_handler(state=ScanDevicesState.waiting_for_file_request)
 async def process_devices_file_request(message: Message, state: FSMContext):
@@ -155,7 +159,7 @@ async def process_devices_file_request(message: Message, state: FSMContext):
         await message.answer("Завершено.")
     await state.finish()
 
-@dp.message_handler(state=ScanDevicesState.waiting_for_network)
+@dp.message_handler(state=ScanMinersState.waiting_for_network)
 async def process_miners_network_input(message: Message, state: FSMContext):
     network = message.text.strip()
     try:
@@ -190,7 +194,7 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ."
         await message.answer(text)
         await state.update_data(miners=miners)
-        await ScanDevicesState.waiting_for_file_request.set()
+        await ScanMinersState.waiting_for_file_request.set()
     except Exception as e:
         await bot.edit_message_text(
             f"Ошибка сканирования: {e}",
@@ -198,6 +202,28 @@ async def process_miners_network_input(message: Message, state: FSMContext):
             message_id=progress_msg.message_id
         )
         await state.finish()
+
+@dp.message_handler(state=ScanMinersState.waiting_for_file_request)
+async def process_miners_file_request(message: Message, state: FSMContext):
+    if message.text.strip().lower() == 'файл':
+        data = await state.get_data()
+        miners = data.get('miners', [])
+        if not miners:
+            await message.answer("Нет данных для файла.")
+            await state.finish()
+            return
+        import pandas as pd
+        import tempfile
+        await bot.send_chat_action(message.chat.id, types.ChatActions.UPLOAD_DOCUMENT)
+        df = pd.DataFrame(miners)
+        with tempfile.NamedTemporaryFile('w+', suffix='.csv', delete=False) as tmp:
+            df.to_csv(tmp.name, index=False)
+            tmp.flush()
+            await message.answer_document(types.InputFile(tmp.name), caption="Результаты сканирования майнеров")
+        os.remove(tmp.name)
+    else:
+        await message.answer("Завершено.")
+    await state.finish()
 
 async def send_notify_to_owner(text: str):
     await bot.send_message(CHAT_ID, text)
