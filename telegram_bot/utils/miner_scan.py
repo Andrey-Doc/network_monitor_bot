@@ -61,18 +61,17 @@ async def get_miner_info(ip: str, port: int = MINER_PORT, timeout: float = 3.0) 
     except Exception:
         return None
 
-async def scan_network_for_miners(network: str) -> List[Dict]:
-    # network: "192.168.1.0/24"
+async def scan_network_for_miners(network: str, on_progress=None) -> List[Dict]:
     net = ipaddress.IPv4Network(network, strict=False)
     hosts = [str(ip) for ip in net.hosts()]
     results = []
-    tasks = []
-    for ip in hosts:
-        tasks.append(scan_miner(ip))
-    scan_results = await asyncio.gather(*tasks)
-    for res in scan_results:
+    total = len(hosts)
+    for idx, ip in enumerate(hosts, 1):
+        res = await scan_miner(ip)
         if res:
             results.append(res)
+        if on_progress and (idx % max(1, total // 20) == 0 or idx == total):  # обновлять каждые 5% или последний
+            await on_progress(idx, total)
     return results
 
 async def scan_miner(ip: str) -> Optional[Dict]:

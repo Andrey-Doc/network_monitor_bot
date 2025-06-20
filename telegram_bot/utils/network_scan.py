@@ -52,9 +52,15 @@ async def scan_device(ip: str) -> Optional[Dict]:
         }
     return None
 
-async def scan_network_devices(network: str) -> List[Dict]:
+async def scan_network_devices(network: str, on_progress=None) -> List[Dict]:
     net = ipaddress.IPv4Network(network, strict=False)
     hosts = [str(ip) for ip in net.hosts()]
-    tasks = [scan_device(ip) for ip in hosts]
-    results = await asyncio.gather(*tasks)
-    return [r for r in results if r] 
+    results = []
+    total = len(hosts)
+    for idx, ip in enumerate(hosts, 1):
+        res = await scan_device(ip)
+        if res:
+            results.append(res)
+        if on_progress and (idx % max(1, total // 20) == 0 or idx == total):  # обновлять каждые 5% или последний
+            await on_progress(idx, total)
+    return results 
