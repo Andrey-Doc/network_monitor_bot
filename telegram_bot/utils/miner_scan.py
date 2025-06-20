@@ -63,7 +63,8 @@ async def get_miner_info(ip: str, port: int = MINER_PORT, timeout: float = 3.0) 
 
 async def scan_network_for_miners(network: str) -> List[Dict]:
     # network: "192.168.1.0/24"
-    hosts = [str(ip) for ip in ipaddress.IPv4Network(network) if ip != ip.network_address and ip != ip.broadcast_address]
+    net = ipaddress.IPv4Network(network, strict=False)
+    hosts = [str(ip) for ip in net.hosts()]
     results = []
     tasks = []
     for ip in hosts:

@@ -53,7 +53,8 @@ async def scan_device(ip: str) -> Optional[Dict]:
     return None
 
 async def scan_network_devices(network: str) -> List[Dict]:
-    hosts = [str(ip) for ip in ipaddress.IPv4Network(network) if ip != ip.network_address and ip != ip.broadcast_address]
+    net = ipaddress.IPv4Network(network, strict=False)
+    hosts = [str(ip) for ip in net.hosts()]
     tasks = [scan_device(ip) for ip in hosts]
     results = await asyncio.gather(*tasks)
     return [r for r in results if r] 
