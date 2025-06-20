@@ -10,4 +10,7 @@ def main_menu_keyboard():
         KeyboardButton('Загрузить файл для сканирования'),
         KeyboardButton('Сканировать майнеров'),
     )
+    keyboard.add(
+        KeyboardButton('Быстрое сканирование сети'),
+    )
     return keyboard 

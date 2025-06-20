@@ -12,6 +12,7 @@ import pandas as pd
 import os
 from ..utils.network_scan import scan_network_devices
 import ipaddress
+from ..utils.fast_scan import fast_scan_network
 
 logging.basicConfig(level=logging.INFO)
 
@@ -34,6 +35,10 @@ class ScanDevicesState(StatesGroup):
     waiting_for_file_request = State()
 
 class ScanMinersState(StatesGroup):
+    waiting_for_network = State()
+    waiting_for_file_request = State()
+
+class FastScanState(StatesGroup):
     waiting_for_network = State()
     waiting_for_file_request = State()
 
@@ -226,6 +231,78 @@ async def process_miners_file_request(message: Message, state: FSMContext):
             df.to_csv(tmp.name, index=False)
             tmp.flush()
             await message.answer_document(types.InputFile(tmp.name), caption="Результаты сканирования майнеров")
+        os.remove(tmp.name)
+    else:
+        await message.answer("Завершено.")
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Быстрое сканирование сети')
+async def handle_fast_scan(message: Message):
+    await message.answer("Введите сеть и маску для быстрого сканирования (например, 192.168.1.0/24):")
+    await FastScanState.waiting_for_network.set()
+
+@dp.message_handler(state=FastScanState.waiting_for_network)
+async def process_fast_scan_network_input(message: Message, state: FSMContext):
+    import ipaddress
+    network = message.text.strip()
+    try:
+        net = ipaddress.IPv4Network(network, strict=False)
+    except Exception:
+        await message.answer("Ошибка: некорректный формат сети. Пример: 192.168.1.0/24")
+        await state.finish()
+        return
+    progress_msg = await message.answer(f"Начинаю быстрое сканирование сети {network}... 0%")
+    async def on_progress(done, total):
+        percent = int(done / total * 100)
+        bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
+        await bot.edit_message_text(
+            f"Быстрое сканирование: [{bar}] {percent}% ({done}/{total})",
+            chat_id=progress_msg.chat.id,
+            message_id=progress_msg.message_id
+        )
+    try:
+        devices = await fast_scan_network(network, on_progress=on_progress)
+        await bot.edit_message_text(
+            f"Быстрое сканирование завершено! Найдено устройств: {len(devices)}",
+            chat_id=progress_msg.chat.id,
+            message_id=progress_msg.message_id
+        )
+        if not devices:
+            await message.answer("Устройства не найдены.")
+            await state.finish()
+            return
+        text = f"Найдено устройств: {len(devices)}\n"
+        for d in devices:
+            text += f"{d['ip']}: {d['type']} (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
+        text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ."
+        await message.answer(text)
+        await state.update_data(devices=devices)
+        await FastScanState.waiting_for_file_request.set()
+    except Exception as e:
+        await bot.edit_message_text(
+            f"Ошибка быстрого сканирования: {e}",
+            chat_id=progress_msg.chat.id,
+            message_id=progress_msg.message_id
+        )
+        await state.finish()
+
+@dp.message_handler(state=FastScanState.waiting_for_file_request)
+async def process_fast_scan_file_request(message: Message, state: FSMContext):
+    if message.text.strip().lower() == 'файл':
+        data = await state.get_data()
+        devices = data.get('devices', [])
+        if not devices:
+            await message.answer("Нет данных для файла.")
+            await state.finish()
+            return
+        import pandas as pd
+        import tempfile
+        await bot.send_chat_action(message.chat.id, types.ChatActions.UPLOAD_DOCUMENT)
+        df = pd.DataFrame(devices)
+        with tempfile.NamedTemporaryFile('w+', suffix='.csv', delete=False) as tmp:
+            df.to_csv(tmp.name, index=False)
+            tmp.flush()
+            await message.answer_document(types.InputFile(tmp.name), caption="Результаты быстрого сканирования сети")
         os.remove(tmp.name)
     else:
         await message.answer("Завершено.")
