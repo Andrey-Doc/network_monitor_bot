@@ -58,9 +58,11 @@ async def handle_scan_network(message: Message):
 @dp.message_handler(state=ScanDevicesState.waiting_for_network)
 async def process_devices_network_input(message: Message, state: FSMContext):
     network = message.text.strip()
+    logging.info(f"[SCAN] Запрошено сканирование сети: {network}")
     try:
         net = ipaddress.IPv4Network(network, strict=False)
-    except Exception:
+    except Exception as e:
+        logging.error(f"[SCAN] Некорректный формат сети: {network}, ошибка: {e}")
         await message.answer("Ошибка: некорректный формат сети. Пример: 192.168.1.0/24")
         await state.finish()
         return
@@ -68,13 +70,16 @@ async def process_devices_network_input(message: Message, state: FSMContext):
     async def on_progress(done, total):
         percent = int(done / total * 100)
         bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
+        logging.info(f"[SCAN] Прогресс: {done}/{total} ({percent}%)")
         await bot.edit_message_text(
             f"Сканирование: [{bar}] {percent}% ({done}/{total})",
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
     try:
+        logging.info(f"[SCAN] Запуск scan_network_devices({network})")
         devices = await scan_network_devices(network, on_progress=on_progress)
+        logging.info(f"[SCAN] Сканирование завершено, найдено устройств: {len(devices)}")
         await bot.edit_message_text(
             f"Сканирование завершено! Найдено устройств: {len(devices)}",
             chat_id=progress_msg.chat.id,
@@ -92,6 +97,7 @@ async def process_devices_network_input(message: Message, state: FSMContext):
         await state.update_data(devices=devices)
         await ScanDevicesState.waiting_for_file_request.set()
     except Exception as e:
+        logging.error(f"[SCAN] Ошибка сканирования: {e}")
         await bot.edit_message_text(
             f"Ошибка сканирования: {e}",
             chat_id=progress_msg.chat.id,

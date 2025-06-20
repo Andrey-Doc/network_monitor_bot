@@ -2,6 +2,7 @@ import asyncio
 import socket
 import ipaddress
 from typing import List, Dict, Optional
+import logging
 
 # Порты для определения типа устройства
 DEVICE_PORTS = {
@@ -55,13 +56,16 @@ async def scan_device(ip: str) -> Optional[Dict]:
 async def scan_network_devices(network: str, on_progress=None) -> List[Dict]:
     net = ipaddress.IPv4Network(network, strict=False)
     hosts = [str(ip) for ip in net.hosts()]
+    logging.info(f"[SCAN] Всего хостов для сканирования: {len(hosts)}")
     results = []
     total = len(hosts)
     for idx, ip in enumerate(hosts, 1):
+        logging.info(f"[SCAN] Сканирую {ip} ({idx}/{total})")
         res = await scan_device(ip)
         if res:
             results.append(res)
         if on_progress and (idx % max(1, total // 20) == 0 or idx == total):
+            logging.info(f"[SCAN] Вызов on_progress: {idx}/{total}")
             await on_progress(idx, total)
         await asyncio.sleep(0)
     return results 
