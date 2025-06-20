@@ -1,0 +1,89 @@
+import asyncio
+import socket
+import json
+from typing import List, Dict, Optional
+import ipaddress
+
+MINER_PORT = 4028
+
+async def check_port(ip: str, port: int, timeout: float = 2.0) -> bool:
+    loop = asyncio.get_event_loop()
+    try:
+        return await loop.run_in_executor(
+            None,
+            lambda: _check_port_sync(ip, port, timeout)
+        )
+    except Exception:
+        return False
+
+def _check_port_sync(ip: str, port: int, timeout: float) -> bool:
+    try:
+        with socket.create_connection((ip, port), timeout=timeout):
+            return True
+    except Exception:
+        return False
+
+async def get_miner_info(ip: str, port: int = MINER_PORT, timeout: float = 3.0) -> Optional[Dict]:
+    # Пробуем получить информацию через API майнера (Antminer, Avalon, Whatsminer)
+    # Обычно это TCP socket, команда: {"command": "summary"}
+    try:
+        reader, writer = await asyncio.wait_for(asyncio.open_connection(ip, port), timeout=timeout)
+        writer.write(b'{"command": "summary"}\n')
+        await writer.drain()
+        data = await asyncio.wait_for(reader.read(4096), timeout=timeout)
+        writer.close()
+        await writer.wait_closed()
+        # Попытка декодировать ответ
+        try:
+            text = data.decode(errors='ignore')
+            # Иногда ответ невалидный JSON, пробуем найти {...}
+            start = text.find('{')
+            end = text.rfind('}')
+            if start != -1 and end != -1:
+                text = text[start:end+1]
+            info = json.loads(text)
+            # Универсальный парсинг для разных моделей
+            hashrate = None
+            uptime = None
+            status = 'online'
+            if 'SUMMARY' in info:
+                s = info['SUMMARY'][0]
+                hashrate = s.get('MHS av') or s.get('GHS av') or s.get('hashrate')
+                uptime = s.get('Elapsed') or s.get('Uptime')
+            return {
+                'ip': ip,
+                'status': status,
+                'hashrate': hashrate,
+                'uptime': uptime
+            }
+        except Exception:
+            return {'ip': ip, 'status': 'online', 'hashrate': None, 'uptime': None}
+    except Exception:
+        return None
+
+async def scan_network_for_miners(network: str) -> List[Dict]:
+    # network: "192.168.1.0/24"
+    hosts = [str(ip) for ip in ipaddress.IPv4Network(network) if ip != ip.network_address and ip != ip.broadcast_address]
+    results = []
+    tasks = []
+    for ip in hosts:
+        tasks.append(scan_miner(ip))
+    scan_results = await asyncio.gather(*tasks)
+    for res in scan_results:
+        if res:
+            results.append(res)
+    return results
+
+async def scan_miner(ip: str) -> Optional[Dict]:
+    if await check_port(ip, MINER_PORT):
+        info = await get_miner_info(ip)
+        if info:
+            return info
+        else:
+            return {'ip': ip, 'status': 'online', 'hashrate': None, 'uptime': None}
+    return None
+
+async def scan_miners_from_list(ip_list: List[str]) -> List[Dict]:
+    tasks = [scan_miner(ip) for ip in ip_list]
+    results = await asyncio.gather(*tasks)
+    return [r for r in results if r] 

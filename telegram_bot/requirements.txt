@@ -1,0 +1,4 @@
+aiogram
+python-nmap
+pandas
+ping3 
