@@ -61,6 +61,7 @@ async def scan_network_devices(network: str, on_progress=None) -> List[Dict]:
         res = await scan_device(ip)
         if res:
             results.append(res)
-        if on_progress and (idx % max(1, total // 20) == 0 or idx == total):  # обновлять каждые 5% или последний
+        if on_progress and (idx % max(1, total // 20) == 0 or idx == total):
             await on_progress(idx, total)
+        await asyncio.sleep(0)
     return results 
