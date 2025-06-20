@@ -96,7 +96,10 @@ async def process_devices_network_input(message: Message, state: FSMContext):
             return
         text = f"Найдено устройств: {len(devices)}\n"
         for d in devices:
-            text += f"{d['ip']}: {d['type']} (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
+            if d.get('type') == 'miner':
+                text += f"{d['ip']}: miner (hashrate: {d.get('hashrate')}, uptime: {d.get('uptime')})\n"
+            else:
+                text += f"{d['ip']}: (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
         text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ."
         await message.answer(text)
         await state.update_data(devices=devices)
@@ -160,6 +163,14 @@ async def process_devices_file_request(message: Message, state: FSMContext):
         import pandas as pd
         import tempfile
         await bot.send_chat_action(message.chat.id, types.ChatActions.UPLOAD_DOCUMENT)
+        for d in devices:
+            if d.get('type') != 'miner':
+                d['type'] = ''
+                d['hashrate'] = ''
+                d['uptime'] = ''
+            else:
+                d['hashrate'] = d.get('hashrate', '')
+                d['uptime'] = d.get('uptime', '')
         df = pd.DataFrame(devices)
         with tempfile.NamedTemporaryFile('w+', suffix='.csv', delete=False) as tmp:
             df.to_csv(tmp.name, index=False)
@@ -201,7 +212,7 @@ async def process_miners_network_input(message: Message, state: FSMContext):
             return
         text = "Найдено майнеров: {}\n".format(len(miners))
         for m in miners:
-            text += f"{m['ip']}: status={m['status']}, hashrate={m['hashrate']}, uptime={m['uptime']}\n"
+            text += f"{m['ip']}: miner (hashrate: {m.get('hashrate')}, uptime: {m.get('uptime')})\n"
         text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ."
         await message.answer(text)
         await state.update_data(miners=miners)
@@ -226,6 +237,10 @@ async def process_miners_file_request(message: Message, state: FSMContext):
         import pandas as pd
         import tempfile
         await bot.send_chat_action(message.chat.id, types.ChatActions.UPLOAD_DOCUMENT)
+        for m in miners:
+            m['type'] = 'miner'
+            m['hashrate'] = m.get('hashrate', '')
+            m['uptime'] = m.get('uptime', '')
         df = pd.DataFrame(miners)
         with tempfile.NamedTemporaryFile('w+', suffix='.csv', delete=False) as tmp:
             df.to_csv(tmp.name, index=False)

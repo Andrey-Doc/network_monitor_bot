@@ -78,10 +78,16 @@ async def scan_network_for_miners(network: str, on_progress=None) -> List[Dict]:
 async def scan_miner(ip: str) -> Optional[Dict]:
     if await check_port(ip, MINER_PORT):
         info = await get_miner_info(ip)
+        result = {'ip': ip, 'type': 'miner'}
         if info:
-            return info
+            result['status'] = info.get('status', 'online')
+            result['hashrate'] = info.get('hashrate')
+            result['uptime'] = info.get('uptime')
         else:
-            return {'ip': ip, 'status': 'online', 'hashrate': None, 'uptime': None}
+            result['status'] = 'online'
+            result['hashrate'] = None
+            result['uptime'] = None
+        return result
     return None
 
 async def scan_miners_from_list(ip_list: List[str]) -> List[Dict]:

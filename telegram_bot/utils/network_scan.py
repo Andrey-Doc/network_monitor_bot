@@ -3,6 +3,7 @@ import socket
 import ipaddress
 from typing import List, Dict, Optional
 import logging
+from .miner_scan import get_miner_info
 
 # Порты для определения типа устройства
 DEVICE_PORTS = {
@@ -39,19 +40,29 @@ def _check_port_sync(ip: str, port: int, timeout: float) -> bool:
 
 async def scan_device(ip: str) -> Optional[Dict]:
     open_ports = []
-    types = set()
+    is_miner = False
+    hashrate = None
+    uptime = None
     for port in COMMON_PORTS:
         if await check_port(ip, port):
             open_ports.append(port)
-            for t in PORT_TO_TYPE.get(port, []):
-                types.add(t)
-    if open_ports:
-        return {
-            'ip': ip,
-            'open_ports': open_ports,
-            'type': ', '.join(types) if types else 'unknown',
-        }
-    return None
+            if port == 4028:
+                is_miner = True
+    result = {
+        'ip': ip,
+        'open_ports': open_ports,
+        'type': '',
+    }
+    if is_miner:
+        result['type'] = 'miner'
+        miner_info = await get_miner_info(ip)
+        if miner_info:
+            result['hashrate'] = miner_info.get('hashrate')
+            result['uptime'] = miner_info.get('uptime')
+        else:
+            result['hashrate'] = None
+            result['uptime'] = None
+    return result if open_ports else None
 
 async def scan_network_devices(network: str, on_progress=None) -> List[Dict]:
     net = ipaddress.IPv4Network(network, strict=False)
