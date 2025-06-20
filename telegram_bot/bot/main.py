@@ -1,7 +1,7 @@
 import logging
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import Message, ContentType
-from .config import TELEGRAM_BOT_TOKEN
+from .config import TELEGRAM_BOT_TOKEN, CHAT_ID
 from .keyboards import main_menu_keyboard
 from ..utils.router_monitor import check_routers_status
 from ..utils.miner_scan import scan_network_for_miners, scan_miners_from_list
@@ -129,6 +129,9 @@ async def process_devices_file_request(message: Message, state: FSMContext):
     else:
         await message.answer("Завершено.")
     await state.finish()
+
+async def send_notify_to_owner(text: str):
+    await bot.send_message(CHAT_ID, text)
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True) 
