@@ -11,6 +11,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 import pandas as pd
 import os
 from ..utils.network_scan import scan_network_devices
+import ipaddress
 
 logging.basicConfig(level=logging.INFO)
 
@@ -53,6 +54,12 @@ async def handle_scan_network(message: Message):
 @dp.message_handler(state=ScanDevicesState.waiting_for_network)
 async def process_devices_network_input(message: Message, state: FSMContext):
     network = message.text.strip()
+    try:
+        net = ipaddress.IPv4Network(network, strict=False)
+    except Exception:
+        await message.answer("Ошибка: некорректный формат сети. Пример: 192.168.1.0/24")
+        await state.finish()
+        return
     await message.answer(f"Сканирую сеть {network} на устройства...")
     try:
         devices = await scan_network_devices(network)
@@ -129,6 +136,33 @@ async def process_devices_file_request(message: Message, state: FSMContext):
     else:
         await message.answer("Завершено.")
     await state.finish()
+
+@dp.message_handler(state=ScanDevicesState.waiting_for_network)
+async def process_miners_network_input(message: Message, state: FSMContext):
+    network = message.text.strip()
+    try:
+        net = ipaddress.IPv4Network(network, strict=False)
+    except Exception:
+        await message.answer("Ошибка: некорректный формат сети. Пример: 192.168.1.0/24")
+        await state.finish()
+        return
+    await message.answer(f"Сканирую сеть {network} только на майнеры...")
+    try:
+        miners = await scan_network_for_miners(network)
+        if not miners:
+            await message.answer("Майнеры не найдены.")
+            await state.finish()
+            return
+        text = "Найдено майнеров: {}\n".format(len(miners))
+        for m in miners:
+            text += f"{m['ip']}: status={m['status']}, hashrate={m['hashrate']}, uptime={m['uptime']}\n"
+        text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ."
+        await message.answer(text)
+        await state.update_data(miners=miners)
+        await ScanDevicesState.waiting_for_file_request.set()
+    except Exception as e:
+        await message.answer(f"Ошибка сканирования: {e}")
+        await state.finish()
 
 async def send_notify_to_owner(text: str):
     await bot.send_message(CHAT_ID, text)
