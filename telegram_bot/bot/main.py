@@ -1,7 +1,7 @@
 import logging
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import Message, ContentType
-from .config import TELEGRAM_BOT_TOKEN, CHAT_ID
+from .config import TELEGRAM_BOT_TOKEN, CHAT_ID, ROUTER_IPS, ROUTER_PORTS, SCAN_RESULTS_TTL
 from .keyboards import main_menu_keyboard
 from ..utils.router_monitor import check_routers_status
 from ..utils.miner_scan import scan_network_for_miners, scan_miners_from_list
@@ -21,19 +21,10 @@ bot = Bot(token=TELEGRAM_BOT_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
-ROUTER_IPS = [
-    '11.250.0.1',
-    '11.250.0.2',
-    '11.250.0.3',
-    '11.250.0.4',
-    '11.250.0.5',
-]
-
 UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data'))
 
 # Глобальное хранилище результатов сканирования с TTL
 scan_results_storage = {}
-SCAN_RESULTS_TTL = 3600  # 1 час в секундах
 
 def cleanup_old_results():
     """Очищает старые результаты сканирования"""
@@ -68,7 +59,7 @@ async def send_welcome(message: Message):
 @dp.message_handler(lambda m: m.text == 'Статус роутеров')
 async def handle_router_status(message: Message):
     await message.answer("Проверяю статус роутеров...")
-    results = await check_routers_status(ROUTER_IPS)
+    results = await check_routers_status(ROUTER_IPS, ROUTER_PORTS)
     text = ""
     for r in results:
         text += f"{r['ip']}: {r['status']} (открытые порты: {', '.join(map(str, r['open_ports'])) if r['open_ports'] else 'нет'})\n"
