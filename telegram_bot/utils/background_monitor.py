@@ -78,11 +78,11 @@ class BackgroundMonitor:
             
     async def _send_status_notification(self, changes: List[Dict]):
         """Отправляет уведомление об изменении статуса"""
-        message = "🔄 **Изменение статуса роутеров:**\n\n"
+        message = "🔄 *Изменение статуса роутеров:*\n\n"
         
         for change in changes:
             emoji = "🟢" if change['new_status'] == 'online' else "🔴"
-            message += f"{emoji} **{change['ip']}**: "
+            message += f"{emoji} *{change['ip']}*: "
             message += f"{change['old_status']} → {change['new_status']}\n"
             
             if change['new_status'] == 'online' and change['open_ports']:

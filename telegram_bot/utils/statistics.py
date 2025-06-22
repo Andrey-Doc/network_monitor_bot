@@ -223,38 +223,40 @@ class StatisticsManager:
         summary = self.get_summary_stats()
         daily_stats = self.get_daily_stats(7)
         
-        report = "📊 **Отчёт статистики бота**\n\n"
+        report = "📊 *Отчёт статистики бота*\n\n"
         
         # Общая статистика
-        report += "🔢 **Общая статистика:**\n"
-        report += f"• Команд выполнено: {summary['total_commands']}\n"
-        report += f"• Сканирований: {summary['total_scans']}\n"
-        report += f"• Устройств найдено: {summary['total_devices_found']}\n"
-        report += f"• Майнеров найдено: {summary['total_miners_found']}\n"
-        report += f"• Проверок роутеров: {summary['total_router_checks']}\n"
-        report += f"• Ошибок: {summary['total_errors']}\n"
-        report += f"• Время работы: {summary['bot_uptime_days']} дней\n\n"
+        report += "🔢 *Общая статистика:*\n"
+        report += f"• Команд выполнено: `{summary['total_commands']}`\n"
+        report += f"• Сканирований: `{summary['total_scans']}`\n"
+        report += f"• Устройств найдено: `{summary['total_devices_found']}`\n"
+        report += f"• Майнеров найдено: `{summary['total_miners_found']}`\n"
+        report += f"• Проверок роутеров: `{summary['total_router_checks']}`\n"
+        report += f"• Ошибок: `{summary['total_errors']}`\n"
+        report += f"• Время работы: `{summary['bot_uptime_days']}` дней\n\n"
         
         # Мониторинг
-        report += "🌐 **Мониторинг роутеров:**\n"
-        report += f"• Доступность: {summary['uptime_percentage']:.1f}%\n"
-        report += f"• Изменений статуса: {self.stats['monitoring']['status_changes']}\n\n"
+        report += "🌐 *Мониторинг роутеров:*\n"
+        report += f"• Доступность: `{summary['uptime_percentage']:.1f}%`\n"
+        report += f"• Изменений статуса: `{self.stats['monitoring']['status_changes']}`\n\n"
         
         # Статистика по командам
-        report += "📋 **Популярные команды:**\n"
+        report += "📋 *Популярные команды:*\n"
         for cmd, count in sorted(
             self.stats['commands_by_type'].items(), 
             key=lambda x: x[1], 
             reverse=True
         ):
             if count > 0:
-                report += f"• {cmd}: {count}\n"
+                # Экранируем специальные символы в названиях команд
+                safe_cmd = cmd.replace('_', '\\_').replace('*', '\\*').replace('`', '\\`')
+                report += f"• `{safe_cmd}`: `{count}`\n"
         report += "\n"
         
         # Статистика за неделю
-        report += "📈 **Активность за неделю:**\n"
+        report += "📈 *Активность за неделю:*\n"
         for day in daily_stats[-7:]:
-            report += f"• {day['date']}: {day['commands']} команд, {day['scans']} сканирований\n"
+            report += f"• `{day['date']}`: `{day['commands']}` команд, `{day['scans']}` сканирований\n"
             
         return report
         

@@ -107,15 +107,15 @@ class NotificationManager:
         }
         
         # Формируем сообщение
-        formatted_message = f"{level_emoji[level]} {type_emoji[notification_type]} **{title}**\n"
+        formatted_message = f"{level_emoji[level]} {type_emoji[notification_type]} *{title}*\n"
         formatted_message += f"⏰ {timestamp}\n\n"
         formatted_message += message
         
         # Добавляем данные если есть
         if notification['data']:
-            formatted_message += "\n📋 **Детали:**\n"
+            formatted_message += "\n📋 *Детали:*\n"
             for key, value in notification['data'].items():
-                formatted_message += f"• {key}: {value}\n"
+                formatted_message += f"• {key}: `{value}`\n"
         
         try:
             await self.bot.send_message(
@@ -132,7 +132,7 @@ class NotificationManager:
         """Уведомление об изменении статуса роутера"""
         level = NotificationLevel.CRITICAL if new_status == 'offline' else NotificationLevel.INFO
         title = f"Изменение статуса роутера {router_ip}"
-        message = f"Статус изменился с **{old_status}** на **{new_status}**"
+        message = f"Статус изменился с *{old_status}* на *{new_status}*"
         
         await self.send_notification(
             level=level,
@@ -145,7 +145,7 @@ class NotificationManager:
     async def scan_completed(self, scan_type: str, devices_found: int, duration: float):
         """Уведомление о завершении сканирования"""
         title = f"Сканирование {scan_type} завершено"
-        message = f"Найдено устройств: **{devices_found}**\nВремя выполнения: **{duration:.1f}с**"
+        message = f"Найдено устройств: *{devices_found}*\nВремя выполнения: *{duration:.1f}с*"
         
         await self.send_notification(
             level=NotificationLevel.SUCCESS,
@@ -158,7 +158,7 @@ class NotificationManager:
     async def scan_error(self, scan_type: str, error_message: str):
         """Уведомление об ошибке сканирования"""
         title = f"Ошибка сканирования {scan_type}"
-        message = f"Произошла ошибка: **{error_message}**"
+        message = f"Произошла ошибка: *{error_message}*"
         
         await self.send_notification(
             level=NotificationLevel.CRITICAL,
@@ -172,11 +172,11 @@ class NotificationManager:
         """Ежедневный отчёт"""
         title = "Ежедневный отчёт мониторинга"
         message = f"""
-📊 **Статистика за день:**
-• Проверок роутеров: {stats.get('router_checks', 0)}
-• Сканирований: {stats.get('scans', 0)}
-• Устройств найдено: {stats.get('devices_found', 0)}
-• Ошибок: {stats.get('errors', 0)}
+📊 *Статистика за день:*
+• Проверок роутеров: `{stats.get('router_checks', 0)}`
+• Сканирований: `{stats.get('scans', 0)}`
+• Устройств найдено: `{stats.get('devices_found', 0)}`
+• Ошибок: `{stats.get('errors', 0)}`
         """
         
         await self.send_notification(

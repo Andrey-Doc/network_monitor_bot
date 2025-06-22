@@ -88,10 +88,10 @@ async def process_callback_query(callback_query: CallbackQuery):
         online_count = sum(1 for r in results if r['status'] == 'online')
         statistics_manager.record_router_check(online_count, len(ROUTER_IPS))
         
-        text = "🌐 **Статус роутеров:**\n\n"
+        text = "🌐 *Статус роутеров:*\n\n"
         for r in results:
             emoji = "🟢" if r['status'] == 'online' else "🔴"
-            text += f"{emoji} **{r['ip']}**: {r['status']}\n"
+            text += f"{emoji} *{r['ip']}*: {r['status']}\n"
             if r['open_ports']:
                 text += f"   📡 Порт(ы): {', '.join(map(str, r['open_ports']))}\n"
             text += "\n"
@@ -188,10 +188,10 @@ async def handle_router_status(message: Message):
     online_count = sum(1 for r in results if r['status'] == 'online')
     statistics_manager.record_router_check(online_count, len(ROUTER_IPS))
     
-    text = "🌐 **Статус роутеров:**\n\n"
+    text = "🌐 *Статус роутеров:*\n\n"
     for r in results:
         emoji = "🟢" if r['status'] == 'online' else "🔴"
-        text += f"{emoji} **{r['ip']}**: {r['status']}\n"
+        text += f"{emoji} *{r['ip']}*: {r['status']}\n"
         if r['open_ports']:
             text += f"   📡 Порт(ы): {', '.join(map(str, r['open_ports']))}\n"
         text += "\n"
@@ -605,12 +605,12 @@ async def handle_status(message: Message):
     monitor_status = "🟢 Активен" if background_monitor.is_running else "🔴 Остановлен"
     
     status_text = f"""
-🤖 **Статус бота:**
-📊 Активных результатов сканирования: {active_results}
-🔄 Сканирований в процессе: {active_scans_count}
-🌐 Роутеров в мониторинге: {total_routers}
+🤖 *Статус бота:*
+📊 Активных результатов сканирования: `{active_results}`
+🔄 Сканирований в процессе: `{active_scans_count}`
+🌐 Роутеров в мониторинге: `{total_routers}`
 📡 Мониторинг: {monitor_status}
-⏰ TTL результатов: {SCAN_RESULTS_TTL} сек
+⏰ TTL результатов: `{SCAN_RESULTS_TTL}` сек
 🟢 Бот работает: ✅
     """
     await message.answer(status_text, parse_mode='Markdown')
