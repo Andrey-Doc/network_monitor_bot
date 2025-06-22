@@ -4,6 +4,7 @@ import ipaddress
 from typing import List, Dict, Optional
 import logging
 from .miner_scan import get_miner_info
+import time
 
 # Порты для определения типа устройства
 DEVICE_PORTS = {
@@ -70,13 +71,18 @@ async def scan_network_devices(network: str, on_progress=None) -> List[Dict]:
     logging.info(f"[SCAN] Всего хостов для сканирования: {len(hosts)}")
     results = []
     total = len(hosts)
+    start_time = time.time()
     for idx, ip in enumerate(hosts, 1):
-        logging.info(f"[SCAN] Сканирую {ip} ({idx}/{total})")
+        logging.info(f"[SCAN] Сканирую {ip} ({idx}/{total}) - найдено устройств: {len(results)}")
         res = await scan_device(ip)
         if res:
             results.append(res)
+            logging.info(f"[SCAN] Найдено устройство: {ip} - {res.get('type', 'unknown')}")
         if on_progress and (idx % max(1, total // 20) == 0 or idx == total):
-            logging.info(f"[SCAN] Вызов on_progress: {idx}/{total}")
+            elapsed = time.time() - start_time
+            logging.info(f"[SCAN] Вызов on_progress: {idx}/{total} - время: {elapsed:.1f}с")
             await on_progress(idx, total)
         await asyncio.sleep(0)
+    total_time = time.time() - start_time
+    logging.info(f"[SCAN] Сканирование завершено за {total_time:.1f}с, найдено: {len(results)}")
     return results 

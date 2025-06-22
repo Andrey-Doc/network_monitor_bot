@@ -412,6 +412,19 @@ async def handle_reply_file_request(message: Message):
     else:
         await message.answer("Результаты этого сканирования недоступны или устарели. Запустите сканирование заново.")
 
+@dp.message_handler(commands=['status'])
+async def handle_status(message: Message):
+    active_scans = len(scan_results_storage)
+    total_routers = len(ROUTER_IPS)
+    status_text = f"""
+🤖 Статус бота:
+📊 Активных результатов сканирования: {active_scans}
+🌐 Роутеров в мониторинге: {total_routers}
+⏰ TTL результатов: {SCAN_RESULTS_TTL} сек
+🔄 Бот работает: ✅
+    """
+    await message.answer(status_text)
+
 async def send_notify_to_owner(text: str):
     await bot.send_message(CHAT_ID, text)
 
