@@ -8,7 +8,7 @@ def main_menu_keyboard():
     )
     keyboard.add(
         KeyboardButton('Загрузить файл для сканирования'),
-        KeyboardButton('Сканировать майнеров'),
+        KeyboardButton('Сканировать майнеры'),
     )
     keyboard.add(
         KeyboardButton('Быстрое сканирование сети'),

@@ -13,6 +13,7 @@ import os
 from ..utils.network_scan import scan_network_devices
 import ipaddress
 from ..utils.fast_scan import fast_scan_network
+import time
 
 logging.basicConfig(level=logging.INFO)
 
@@ -29,6 +30,24 @@ ROUTER_IPS = [
 ]
 
 UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data'))
+
+# Глобальное хранилище результатов сканирования с TTL
+scan_results_storage = {}
+SCAN_RESULTS_TTL = 3600  # 1 час в секундах
+
+def cleanup_old_results():
+    """Очищает старые результаты сканирования"""
+    current_time = time.time()
+    expired_keys = []
+    for msg_id, data in scan_results_storage.items():
+        if current_time - data.get('timestamp', 0) > SCAN_RESULTS_TTL:
+            expired_keys.append(msg_id)
+    
+    for key in expired_keys:
+        del scan_results_storage[key]
+    
+    if expired_keys:
+        logging.info(f"[CLEANUP] Удалено {len(expired_keys)} старых результатов сканирования")
 
 class ScanDevicesState(StatesGroup):
     waiting_for_network = State()
@@ -62,6 +81,9 @@ async def handle_scan_network(message: Message):
 
 @dp.message_handler(state=ScanDevicesState.waiting_for_network)
 async def process_devices_network_input(message: Message, state: FSMContext):
+    # Очищаем старые результаты перед новым сканированием
+    cleanup_old_results()
+    
     network = message.text.strip()
     logging.info(f"[SCAN] Запрошено сканирование сети: {network}")
     try:
@@ -100,8 +122,14 @@ async def process_devices_network_input(message: Message, state: FSMContext):
                 text += f"{d['ip']}: miner (hashrate: {d.get('hashrate')}, uptime: {d.get('uptime')})\n"
             else:
                 text += f"{d['ip']}: (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
-        text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ."
-        await message.answer(text)
+        text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
+        result_msg = await message.answer(text)
+        # Сохраняем результаты с привязкой к message_id
+        scan_results_storage[result_msg.message_id] = {
+            'devices': devices,
+            'type': 'devices',
+            'timestamp': time.time()
+        }
         await state.update_data(devices=devices)
         await ScanDevicesState.waiting_for_file_request.set()
     except Exception as e:
@@ -146,7 +174,7 @@ async def process_csv_file(message: Message):
         if os.path.exists(file_path):
             os.remove(file_path)
 
-@dp.message_handler(lambda m: m.text == 'Сканировать майнеров')
+@dp.message_handler(lambda m: m.text == 'Сканировать майнеры')
 async def handle_scan_miners(message: Message):
     await message.answer("Введите сеть и маску для поиска майнеров (например, 192.168.1.0/24):")
     await ScanMinersState.waiting_for_network.set()
@@ -183,6 +211,9 @@ async def process_devices_file_request(message: Message, state: FSMContext):
 
 @dp.message_handler(state=ScanMinersState.waiting_for_network)
 async def process_miners_network_input(message: Message, state: FSMContext):
+    # Очищаем старые результаты перед новым сканированием
+    cleanup_old_results()
+    
     network = message.text.strip()
     try:
         net = ipaddress.IPv4Network(network, strict=False)
@@ -213,8 +244,14 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         text = "Найдено майнеров: {}\n".format(len(miners))
         for m in miners:
             text += f"{m['ip']}: miner (hashrate: {m.get('hashrate')}, uptime: {m.get('uptime')})\n"
-        text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ."
-        await message.answer(text)
+        text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
+        result_msg = await message.answer(text)
+        # Сохраняем результаты с привязкой к message_id
+        scan_results_storage[result_msg.message_id] = {
+            'miners': miners,
+            'type': 'miners',
+            'timestamp': time.time()
+        }
         await state.update_data(miners=miners)
         await ScanMinersState.waiting_for_file_request.set()
     except Exception as e:
@@ -258,6 +295,9 @@ async def handle_fast_scan(message: Message):
 
 @dp.message_handler(state=FastScanState.waiting_for_network)
 async def process_fast_scan_network_input(message: Message, state: FSMContext):
+    # Очищаем старые результаты перед новым сканированием
+    cleanup_old_results()
+    
     import ipaddress
     network = message.text.strip()
     try:
@@ -288,9 +328,18 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
             return
         text = f"Найдено устройств: {len(devices)}\n"
         for d in devices:
-            text += f"{d['ip']}: {d['type']} (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
-        text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ."
-        await message.answer(text)
+            if d.get('type') == 'miner':
+                text += f"{d['ip']}: miner (hashrate: {d.get('hashrate')}, uptime: {d.get('uptime')})\n"
+            else:
+                text += f"{d['ip']}: {d.get('type', 'unknown')} (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
+        text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
+        result_msg = await message.answer(text)
+        # Сохраняем результаты с привязкой к message_id
+        scan_results_storage[result_msg.message_id] = {
+            'devices': devices,
+            'type': 'fast_scan',
+            'timestamp': time.time()
+        }
         await state.update_data(devices=devices)
         await FastScanState.waiting_for_file_request.set()
     except Exception as e:
@@ -322,6 +371,55 @@ async def process_fast_scan_file_request(message: Message, state: FSMContext):
     else:
         await message.answer("Завершено.")
     await state.finish()
+
+@dp.message_handler(lambda m: m.reply_to_message and m.text.lower() == 'файл')
+async def handle_reply_file_request(message: Message):
+    # Очищаем старые результаты перед обработкой
+    cleanup_old_results()
+    
+    reply_msg_id = message.reply_to_message.message_id
+    if reply_msg_id in scan_results_storage:
+        data = scan_results_storage[reply_msg_id]
+        devices = data.get('devices', [])
+        miners = data.get('miners', [])
+        scan_type = data.get('type', '')
+        
+        if not devices and not miners:
+            await message.answer("Нет данных для файла.")
+            return
+            
+        import pandas as pd
+        import tempfile
+        await bot.send_chat_action(message.chat.id, types.ChatActions.UPLOAD_DOCUMENT)
+        
+        if scan_type == 'miners':
+            # Обработка результатов сканирования майнеров
+            for m in miners:
+                m['type'] = 'miner'
+                m['hashrate'] = str(m.get('hashrate') or '')
+                m['uptime'] = str(m.get('uptime') or '')
+            df = pd.DataFrame(miners)
+            caption = "Результаты сканирования майнеров"
+        else:
+            # Обработка результатов сканирования устройств
+            for d in devices:
+                if d.get('type') != 'miner':
+                    d['type'] = ''
+                    d['hashrate'] = ''
+                    d['uptime'] = ''
+                else:
+                    d['hashrate'] = str(d.get('hashrate') or '')
+                    d['uptime'] = str(d.get('uptime') or '')
+            df = pd.DataFrame(devices)
+            caption = "Результаты сканирования сети"
+            
+        with tempfile.NamedTemporaryFile('w+', suffix='.csv', delete=False) as tmp:
+            df.to_csv(tmp.name, index=False)
+            tmp.flush()
+            await message.answer_document(types.InputFile(tmp.name), caption=caption)
+        os.remove(tmp.name)
+    else:
+        await message.answer("Результаты этого сканирования недоступны или устарели. Запустите сканирование заново.")
 
 async def send_notify_to_owner(text: str):
     await bot.send_message(CHAT_ID, text)

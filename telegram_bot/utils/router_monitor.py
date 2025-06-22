@@ -2,7 +2,7 @@ import asyncio
 import socket
 from typing import List, Dict
 
-ROUTER_PORTS = [8080, 8022]
+ROUTER_PORTS = [8080, 8022, 80, 22]
 
 async def check_port(ip: str, port: int, timeout: float = 2.0) -> bool:
     loop = asyncio.get_event_loop()
