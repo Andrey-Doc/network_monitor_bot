@@ -6,13 +6,19 @@ from .keyboards import main_menu_keyboard
 from .inline_keyboards import (
     get_main_inline_keyboard, get_monitoring_control_keyboard, 
     get_scan_options_keyboard, get_settings_keyboard, get_export_keyboard,
-    get_help_keyboard, get_help_submenu_keyboard
+    get_help_keyboard, get_help_submenu_keyboard,
+    get_monitoring_settings_keyboard, get_notification_settings_keyboard,
+    get_scanning_settings_keyboard, get_router_settings_keyboard,
+    get_interface_settings_keyboard, get_security_settings_keyboard,
+    get_backup_settings_keyboard, get_export_settings_keyboard,
+    get_interval_keyboard, get_toggle_keyboard
 )
 from ..utils.router_monitor import check_routers_status
 from ..utils.miner_scan import scan_network_for_miners, scan_miners_from_list
 from ..utils.background_monitor import BackgroundMonitor
 from ..utils.notifications import NotificationManager, NotificationLevel, NotificationType
 from ..utils.statistics import StatisticsManager
+from ..utils.settings_manager import SettingsManager
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
@@ -43,6 +49,7 @@ background_monitor = BackgroundMonitor(bot, CHAT_ID)
 notification_manager = NotificationManager(bot, CHAT_ID)
 statistics_manager = StatisticsManager(UPLOAD_DIR)
 help_system = HelpSystem()
+settings_manager = SettingsManager(os.path.join(UPLOAD_DIR, 'settings.json'))
 
 def cleanup_old_results():
     """Очищает старые результаты сканирования"""
@@ -279,6 +286,232 @@ async def process_callback_query(callback_query: CallbackQuery):
             callback_query.from_user.id,
             docs_text,
             parse_mode='Markdown'
+        )
+        
+    # Обработчики настроек
+    elif data == "settings":
+        await callback_query.answer("Настройки")
+        await bot.edit_message_reply_markup(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            reply_markup=get_settings_keyboard()
+        )
+        
+    elif data == "settings_summary":
+        await callback_query.answer("Сводка настроек")
+        summary = settings_manager.get_settings_summary()
+        await bot.send_message(
+            callback_query.from_user.id,
+            summary,
+            parse_mode='Markdown'
+        )
+        
+    elif data == "settings_reset":
+        await callback_query.answer("Сброс настроек")
+        if settings_manager.reset_to_defaults():
+            await bot.send_message(
+                callback_query.from_user.id,
+                "✅ Настройки сброшены к значениям по умолчанию"
+            )
+        else:
+            await bot.send_message(
+                callback_query.from_user.id,
+                "❌ Ошибка при сбросе настроек"
+            )
+            
+    # Настройки мониторинга
+    elif data == "settings_monitoring":
+        await callback_query.answer("Настройки мониторинга")
+        await bot.edit_message_reply_markup(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            reply_markup=get_monitoring_settings_keyboard()
+        )
+        
+    elif data == "setting_monitor_interval":
+        await callback_query.answer("Выберите интервал")
+        await bot.edit_message_reply_markup(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            reply_markup=get_interval_keyboard()
+        )
+        
+    elif data.startswith("interval_"):
+        interval = int(data.replace("interval_", ""))
+        if settings_manager.update_monitoring_interval(interval):
+            await callback_query.answer(f"Интервал изменён на {interval} сек")
+            await bot.send_message(
+                callback_query.from_user.id,
+                f"✅ Интервал мониторинга изменён на `{interval}` секунд",
+                parse_mode='Markdown'
+            )
+        else:
+            await callback_query.answer("Ошибка изменения интервала")
+            
+    elif data == "setting_monitor_auto_start":
+        current = settings_manager.get_setting('monitoring.auto_start', False)
+        await callback_query.answer("Автозапуск мониторинга")
+        await bot.edit_message_reply_markup(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            reply_markup=get_toggle_keyboard(current)
+        )
+        
+    # Настройки уведомлений
+    elif data == "settings_notifications":
+        await callback_query.answer("Настройки уведомлений")
+        await bot.edit_message_reply_markup(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            reply_markup=get_notification_settings_keyboard()
+        )
+        
+    elif data == "setting_notifications_toggle":
+        current = settings_manager.get_setting('notifications.enabled', True)
+        await callback_query.answer("Включение/выключение уведомлений")
+        await bot.edit_message_reply_markup(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            reply_markup=get_toggle_keyboard(current)
+        )
+        
+    elif data in ["toggle_on", "toggle_off"]:
+        value = data == "toggle_on"
+        # Определяем, какую настройку изменяем
+        if callback_query.message.reply_markup and callback_query.message.reply_markup.inline_keyboard:
+            first_button = callback_query.message.reply_markup.inline_keyboard[0][0]
+            if "мониторинг" in first_button.text.lower():
+                settings_manager.toggle_monitoring(value)
+                setting_name = "мониторинг"
+            elif "уведомления" in first_button.text.lower():
+                settings_manager.toggle_notifications(value)
+                setting_name = "уведомления"
+            else:
+                setting_name = "настройка"
+                
+        await callback_query.answer(f"{setting_name.capitalize()} {'включён' if value else 'выключен'}")
+        await bot.send_message(
+            callback_query.from_user.id,
+            f"✅ {setting_name.capitalize()} {'включён' if value else 'выключен'}"
+        )
+        
+    # Настройки сканирования
+    elif data == "settings_scanning":
+        await callback_query.answer("Настройки сканирования")
+        await bot.edit_message_reply_markup(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            reply_markup=get_scanning_settings_keyboard()
+        )
+        
+    elif data == "setting_scan_timeout":
+        current_timeout = settings_manager.get_setting('scanning.default_timeout', 5)
+        await callback_query.answer(f"Текущий таймаут: {current_timeout} сек")
+        await bot.send_message(
+            callback_query.from_user.id,
+            f"⏱️ Текущий таймаут сканирования: `{current_timeout}` сек\n\n"
+            "Введите новое значение (в секундах):",
+            parse_mode='Markdown'
+        )
+        
+    elif data == "setting_scan_ports":
+        current_ports = settings_manager.get_setting('scanning.default_ports', [22, 80, 443, 8080, 8022, 4028])
+        await callback_query.answer("Порты для сканирования")
+        await bot.send_message(
+            callback_query.from_user.id,
+            f"🔌 Текущие порты для сканирования: `{', '.join(map(str, current_ports))}`\n\n"
+            "Введите новые порты через запятую (например: 22,80,443,8080):",
+            parse_mode='Markdown'
+        )
+        
+    # Настройки роутеров
+    elif data == "settings_routers":
+        await callback_query.answer("Настройки роутеров")
+        await bot.edit_message_reply_markup(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            reply_markup=get_router_settings_keyboard()
+        )
+        
+    elif data == "setting_routers_ips":
+        current_ips = settings_manager.get_setting('routers.ips', ROUTER_IPS)
+        await callback_query.answer("IP адреса роутеров")
+        await bot.send_message(
+            callback_query.from_user.id,
+            f"🌐 Текущие IP роутеров: `{', '.join(current_ips)}`\n\n"
+            "Введите новые IP адреса через запятую:",
+            parse_mode='Markdown'
+        )
+        
+    # Настройки интерфейса
+    elif data == "settings_interface":
+        await callback_query.answer("Настройки интерфейса")
+        await bot.edit_message_reply_markup(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            reply_markup=get_interface_settings_keyboard()
+        )
+        
+    # Настройки безопасности
+    elif data == "settings_security":
+        await callback_query.answer("Настройки безопасности")
+        await bot.edit_message_reply_markup(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            reply_markup=get_security_settings_keyboard()
+        )
+        
+    # Настройки резервного копирования
+    elif data == "settings_backup":
+        await callback_query.answer("Настройки резервного копирования")
+        await bot.edit_message_reply_markup(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            reply_markup=get_backup_settings_keyboard()
+        )
+        
+    elif data == "setting_backup_create_now":
+        await callback_query.answer("Создание резервной копии")
+        # Здесь будет логика создания резервной копии
+        await bot.send_message(
+            callback_query.from_user.id,
+            "💾 Создание резервной копии...\n\nФункция в разработке"
+        )
+        
+    # Настройки экспорта/импорта
+    elif data == "settings_export":
+        await callback_query.answer("Экспорт/Импорт")
+        await bot.edit_message_reply_markup(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            reply_markup=get_export_settings_keyboard()
+        )
+        
+    elif data == "setting_export_settings":
+        await callback_query.answer("Экспорт настроек")
+        settings_json = settings_manager.export_settings()
+        await bot.send_message(
+            callback_query.from_user.id,
+            f"📄 *Экспорт настроек:*\n\n```json\n{settings_json}\n```",
+            parse_mode='Markdown'
+        )
+        
+    elif data == "setting_export_stats":
+        await callback_query.answer("Экспорт статистики")
+        report = statistics_manager.generate_report()
+        await bot.send_message(
+            callback_query.from_user.id,
+            f"📊 *Экспорт статистики:*\n\n{report}",
+            parse_mode='Markdown'
+        )
+        
+    # Навигация по настройкам
+    elif data == "back_to_settings":
+        await callback_query.answer("Назад к настройкам")
+        await bot.edit_message_reply_markup(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            reply_markup=get_settings_keyboard()
         )
         
     else:
