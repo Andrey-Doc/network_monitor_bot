@@ -25,6 +25,8 @@ UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data'))
 
 # Глобальное хранилище результатов сканирования с TTL
 scan_results_storage = {}
+# Счётчик активных сканирований
+active_scans_count = 0
 
 def cleanup_old_results():
     """Очищает старые результаты сканирования"""
@@ -75,6 +77,9 @@ async def process_devices_network_input(message: Message, state: FSMContext):
     # Очищаем старые результаты перед новым сканированием
     cleanup_old_results()
     
+    global active_scans_count
+    active_scans_count += 1
+    
     network = message.text.strip()
     logging.info(f"[SCAN] Запрошено сканирование сети: {network}")
     try:
@@ -82,6 +87,7 @@ async def process_devices_network_input(message: Message, state: FSMContext):
     except Exception as e:
         logging.error(f"[SCAN] Некорректный формат сети: {network}, ошибка: {e}")
         await message.answer("Ошибка: некорректный формат сети. Пример: 192.168.1.0/24")
+        active_scans_count -= 1
         await state.finish()
         return
     progress_msg = await message.answer(f"Начинаю сканирование сети {network} на устройства... 0%")
@@ -105,6 +111,7 @@ async def process_devices_network_input(message: Message, state: FSMContext):
         )
         if not devices:
             await message.answer("Устройства не найдены.")
+            active_scans_count -= 1
             await state.finish()
             return
         text = f"Найдено устройств: {len(devices)}\n"
@@ -130,6 +137,7 @@ async def process_devices_network_input(message: Message, state: FSMContext):
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
+        active_scans_count -= 1
         await state.finish()
 
 @dp.message_handler(lambda m: m.text == 'Загрузить файл для сканирования')
@@ -205,11 +213,15 @@ async def process_miners_network_input(message: Message, state: FSMContext):
     # Очищаем старые результаты перед новым сканированием
     cleanup_old_results()
     
+    global active_scans_count
+    active_scans_count += 1
+    
     network = message.text.strip()
     try:
         net = ipaddress.IPv4Network(network, strict=False)
     except Exception:
         await message.answer("Ошибка: некорректный формат сети. Пример: 192.168.1.0/24")
+        active_scans_count -= 1
         await state.finish()
         return
     progress_msg = await message.answer(f"Начинаю сканирование сети {network} только на майнеры... 0%")
@@ -230,6 +242,7 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         )
         if not miners:
             await message.answer("Майнеры не найдены.")
+            active_scans_count -= 1
             await state.finish()
             return
         text = "Найдено майнеров: {}\n".format(len(miners))
@@ -251,6 +264,7 @@ async def process_miners_network_input(message: Message, state: FSMContext):
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
+        active_scans_count -= 1
         await state.finish()
 
 @dp.message_handler(state=ScanMinersState.waiting_for_file_request)
@@ -289,12 +303,16 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
     # Очищаем старые результаты перед новым сканированием
     cleanup_old_results()
     
+    global active_scans_count
+    active_scans_count += 1
+    
     import ipaddress
     network = message.text.strip()
     try:
         net = ipaddress.IPv4Network(network, strict=False)
     except Exception:
         await message.answer("Ошибка: некорректный формат сети. Пример: 192.168.1.0/24")
+        active_scans_count -= 1
         await state.finish()
         return
     progress_msg = await message.answer(f"Начинаю быстрое сканирование сети {network}... 0%")
@@ -315,6 +333,7 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
         )
         if not devices:
             await message.answer("Устройства не найдены.")
+            active_scans_count -= 1
             await state.finish()
             return
         text = f"Найдено устройств: {len(devices)}\n"
@@ -339,6 +358,7 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
+        active_scans_count -= 1
         await state.finish()
 
 @dp.message_handler(state=FastScanState.waiting_for_file_request)
@@ -414,14 +434,15 @@ async def handle_reply_file_request(message: Message):
 
 @dp.message_handler(commands=['status'])
 async def handle_status(message: Message):
-    active_scans = len(scan_results_storage)
+    active_results = len(scan_results_storage)
     total_routers = len(ROUTER_IPS)
     status_text = f"""
 🤖 Статус бота:
-📊 Активных результатов сканирования: {active_scans}
+📊 Активных результатов сканирования: {active_results}
+🔄 Сканирований в процессе: {active_scans_count}
 🌐 Роутеров в мониторинге: {total_routers}
 ⏰ TTL результатов: {SCAN_RESULTS_TTL} сек
-🔄 Бот работает: ✅
+🟢 Бот работает: ✅
     """
     await message.answer(status_text)
 
