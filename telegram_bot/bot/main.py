@@ -5,7 +5,8 @@ from .config import TELEGRAM_BOT_TOKEN, CHAT_ID, ROUTER_IPS, ROUTER_PORTS, SCAN_
 from .keyboards import main_menu_keyboard
 from .inline_keyboards import (
     get_main_inline_keyboard, get_monitoring_control_keyboard, 
-    get_scan_options_keyboard, get_settings_keyboard, get_export_keyboard
+    get_scan_options_keyboard, get_settings_keyboard, get_export_keyboard,
+    get_help_keyboard, get_help_submenu_keyboard
 )
 from ..utils.router_monitor import check_routers_status
 from ..utils.miner_scan import scan_network_for_miners, scan_miners_from_list
@@ -22,6 +23,7 @@ import ipaddress
 from ..utils.fast_scan import fast_scan_network
 import time
 import asyncio
+from ..utils.help_system import HelpSystem
 
 logging.basicConfig(level=logging.INFO)
 
@@ -40,6 +42,7 @@ active_scans_count = 0
 background_monitor = BackgroundMonitor(bot, CHAT_ID)
 notification_manager = NotificationManager(bot, CHAT_ID)
 statistics_manager = StatisticsManager(UPLOAD_DIR)
+help_system = HelpSystem()
 
 def cleanup_old_results():
     """Очищает старые результаты сканирования"""
@@ -175,6 +178,108 @@ async def process_callback_query(callback_query: CallbackQuery):
         await callback_query.answer(f"Выбрана сеть: {network}")
         await bot.send_message(callback_query.from_user.id, f"Сканирую сеть {network}...")
         # Здесь можно добавить логику сканирования
+        
+    # Обработчики помощи
+    elif data == "help":
+        await callback_query.answer("Открываю справку")
+        help_text = help_system.get_main_help()
+        await bot.edit_message_text(
+            text=help_text,
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            parse_mode='Markdown',
+            reply_markup=get_help_keyboard()
+        )
+        
+    elif data.startswith("help_"):
+        section = data.replace("help_", "")
+        await callback_query.answer(f"Загружаю раздел: {section}")
+        help_section = help_system.get_help_section(section)
+        
+        await bot.edit_message_text(
+            text=help_section['content'],
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            parse_mode='Markdown',
+            reply_markup=get_help_submenu_keyboard()
+        )
+        
+    elif data == "help_search":
+        await callback_query.answer("Функция поиска в разработке")
+        await bot.send_message(
+            callback_query.from_user.id,
+            "🔍 *Поиск по справке*\n\nВведите ваш вопрос, и я найду подходящий раздел справки.",
+            parse_mode='Markdown'
+        )
+        
+    elif data == "help_all_sections":
+        await callback_query.answer("Показываю все разделы")
+        sections = help_system.get_all_sections()
+        sections_text = "*📋 Все разделы справки:*\n\n"
+        
+        for section in sections:
+            help_section = help_system.get_help_section(section)
+            sections_text += f"• {help_section['title']}\n"
+            
+        sections_text += "\nНажмите на кнопку раздела для просмотра подробной информации."
+        
+        await bot.edit_message_text(
+            text=sections_text,
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            parse_mode='Markdown',
+            reply_markup=get_help_keyboard()
+        )
+        
+    elif data == "help_contact":
+        await callback_query.answer("Информация о поддержке")
+        contact_text = """
+*📞 Связаться с поддержкой*
+
+*Способы связи:*
+• Создать issue в репозитории проекта
+• Написать разработчику в Telegram
+• Отправить email с описанием проблемы
+
+*При обращении укажите:*
+• Версию бота и Python
+• Описание проблемы
+• Логи ошибок
+• Шаги для воспроизведения
+
+*Время ответа:* 24-48 часов
+        """
+        await bot.send_message(
+            callback_query.from_user.id,
+            contact_text,
+            parse_mode='Markdown'
+        )
+        
+    elif data == "help_docs":
+        await callback_query.answer("Документация")
+        docs_text = """
+*📚 Документация*
+
+*Основные документы:*
+• README.md - Общее описание проекта
+• requirements.txt - Зависимости
+• config.py - Конфигурация
+
+*Дополнительные материалы:*
+• Примеры использования
+• Руководство по настройке
+• API документация
+
+*Полезные ссылки:*
+• GitHub репозиторий
+• Wiki проекта
+• Примеры конфигураций
+        """
+        await bot.send_message(
+            callback_query.from_user.id,
+            docs_text,
+            parse_mode='Markdown'
+        )
         
     else:
         await callback_query.answer("Функция в разработке")
@@ -659,6 +764,17 @@ async def handle_monitor_stop(message: Message):
         message="Фоновый мониторинг роутеров остановлен"
     )
     await message.answer("⏹️ Мониторинг роутеров остановлен")
+
+@dp.message_handler(commands=['help'])
+async def handle_help_command(message: Message):
+    """Команда для получения справки"""
+    statistics_manager.record_command('help')
+    help_text = help_system.get_main_help()
+    await message.answer(
+        help_text,
+        parse_mode='Markdown',
+        reply_markup=get_help_keyboard()
+    )
 
 async def send_notify_to_owner(text: str):
     await bot.send_message(CHAT_ID, text)

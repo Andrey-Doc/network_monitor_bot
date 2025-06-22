@@ -110,7 +110,27 @@ def get_help_keyboard():
         InlineKeyboardButton("🐛 Отчёт об ошибке", callback_data="help_bug_report"),
     )
     keyboard.add(
+        InlineKeyboardButton("🚀 Возможности", callback_data="help_features"),
+        InlineKeyboardButton("🔧 Устранение неполадок", callback_data="help_troubleshooting"),
+    )
+    keyboard.add(
         InlineKeyboardButton("🔙 Назад", callback_data="back_to_main"),
+    )
+    return keyboard
+
+def get_help_submenu_keyboard():
+    """Подменю помощи с дополнительными опциями"""
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    keyboard.add(
+        InlineKeyboardButton("🔍 Поиск по справке", callback_data="help_search"),
+        InlineKeyboardButton("📋 Все разделы", callback_data="help_all_sections"),
+    )
+    keyboard.add(
+        InlineKeyboardButton("📞 Связаться с поддержкой", callback_data="help_contact"),
+        InlineKeyboardButton("📚 Документация", callback_data="help_docs"),
+    )
+    keyboard.add(
+        InlineKeyboardButton("🔙 Назад к помощи", callback_data="help"),
     )
     return keyboard
 
