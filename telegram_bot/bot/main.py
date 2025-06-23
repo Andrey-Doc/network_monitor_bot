@@ -101,6 +101,9 @@ class RouterSettingsState(StatesGroup):
 
 class InterfaceSettingsState(StatesGroup):
     waiting_for_language = State()
+    waiting_for_progress = State()
+    waiting_for_time = State()
+    waiting_for_compact = State()
 
 class SecuritySettingsState(StatesGroup):
     waiting_for_users = State()
@@ -918,32 +921,77 @@ async def process_interface_language(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Показывать прогресс')
 async def handle_interface_progress(message: Message):
     current = settings_manager.get_setting('interface.show_progress', True)
-    new_value = not current
+    value = 'да' if current else 'нет'
+    await message.answer(translate(get_lang(), 'interface_progress_prompt', value=value), reply_markup=cancel_keyboard())
+    await InterfaceSettingsState.waiting_for_progress.set()
+
+@dp.message_handler(state=InterfaceSettingsState.waiting_for_progress)
+async def process_interface_progress(message: Message, state: FSMContext):
+    text = message.text.strip().lower()
+    if text in ['да', 'yes', 'y', 'oui', 'ja', '是']:
+        new_value = True
+    elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
+        new_value = False
+    else:
+        await message.answer(translate(get_lang(), 'input_error'), reply_markup=interface_menu_keyboard())
+        await state.finish()
+        return
     if settings_manager.set_setting('interface.show_progress', new_value):
-        status = 'будет показываться' if new_value else 'не будет показываться'
+        status = 'включён' if new_value else 'выключен'
         await message.answer(translate(get_lang(), 'interface_progress_set', status=status), reply_markup=interface_menu_keyboard())
     else:
-        await message.answer(translate(get_lang(), 'interface_progress_error'), reply_markup=interface_menu_keyboard())
+        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=interface_menu_keyboard())
+    await state.finish()
 
 @dp.message_handler(lambda m: m.text == 'Показывать время')
 async def handle_interface_time(message: Message):
     current = settings_manager.get_setting('interface.show_time', True)
-    new_value = not current
+    value = 'да' if current else 'нет'
+    await message.answer(translate(get_lang(), 'interface_time_prompt', value=value), reply_markup=cancel_keyboard())
+    await InterfaceSettingsState.waiting_for_time.set()
+
+@dp.message_handler(state=InterfaceSettingsState.waiting_for_time)
+async def process_interface_time(message: Message, state: FSMContext):
+    text = message.text.strip().lower()
+    if text in ['да', 'yes', 'y', 'oui', 'ja', '是']:
+        new_value = True
+    elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
+        new_value = False
+    else:
+        await message.answer(translate(get_lang(), 'input_error'), reply_markup=interface_menu_keyboard())
+        await state.finish()
+        return
     if settings_manager.set_setting('interface.show_time', new_value):
-        status = 'будет показываться' if new_value else 'не будет показываться'
+        status = 'включён' if new_value else 'выключен'
         await message.answer(translate(get_lang(), 'interface_time_set', status=status), reply_markup=interface_menu_keyboard())
     else:
-        await message.answer(translate(get_lang(), 'interface_time_error'), reply_markup=interface_menu_keyboard())
+        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=interface_menu_keyboard())
+    await state.finish()
 
 @dp.message_handler(lambda m: m.text == 'Компактный режим')
 async def handle_interface_compact(message: Message):
     current = settings_manager.get_setting('interface.compact_mode', False)
-    new_value = not current
+    value = 'да' if current else 'нет'
+    await message.answer(translate(get_lang(), 'interface_compact_prompt', value=value), reply_markup=cancel_keyboard())
+    await InterfaceSettingsState.waiting_for_compact.set()
+
+@dp.message_handler(state=InterfaceSettingsState.waiting_for_compact)
+async def process_interface_compact(message: Message, state: FSMContext):
+    text = message.text.strip().lower()
+    if text in ['да', 'yes', 'y', 'oui', 'ja', '是']:
+        new_value = True
+    elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
+        new_value = False
+    else:
+        await message.answer(translate(get_lang(), 'input_error'), reply_markup=interface_menu_keyboard())
+        await state.finish()
+        return
     if settings_manager.set_setting('interface.compact_mode', new_value):
         status = 'включён' if new_value else 'выключен'
         await message.answer(translate(get_lang(), 'interface_compact_set', status=status), reply_markup=interface_menu_keyboard())
     else:
-        await message.answer(translate(get_lang(), 'interface_compact_error'), reply_markup=interface_menu_keyboard())
+        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=interface_menu_keyboard())
+    await state.finish()
 
 @dp.message_handler(lambda m: m.text == 'Разрешенные пользователи')
 async def handle_security_users(message: Message):
