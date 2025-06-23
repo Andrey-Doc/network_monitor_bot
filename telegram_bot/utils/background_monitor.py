@@ -2,7 +2,9 @@ import asyncio
 import logging
 from typing import Dict, List
 from telegram_bot.utils.router_monitor import check_routers_status
-from telegram_bot.bot.config import ROUTER_IPS, ROUTER_PORTS
+from telegram_bot.utils.settings_manager import SettingsManager
+
+settings_manager = SettingsManager()
 
 class BackgroundMonitor:
     def __init__(self, bot, chat_id):
@@ -22,7 +24,7 @@ class BackgroundMonitor:
         logging.info(f"[MONITOR] Запуск фонового мониторинга с интервалом {interval}с")
         
         # Инициализация начального статуса
-        initial_status = await check_routers_status(ROUTER_IPS, ROUTER_PORTS)
+        initial_status = await check_routers_status(settings_manager.get_setting('ROUTER_IPS'), settings_manager.get_setting('ROUTER_PORTS'))
         for router in initial_status:
             self.previous_status[router['ip']] = router['status']
         
@@ -46,7 +48,7 @@ class BackgroundMonitor:
         """Основной цикл мониторинга"""
         while self.is_running:
             try:
-                current_status = await check_routers_status(ROUTER_IPS, ROUTER_PORTS)
+                current_status = await check_routers_status(settings_manager.get_setting('ROUTER_IPS'), settings_manager.get_setting('ROUTER_PORTS'))
                 await self._check_status_changes(current_status)
                 await asyncio.sleep(interval)
             except asyncio.CancelledError:

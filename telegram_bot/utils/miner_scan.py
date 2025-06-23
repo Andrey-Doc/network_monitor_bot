@@ -3,8 +3,11 @@ import socket
 import json
 from typing import List, Dict, Optional
 import ipaddress
+from telegram_bot.utils.settings_manager import SettingsManager
 
 MINER_PORT = 4028
+settings_manager = SettingsManager()
+# Используйте settings_manager.get_setting('...') для получения нужных параметров.
 
 async def check_port(ip: str, port: int, timeout: float = 2.0) -> bool:
     loop = asyncio.get_event_loop()

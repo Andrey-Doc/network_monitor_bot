@@ -5,6 +5,10 @@ from typing import List, Dict, Optional
 import logging
 from .miner_scan import get_miner_info
 import time
+from telegram_bot.utils.settings_manager import SettingsManager
+
+settings_manager = SettingsManager()
+# Используйте settings_manager.get_setting('...') для получения нужных параметров.
 
 # Порты для определения типа устройства
 DEVICE_PORTS = {

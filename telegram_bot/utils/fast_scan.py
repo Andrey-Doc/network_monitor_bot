@@ -2,6 +2,10 @@ import asyncio
 import ipaddress
 import socket
 from typing import List, Dict, Optional
+from telegram_bot.utils.settings_manager import SettingsManager
+
+settings_manager = SettingsManager()
+# Используйте settings_manager.get_setting('...') для получения нужных параметров.
 
 # Порты для быстрой проверки (можно расширить)
 FAST_PORTS = [80, 8080, 22, 161, 443, 554, 4028, 62078, 5555]

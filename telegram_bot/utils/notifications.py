@@ -3,6 +3,7 @@ import logging
 from typing import List, Dict, Optional
 from enum import Enum
 from datetime import datetime
+from telegram_bot.utils.settings_manager import SettingsManager
 
 class NotificationLevel(Enum):
     INFO = "info"
@@ -17,10 +18,12 @@ class NotificationType(Enum):
     SYSTEM_ALERT = "system_alert"
     DAILY_REPORT = "daily_report"
 
+settings_manager = SettingsManager()
+
 class NotificationManager:
-    def __init__(self, bot, chat_id):
+    def __init__(self, bot):
         self.bot = bot
-        self.chat_id = chat_id
+        self.chat_id = settings_manager.get_setting('CHAT_ID')
         self.notification_queue = asyncio.Queue()
         self.is_running = False
         self.processing_task = None

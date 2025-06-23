@@ -1,6 +1,10 @@
 import asyncio
 import socket
 from typing import List, Dict
+from telegram_bot.utils.settings_manager import SettingsManager
+
+settings_manager = SettingsManager()
+# Используйте settings_manager.get_setting('...') для получения нужных параметров.
 
 async def check_port(ip: str, port: int, timeout: float = 2.0) -> bool:
     loop = asyncio.get_event_loop()
