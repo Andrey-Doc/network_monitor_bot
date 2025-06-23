@@ -125,6 +125,8 @@ class BackupSettingsState(StatesGroup):
 @dp.message_handler(commands=['start', 'menu'])
 async def send_welcome(message: Message):
     statistics_manager.record_command('start')
+    print(f"[INFO] Ваш chat_id: {message.chat.id}")
+    logging.info(f"[INFO] Ваш chat_id: {message.chat.id}")
     await message.answer(
         translate(get_lang(), 'welcome'),
         reply_markup=main_menu_keyboard()
