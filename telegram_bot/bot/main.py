@@ -1,6 +1,6 @@
 import logging
 from aiogram import Bot, Dispatcher, types, executor
-from aiogram.types import Message, ContentType
+from aiogram.types import Message, ContentType, ReplyKeyboardMarkup, KeyboardButton
 from .keyboards import (
     main_menu_keyboard, settings_menu_keyboard, monitoring_menu_keyboard,
     scan_menu_keyboard, notification_menu_keyboard, router_menu_keyboard,
@@ -641,7 +641,10 @@ async def handle_toggle_quiet_hours(message: Message):
 @dp.message_handler(lambda m: m.text == 'Уровни уведомлений')
 async def handle_notification_level(message: Message):
     current = settings_manager.get_setting('notifications.level', 'INFO')
-    await message.answer(translate(get_lang(), 'notifications_level_current', value=current), reply_markup=cancel_keyboard())
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.add(KeyboardButton('INFO'), KeyboardButton('WARNING'), KeyboardButton('ERROR'))
+    keyboard.add(KeyboardButton('Отмена'))
+    await message.answer(translate(get_lang(), 'notifications_level_current', value=current), reply_markup=keyboard)
     await NotificationState.waiting_for_level.set()
 
 @dp.message_handler(state=NotificationState.waiting_for_level)
@@ -649,6 +652,7 @@ async def process_notification_level(message: Message, state: FSMContext):
     level = message.text.strip().upper()
     if level not in ['INFO', 'WARNING', 'ERROR']:
         await message.answer(translate(get_lang(), 'notifications_level_error'), reply_markup=notification_menu_keyboard())
+        await state.finish()
         return
     if settings_manager.set_setting('notifications.level', level):
         await message.answer(translate(get_lang(), 'notifications_level_set', value=level), reply_markup=notification_menu_keyboard())
