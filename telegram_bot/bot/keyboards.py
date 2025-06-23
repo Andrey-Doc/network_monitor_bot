@@ -93,4 +93,9 @@ def help_menu_keyboard():
     kb.add(KeyboardButton('FAQ'), KeyboardButton('Отчёт об ошибке'))
     kb.add(KeyboardButton('Возможности'), KeyboardButton('Устранение неполадок'))
     kb.add(KeyboardButton('Назад в меню'))
+    return kb
+
+def cancel_keyboard():
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.add(KeyboardButton('Отмена'))
     return kb 
