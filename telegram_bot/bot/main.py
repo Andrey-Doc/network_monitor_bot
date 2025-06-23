@@ -560,7 +560,7 @@ async def handle_statistics(message: Message):
 @dp.message_handler(lambda m: m.text == 'Интервал мониторинга')
 async def handle_monitoring_interval(message: Message):
     current = settings_manager.get_setting('monitoring.interval', 300)
-    await message.answer(translate(get_lang(), 'monitoring_interval_current', value=current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'monitoring_interval_prompt', value=current), reply_markup=cancel_keyboard())
     await MonitoringState.waiting_for_interval.set()
 
 @dp.message_handler(state=MonitoringState.waiting_for_interval)

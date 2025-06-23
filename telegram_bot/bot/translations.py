@@ -26,6 +26,7 @@ TRANSLATIONS = {
         'notifications_toggle_set': 'Уведомления: {status}',
         'quiet_hours_toggle_set': 'Тихие часы: {status}',
         'notifications_level_current': 'Текущий уровень уведомлений: {value}',
+        'monitoring_interval_prompt': 'Текущий интервал мониторинга: {value} сек.\nВведите новое значение в секундах:',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -54,6 +55,7 @@ TRANSLATIONS = {
         'notifications_toggle_set': 'Notifications: {status}',
         'quiet_hours_toggle_set': 'Quiet hours: {status}',
         'notifications_level_current': 'Current notification level: {value}',
+        'monitoring_interval_prompt': 'Current monitoring interval: {value} sec.\nEnter a new value in seconds:',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -82,6 +84,7 @@ TRANSLATIONS = {
         'notifications_toggle_set': 'Benachrichtigungen: {status}',
         'quiet_hours_toggle_set': 'Ruhezeiten: {status}',
         'notifications_level_current': 'Aktuelles Benachrichtigungslevel: {value}',
+        'monitoring_interval_prompt': 'Aktuelles Überwachungsintervall: {value} Sek.\nGeben Sie einen neuen Wert in Sekunden ein:',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -110,6 +113,7 @@ TRANSLATIONS = {
         'notifications_toggle_set': 'Meldingen: {status}',
         'quiet_hours_toggle_set': 'Stille uren: {status}',
         'notifications_level_current': 'Huidig meldingsniveau: {value}',
+        'monitoring_interval_prompt': 'Huidig monitoring-interval: {value} sec.\nVoer een nieuwe waarde in seconden in:',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -138,6 +142,7 @@ TRANSLATIONS = {
         'notifications_toggle_set': '通知: {status}',
         'quiet_hours_toggle_set': '安静时段: {status}',
         'notifications_level_current': '当前通知级别: {value}',
+        'monitoring_interval_prompt': '当前监控间隔: {value} 秒。\n请输入新的秒数：',
     },
 }
 
