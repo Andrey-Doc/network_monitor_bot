@@ -397,7 +397,10 @@ async def process_csv_file(message: Message):
             await message.answer(translate(get_lang(), 'ip_column_error'), reply_markup=main_menu_keyboard())
             return
         ip_list = df['ip'].dropna().astype(str).tolist()
-        await message.answer(translate(get_lang(), 'scanning_ips', len(ip_list))), reply_markup=main_menu_keyboard())
+        await message.answer(
+            translate(get_lang(), 'scanning_ips', len(ip_list)),
+            reply_markup=main_menu_keyboard()
+        )
         start_time = time.time()
         miners = await scan_miners_from_list(ip_list)
         duration = time.time() - start_time
