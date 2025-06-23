@@ -145,6 +145,10 @@ TRANSLATIONS = {
         'help_settings_btn': 'Справка',
         'status_settings_btn': 'Статус бота',
         'router_status_settings_btn': 'Статус роутеров',
+        'scan_network_prompt': 'Введите сеть для сканирования (например, 192.168.1.0/24):',
+        'scan_miners_prompt': 'Введите сеть для поиска майнеров (например, 192.168.1.0/24):',
+        'fast_scan_prompt': 'Введите сеть для быстрого сканирования (например, 192.168.1.0/24):',
+        'upload_file_prompt': 'Пожалуйста, отправьте CSV-файл с IP-адресами для сканирования.',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -292,6 +296,10 @@ TRANSLATIONS = {
         'help_settings_btn': 'Help',
         'status_settings_btn': 'Bot status',
         'router_status_settings_btn': 'Router status',
+        'scan_network_prompt': 'Enter the network to scan (e.g., 192.168.1.0/24):',
+        'scan_miners_prompt': 'Enter the network to search for miners (e.g., 192.168.1.0/24):',
+        'fast_scan_prompt': 'Enter the network for fast scanning (e.g., 192.168.1.0/24):',
+        'upload_file_prompt': 'Please send a CSV file with IP addresses for scanning.',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -439,6 +447,10 @@ TRANSLATIONS = {
         'help_settings_btn': 'Hilfe',
         'status_settings_btn': 'Bot-Status',
         'router_status_settings_btn': 'Router-Status',
+        'scan_network_prompt': 'Enter the network to scan (e.g., 192.168.1.0/24):',
+        'scan_miners_prompt': 'Enter the network to search for miners (e.g., 192.168.1.0/24):',
+        'fast_scan_prompt': 'Enter the network for fast scanning (e.g., 192.168.1.0/24):',
+        'upload_file_prompt': 'Please send a CSV file with IP addresses for scanning.',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -586,6 +598,10 @@ TRANSLATIONS = {
         'help_settings_btn': 'Help',
         'status_settings_btn': 'Botstatus',
         'router_status_settings_btn': 'Routerstatus',
+        'scan_network_prompt': 'Enter the network to scan (e.g., 192.168.1.0/24):',
+        'scan_miners_prompt': 'Enter the network to search for miners (e.g., 192.168.1.0/24):',
+        'fast_scan_prompt': 'Enter the network for fast scanning (e.g., 192.168.1.0/24):',
+        'upload_file_prompt': 'Please send a CSV file with IP addresses for scanning.',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -733,6 +749,10 @@ TRANSLATIONS = {
         'help_settings_btn': '帮助',
         'status_settings_btn': '机器人状态',
         'router_status_settings_btn': '路由器状态',
+        'scan_network_prompt': 'Enter the network to scan (e.g., 192.168.1.0/24):',
+        'scan_miners_prompt': 'Enter the network to search for miners (e.g., 192.168.1.0/24):',
+        'fast_scan_prompt': 'Enter the network for fast scanning (e.g., 192.168.1.0/24):',
+        'upload_file_prompt': 'Please send a CSV file with IP addresses for scanning.',
     },
 }
 

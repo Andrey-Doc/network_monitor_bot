@@ -155,20 +155,23 @@ async def handle_settings_main_menu(message: Message):
     await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_main_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(is_menu_button('scan_network_main_menu_btn'))
-async def handle_scan_network_main_menu(message: Message):
-    await handle_scan_network(message)
+async def handle_scan_network_main_menu(message: Message, state: FSMContext):
+    await message.answer(translate(get_lang(), 'scan_network_prompt'), reply_markup=cancel_keyboard(lang=get_lang()))
+    await ScanDevicesState.waiting_for_network.set()
 
 @dp.message_handler(is_menu_button('scan_miners_main_menu_btn'))
-async def handle_scan_miners_main_menu(message: Message):
-    await handle_scan_miners(message)
+async def handle_scan_miners_main_menu(message: Message, state: FSMContext):
+    await message.answer(translate(get_lang(), 'scan_miners_prompt'), reply_markup=cancel_keyboard(lang=get_lang()))
+    await ScanMinersState.waiting_for_network.set()
 
 @dp.message_handler(is_menu_button('fast_scan_main_menu_btn'))
-async def handle_fast_scan_main_menu(message: Message):
-    await handle_fast_scan(message)
+async def handle_fast_scan_main_menu(message: Message, state: FSMContext):
+    await message.answer(translate(get_lang(), 'fast_scan_prompt'), reply_markup=cancel_keyboard(lang=get_lang()))
+    await FastScanState.waiting_for_network.set()
 
 @dp.message_handler(is_menu_button('upload_file_main_menu_btn'))
 async def handle_upload_file_main_menu(message: Message):
-    await handle_upload_file(message)
+    await message.answer(translate(get_lang(), 'upload_file_prompt'), reply_markup=cancel_keyboard(lang=get_lang()))
 
 @dp.message_handler(is_menu_button('settings_settings_main_menu_btn'))
 async def handle_settings_settings_main_menu(message: Message):
