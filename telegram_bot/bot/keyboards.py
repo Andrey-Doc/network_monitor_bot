@@ -112,4 +112,9 @@ def settings_settings_menu_keyboard(lang=None):
     kb.row(KeyboardButton(translate(lang, 'notification_settings_btn')), KeyboardButton(translate(lang, 'router_settings_btn')))
     kb.row(KeyboardButton(translate(lang, 'interface_settings_btn')), KeyboardButton(translate(lang, 'security_settings_btn')))
     kb.row(KeyboardButton(translate(lang, 'back_to_settings_main_btn')))
+    return kb
+
+def scan_cancel_or_main_keyboard(lang=None):
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.row(KeyboardButton(translate(lang, 'back_to_main_btn')), KeyboardButton(translate(lang, 'cancel_btn')))
     return kb 

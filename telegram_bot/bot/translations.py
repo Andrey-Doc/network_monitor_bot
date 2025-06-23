@@ -149,6 +149,8 @@ TRANSLATIONS = {
         'scan_miners_prompt': 'Введите сеть для поиска майнеров (например, 192.168.1.0/24):',
         'fast_scan_prompt': 'Введите сеть для быстрого сканирования (например, 192.168.1.0/24):',
         'upload_file_prompt': 'Пожалуйста, отправьте CSV-файл с IP-адресами для сканирования.',
+        'scan_cancel_confirm': 'Вы уверены, что хотите отменить сканирование? Нажмите Отмена ещё раз для подтверждения или Главное меню для возврата.',
+        'scan_cancelled': 'Сканирование отменено.',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -300,6 +302,8 @@ TRANSLATIONS = {
         'scan_miners_prompt': 'Enter the network to search for miners (e.g., 192.168.1.0/24):',
         'fast_scan_prompt': 'Enter the network for fast scanning (e.g., 192.168.1.0/24):',
         'upload_file_prompt': 'Please send a CSV file with IP addresses for scanning.',
+        'scan_cancel_confirm': 'Вы уверены, что хотите отменить сканирование? Нажмите Отмена ещё раз для подтверждения или Главное меню для возврата.',
+        'scan_cancelled': 'Сканирование отменено.',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -451,6 +455,8 @@ TRANSLATIONS = {
         'scan_miners_prompt': 'Enter the network to search for miners (e.g., 192.168.1.0/24):',
         'fast_scan_prompt': 'Enter the network for fast scanning (e.g., 192.168.1.0/24):',
         'upload_file_prompt': 'Please send a CSV file with IP addresses for scanning.',
+        'scan_cancel_confirm': 'Вы уверены, что хотите отменить сканирование? Нажмите Отмена ещё раз для подтверждения или Главное меню для возврата.',
+        'scan_cancelled': 'Сканирование отменено.',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -602,6 +608,8 @@ TRANSLATIONS = {
         'scan_miners_prompt': 'Enter the network to search for miners (e.g., 192.168.1.0/24):',
         'fast_scan_prompt': 'Enter the network for fast scanning (e.g., 192.168.1.0/24):',
         'upload_file_prompt': 'Please send a CSV file with IP addresses for scanning.',
+        'scan_cancel_confirm': 'Вы уверены, что хотите отменить сканирование? Нажмите Отмена ещё раз для подтверждения или Главное меню для возврата.',
+        'scan_cancelled': 'Сканирование отменено.',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -753,6 +761,8 @@ TRANSLATIONS = {
         'scan_miners_prompt': 'Enter the network to search for miners (e.g., 192.168.1.0/24):',
         'fast_scan_prompt': 'Enter the network for fast scanning (e.g., 192.168.1.0/24):',
         'upload_file_prompt': 'Please send a CSV file with IP addresses for scanning.',
+        'scan_cancel_confirm': 'Вы уверены, что хотите отменить сканирование? Нажмите Отмена ещё раз для подтверждения или Главное меню для возврата.',
+        'scan_cancelled': 'Сканирование отменено.',
     },
 }
 

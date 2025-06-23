@@ -6,7 +6,8 @@ from .keyboards import (
     scan_menu_keyboard, notification_menu_keyboard, router_menu_keyboard,
     interface_menu_keyboard, security_menu_keyboard, backup_menu_keyboard,
     export_menu_keyboard, help_menu_keyboard, cancel_keyboard,
-    scan_main_menu_keyboard, settings_main_menu_keyboard, settings_settings_menu_keyboard
+    scan_main_menu_keyboard, settings_main_menu_keyboard, settings_settings_menu_keyboard,
+    scan_cancel_or_main_keyboard
 )
 from ..utils.router_monitor import check_routers_status
 from ..utils.miner_scan import scan_network_for_miners, scan_miners_from_list
@@ -156,17 +157,17 @@ async def handle_settings_main_menu(message: Message):
 
 @dp.message_handler(is_menu_button('scan_network_main_menu_btn'))
 async def handle_scan_network_main_menu(message: Message, state: FSMContext):
-    await message.answer(translate(get_lang(), 'scan_network_prompt'), reply_markup=cancel_keyboard(lang=get_lang()))
+    await message.answer(translate(get_lang(), 'scan_network_prompt'), reply_markup=scan_cancel_or_main_keyboard(lang=get_lang()))
     await ScanDevicesState.waiting_for_network.set()
 
 @dp.message_handler(is_menu_button('scan_miners_main_menu_btn'))
 async def handle_scan_miners_main_menu(message: Message, state: FSMContext):
-    await message.answer(translate(get_lang(), 'scan_miners_prompt'), reply_markup=cancel_keyboard(lang=get_lang()))
+    await message.answer(translate(get_lang(), 'scan_miners_prompt'), reply_markup=scan_cancel_or_main_keyboard(lang=get_lang()))
     await ScanMinersState.waiting_for_network.set()
 
 @dp.message_handler(is_menu_button('fast_scan_main_menu_btn'))
 async def handle_fast_scan_main_menu(message: Message, state: FSMContext):
-    await message.answer(translate(get_lang(), 'fast_scan_prompt'), reply_markup=cancel_keyboard(lang=get_lang()))
+    await message.answer(translate(get_lang(), 'fast_scan_prompt'), reply_markup=scan_cancel_or_main_keyboard(lang=get_lang()))
     await FastScanState.waiting_for_network.set()
 
 @dp.message_handler(is_menu_button('upload_file_main_menu_btn'))
@@ -213,8 +214,8 @@ async def handle_security_settings(message: Message):
 async def handle_help_main_menu(message: Message):
     await message.answer(translate(get_lang(), 'help_menu_msg'), reply_markup=help_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(is_menu_button('back_to_main_btn'))
-async def handle_back_to_main(message: Message):
+@dp.message_handler(is_menu_button('back_to_main_btn'), state=[ScanDevicesState.waiting_for_network, ScanMinersState.waiting_for_network, FastScanState.waiting_for_network])
+async def scan_back_to_main(message: Message, state: FSMContext):
     await message.answer(translate(get_lang(), 'main_menu'), reply_markup=main_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(is_menu_button('back_to_settings_btn'))
@@ -1262,6 +1263,21 @@ async def handle_settings_settings_menu(message: Message):
 @dp.message_handler(is_menu_button('back_to_settings_main_btn'))
 async def handle_back_to_settings_main(message: Message):
     await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_main_menu_keyboard(lang=get_lang()))
+
+@dp.message_handler(is_menu_button('cancel_btn'), state=[ScanDevicesState.waiting_for_network, ScanMinersState.waiting_for_network, FastScanState.waiting_for_network])
+async def scan_cancel_confirm(message: Message, state: FSMContext):
+    await message.answer(translate(get_lang(), 'scan_cancel_confirm'), reply_markup=cancel_keyboard(lang=get_lang()))
+    await state.set_state('scan_cancel_confirm')
+
+@dp.message_handler(is_menu_button('cancel_btn'), state='scan_cancel_confirm')
+async def scan_cancel_final(message: Message, state: FSMContext):
+    await message.answer(translate(get_lang(), 'scan_cancelled'), reply_markup=main_menu_keyboard(lang=get_lang()))
+    await state.finish()
+
+@dp.message_handler(is_menu_button('back_to_main_btn'), state='scan_cancel_confirm')
+async def scan_cancel_back_to_main(message: Message, state: FSMContext):
+    await message.answer(translate(get_lang(), 'main_menu'), reply_markup=main_menu_keyboard(lang=get_lang()))
+    # Не завершаем FSM
 
 if __name__ == '__main__':
     executor.start_polling(
