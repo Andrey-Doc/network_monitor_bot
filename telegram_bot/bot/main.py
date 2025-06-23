@@ -148,7 +148,8 @@ async def handle_router_status_main_menu(message: Message):
 
 @dp.message_handler(is_menu_button('scan_main_menu_btn'))
 async def handle_scan_main_menu(message: Message):
-    await message.answer(translate(get_lang(), 'scan_menu_msg'), reply_markup=scan_main_menu_keyboard(lang=get_lang()))
+    await message.answer("MAIN MENU HANDLER")
+    await message.answer(translate(get_lang(), 'scan_main_menu_msg'), reply_markup=scan_main_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(is_menu_button('settings_main_menu_btn'), state='*')
 async def handle_settings_main_menu_btn(message: Message, state: FSMContext):
@@ -187,6 +188,7 @@ async def handle_monitoring_settings(message: Message):
 
 @dp.message_handler(is_menu_button('scan_settings_btn'))
 async def handle_scan_settings(message: Message):
+    await message.answer("SETTINGS HANDLER")
     await message.answer(translate(get_lang(), 'scan_menu_msg'), reply_markup=scan_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(is_menu_button('notification_settings_btn'))
