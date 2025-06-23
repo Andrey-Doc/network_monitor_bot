@@ -176,38 +176,46 @@ class SettingsManager:
         """Включает/выключает уведомления"""
         return self.set_setting('notifications.enabled', enabled)
         
-    def get_settings_summary(self) -> str:
-        """Возвращает сводку настроек"""
+    def get_settings_summary(self, background_monitor=None, notification_manager=None, scan_manager=None, online_routers=None, offline_routers=None) -> str:
+        """Возвращает сводку настроек. Статус мониторинга и уведомлений определяется по фактическому состоянию, если переданы объекты. Количество активных сканирований и результатов — из scan_manager. Количество онлайн/оффлайн роутеров — из параметров."""
         monitoring = self.get_monitoring_settings()
         notifications = self.get_notification_settings()
         scanning = self.get_scanning_settings()
         routers = self.get_router_settings()
-        
+
         summary = "*⚙️ Текущие настройки:*\n\n"
-        
+
         # Мониторинг
+        monitor_enabled = background_monitor.is_running if background_monitor is not None else monitoring.get('enabled')
         summary += "*🌐 Мониторинг:*\n"
-        summary += f"• Включён: {'✅' if monitoring.get('enabled') else '❌'}\n"
+        summary += f"• Включён: {'✅' if monitor_enabled else '❌'}\n"
         summary += f"• Интервал: `{monitoring.get('interval', 300)}` сек\n"
         summary += f"• Автозапуск: {'✅' if monitoring.get('auto_start') else '❌'}\n"
         summary += f"• Уведомления: {'✅' if monitoring.get('notify_on_change') else '❌'}\n\n"
-        
+
         # Уведомления
+        notif_enabled = notification_manager.is_running if notification_manager is not None else notifications.get('enabled')
         summary += "*🔔 Уведомления:*\n"
-        summary += f"• Включены: {'✅' if notifications.get('enabled') else '❌'}\n"
+        summary += f"• Включены: {'✅' if notif_enabled else '❌'}\n"
         summary += f"• Тихие часы: {'✅' if notifications.get('quiet_hours', {}).get('enabled') else '❌'}\n\n"
-        
+
         # Сканирование
+        active_scans = scan_manager.get_active_count() if scan_manager else scanning.get('active_scans', 0)
+        results_count = scan_manager.get_results_count() if scan_manager else scanning.get('results_count', 0)
         summary += "*🔍 Сканирование:*\n"
+        summary += f"• Активных сканирований: `{active_scans}`\n"
+        summary += f"• Активных результатов: `{results_count}`\n"
         summary += f"• Таймаут: `{scanning.get('default_timeout', 5)}` сек\n"
         summary += f"• Макс. сканирований: `{scanning.get('max_concurrent_scans', 3)}`\n"
         summary += f"• TTL результатов: `{scanning.get('results_ttl', 3600)}` сек\n\n"
-        
+
         # Роутеры
         summary += "*🌐 Роутеры:*\n"
         summary += f"• Количество: `{len(routers.get('ips', []))}`\n"
         summary += f"• Порты: `{', '.join(map(str, routers.get('ports', [])))}`\n"
-        
+        if online_routers is not None and offline_routers is not None:
+            summary += f"• Онлайн: `{online_routers}` | Оффлайн: `{offline_routers}`\n"
+
         return summary
         
     def reset_to_defaults(self) -> bool:

@@ -25,6 +25,7 @@ import time
 import asyncio
 from ..utils.help_system import HelpSystem
 from .translations import translate
+from ..utils.scan_manager import ScanManager
 
 logging.basicConfig(level=logging.INFO)
 
@@ -42,10 +43,8 @@ bot = Bot(token=TELEGRAM_BOT_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
-# Глобальное хранилище результатов сканирования с TTL
-scan_results_storage = {}
-# Счётчик активных сканирований
-active_scans_count = 0
+# Инициализация ScanManager
+scan_manager = ScanManager(ttl=settings_manager.get_setting('scanning.results_ttl', 3600))
 
 # Инициализация новых модулей
 background_monitor = BackgroundMonitor(bot, CHAT_ID)
@@ -63,17 +62,8 @@ def get_lang():
 
 def cleanup_old_results():
     """Очищает старые результаты сканирования"""
-    current_time = time.time()
-    expired_keys = []
-    for msg_id, data in scan_results_storage.items():
-        if current_time - data.get('timestamp', 0) > SCAN_RESULTS_TTL:
-            expired_keys.append(msg_id)
-    
-    for key in expired_keys:
-        del scan_results_storage[key]
-    
-    if expired_keys:
-        logging.info(f"[CLEANUP] Удалено {len(expired_keys)} старых результатов сканирования")
+    scan_manager.cleanup_results()
+    logging.info(f"[CLEANUP] Удалено устаревших результатов сканирования")
 
 class ScanDevicesState(StatesGroup):
     waiting_for_network = State()
@@ -193,17 +183,17 @@ async def handle_help_command(message: Message):
 
 @dp.message_handler(commands=['status'])
 async def handle_status(message: Message):
-    active_results = len(scan_results_storage)
+    active_results = scan_manager.get_results_count()
+    active_scans = scan_manager.get_active_count()
     total_routers = len(ROUTER_IPS)
     monitor_status = "🟢 Активен" if background_monitor.is_running else "🔴 Остановлен"
-    
     status_text = f"""
 🤖 *Статус бота:*
 📊 Активных результатов сканирования: `{active_results}`
-🔄 Сканирований в процессе: `{active_scans_count}`
+🔄 Сканирований в процессе: `{active_scans}`
 🌐 Роутеров в мониторинге: `{total_routers}`
 📡 Мониторинг: {monitor_status}
-⏰ TTL результатов: `{SCAN_RESULTS_TTL}` сек
+⏰ TTL результатов: `{scan_manager._ttl}` сек
 🟢 Бот работает: ✅
     """
     await message.answer(status_text, parse_mode='Markdown')
@@ -326,15 +316,14 @@ async def handle_scan_network(message: Message):
 @dp.message_handler(state=ScanDevicesState.waiting_for_network)
 async def process_devices_network_input(message: Message, state: FSMContext):
     cleanup_old_results()
-    global active_scans_count
-    active_scans_count += 1
+    scan_manager.start_scan()
     network = message.text.strip()
     start_time = time.time()
     try:
         net = ipaddress.IPv4Network(network, strict=False)
     except Exception as e:
         await message.answer(translate(get_lang(), 'network_format_error'), reply_markup=main_menu_keyboard())
-        active_scans_count -= 1
+        scan_manager.finish_scan()
         await state.finish()
         return
     progress_msg = await message.answer(translate(get_lang(), 'scanning_network', network=network))
@@ -358,7 +347,7 @@ async def process_devices_network_input(message: Message, state: FSMContext):
         await notification_manager.scan_completed('сети', len(devices), duration)
         if not devices:
             await message.answer(translate(get_lang(), 'no_devices_found'), reply_markup=main_menu_keyboard())
-            active_scans_count -= 1
+            scan_manager.finish_scan()
             await state.finish()
             return
         text = f"Найдено устройств: {len(devices)}\n"
@@ -369,11 +358,11 @@ async def process_devices_network_input(message: Message, state: FSMContext):
                 text += f"{d['ip']}: (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
         text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
         result_msg = await message.answer(text, reply_markup=main_menu_keyboard())
-        scan_results_storage[result_msg.message_id] = {
+        scan_manager.add_result(result_msg.message_id, {
             'devices': devices,
             'type': 'devices',
             'timestamp': time.time()
-        }
+        })
         await state.update_data(devices=devices)
         await ScanDevicesState.waiting_for_file_request.set()
     except Exception as e:
@@ -382,7 +371,7 @@ async def process_devices_network_input(message: Message, state: FSMContext):
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
-        active_scans_count -= 1
+        scan_manager.finish_scan()
         await state.finish()
 
 @dp.message_handler(lambda m: m.text == 'Загрузить файл для сканирования')
@@ -435,14 +424,13 @@ async def handle_scan_miners(message: Message):
 @dp.message_handler(state=ScanMinersState.waiting_for_network)
 async def process_miners_network_input(message: Message, state: FSMContext):
     cleanup_old_results()
-    global active_scans_count
-    active_scans_count += 1
+    scan_manager.start_scan()
     network = message.text.strip()
     try:
         net = ipaddress.IPv4Network(network, strict=False)
     except Exception:
         await message.answer(translate(get_lang(), 'network_format_error'), reply_markup=main_menu_keyboard())
-        active_scans_count -= 1
+        scan_manager.finish_scan()
         await state.finish()
         return
     progress_msg = await message.answer(translate(get_lang(), 'scanning_miners', network=network))
@@ -463,7 +451,7 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         )
         if not miners:
             await message.answer(translate(get_lang(), 'no_miners_found'), reply_markup=main_menu_keyboard())
-            active_scans_count -= 1
+            scan_manager.finish_scan()
             await state.finish()
             return
         text = "Найдено майнеров: {}\n".format(len(miners))
@@ -471,11 +459,11 @@ async def process_miners_network_input(message: Message, state: FSMContext):
             text += f"{m['ip']}: miner (hashrate: {m.get('hashrate')}, uptime: {m.get('uptime')})\n"
         text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
         result_msg = await message.answer(text, reply_markup=main_menu_keyboard())
-        scan_results_storage[result_msg.message_id] = {
+        scan_manager.add_result(result_msg.message_id, {
             'miners': miners,
             'type': 'miners',
             'timestamp': time.time()
-        }
+        })
         await state.update_data(miners=miners)
         await ScanMinersState.waiting_for_file_request.set()
     except Exception as e:
@@ -484,7 +472,7 @@ async def process_miners_network_input(message: Message, state: FSMContext):
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
-        active_scans_count -= 1
+        scan_manager.finish_scan()
         await state.finish()
 
 @dp.message_handler(lambda m: m.text == 'Быстрое сканирование сети')
@@ -495,14 +483,13 @@ async def handle_fast_scan(message: Message):
 @dp.message_handler(state=FastScanState.waiting_for_network)
 async def process_fast_scan_network_input(message: Message, state: FSMContext):
     cleanup_old_results()
-    global active_scans_count
-    active_scans_count += 1
+    scan_manager.start_scan()
     network = message.text.strip()
     try:
         net = ipaddress.IPv4Network(network, strict=False)
     except Exception:
         await message.answer(translate(get_lang(), 'network_format_error'), reply_markup=main_menu_keyboard())
-        active_scans_count -= 1
+        scan_manager.finish_scan()
         await state.finish()
         return
     progress_msg = await message.answer(translate(get_lang(), 'fast_scanning', network=network))
@@ -523,7 +510,7 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
         )
         if not devices:
             await message.answer(translate(get_lang(), 'no_devices_found'), reply_markup=main_menu_keyboard())
-            active_scans_count -= 1
+            scan_manager.finish_scan()
             await state.finish()
             return
         text = f"Найдено устройств: {len(devices)}\n"
@@ -534,11 +521,11 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
                 text += f"{d['ip']}: {d.get('type', 'unknown')} (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
         text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
         result_msg = await message.answer(text, reply_markup=main_menu_keyboard())
-        scan_results_storage[result_msg.message_id] = {
+        scan_manager.add_result(result_msg.message_id, {
             'devices': devices,
             'type': 'fast_scan',
             'timestamp': time.time()
-        }
+        })
         await state.update_data(devices=devices)
         await FastScanState.waiting_for_file_request.set()
     except Exception as e:
@@ -547,22 +534,23 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
-        active_scans_count -= 1
+        scan_manager.finish_scan()
         await state.finish()
 
 @dp.message_handler(lambda m: m.text == 'Статистика')
 async def handle_statistics(message: Message):
     # Информация из /status
-    active_results = len(scan_results_storage)
+    active_results = scan_manager.get_results_count()
+    active_scans = scan_manager.get_active_count()
     total_routers = len(ROUTER_IPS)
     monitor_status = "🟢 Активен" if background_monitor.is_running else "🔴 Остановлен"
     status_text = f"""
 🤖 *Статус бота:*
 📊 Активных результатов сканирования: `{active_results}`
-🔄 Сканирований в процессе: `{active_scans_count}`
+🔄 Сканирований в процессе: `{active_scans}`
 🌐 Роутеров в мониторинге: `{total_routers}`
 📡 Мониторинг: {monitor_status}
-⏰ TTL результатов: `{SCAN_RESULTS_TTL}` сек
+⏰ TTL результатов: `{scan_manager._ttl}` сек
 🟢 Бот работает: ✅
 """
     report = statistics_manager.generate_report()
@@ -1147,7 +1135,17 @@ async def handle_export_logs(message: Message):
 
 @dp.message_handler(lambda m: m.text == 'Сводка настроек')
 async def handle_settings_summary(message: Message):
-    summary = settings_manager.get_settings_summary()
+    # Получаем статус роутеров
+    router_status = await background_monitor.get_current_status()
+    online_routers = sum(1 for s in router_status.values() if s == 'online')
+    offline_routers = sum(1 for s in router_status.values() if s != 'online')
+    summary = settings_manager.get_settings_summary(
+        background_monitor=background_monitor,
+        notification_manager=notification_manager,
+        scan_manager=scan_manager,
+        online_routers=online_routers,
+        offline_routers=offline_routers
+    )
     await message.answer(summary, parse_mode='Markdown', reply_markup=settings_menu_keyboard())
 
 @dp.message_handler(lambda m: m.text == 'Сбросить настройки')
