@@ -78,7 +78,7 @@ def export_menu_keyboard(lang=None):
 
 def help_menu_keyboard(lang=None):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row(KeyboardButton(translate(lang, 'back_to_settings_btn')), KeyboardButton(translate(lang, 'back_to_main_btn')))
+    kb.row(KeyboardButton(translate(lang, 'back_to_main_btn')))
     return kb
 
 def cancel_keyboard(lang=None):
