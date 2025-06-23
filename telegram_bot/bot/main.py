@@ -138,12 +138,12 @@ async def send_welcome(message: Message):
         reply_markup=main_menu_keyboard(lang=get_lang())
     )
 
-@dp.message_handler(is_menu_button('status_btn'))
-async def handle_status_btn(message: Message):
+@dp.message_handler(is_menu_button('status_main_menu_btn'))
+async def handle_status_main_menu(message: Message):
     await handle_status(message)
 
-@dp.message_handler(is_menu_button('router_status_btn'))
-async def handle_router_status_btn(message: Message):
+@dp.message_handler(is_menu_button('router_status_main_menu_btn'))
+async def handle_router_status_main_menu(message: Message):
     await handle_router_status_menu(message)
 
 @dp.message_handler(is_menu_button('scan_main_menu_btn'))
@@ -154,52 +154,60 @@ async def handle_scan_main_menu(message: Message):
 async def handle_settings_main_menu(message: Message):
     await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_main_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(is_menu_button('scan_network_btn'))
-async def handle_scan_network_btn(message: Message):
+@dp.message_handler(is_menu_button('scan_network_main_menu_btn'))
+async def handle_scan_network_main_menu(message: Message):
     await handle_scan_network(message)
 
-@dp.message_handler(is_menu_button('scan_miners_btn'))
-async def handle_scan_miners_btn(message: Message):
+@dp.message_handler(is_menu_button('scan_miners_main_menu_btn'))
+async def handle_scan_miners_main_menu(message: Message):
     await handle_scan_miners(message)
 
-@dp.message_handler(is_menu_button('fast_scan_btn'))
-async def handle_fast_scan_btn(message: Message):
+@dp.message_handler(is_menu_button('fast_scan_main_menu_btn'))
+async def handle_fast_scan_main_menu(message: Message):
     await handle_fast_scan(message)
 
-@dp.message_handler(is_menu_button('upload_file_btn'))
-async def handle_upload_file_btn(message: Message):
+@dp.message_handler(is_menu_button('upload_file_main_menu_btn'))
+async def handle_upload_file_main_menu(message: Message):
     await handle_upload_file(message)
 
-@dp.message_handler(is_menu_button('settings_menu_btn'))
-async def handle_settings_menu_btn(message: Message):
-    await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_menu_keyboard(lang=get_lang()))
+@dp.message_handler(is_menu_button('settings_settings_main_menu_btn'))
+async def handle_settings_settings_main_menu(message: Message):
+    await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_settings_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(is_menu_button('backup_menu_btn'))
-async def handle_backup_menu_btn(message: Message):
+@dp.message_handler(is_menu_button('backup_main_menu_btn'))
+async def handle_backup_main_menu(message: Message):
     await message.answer(translate(get_lang(), 'backup_menu_msg'), reply_markup=backup_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(is_menu_button('export_menu_btn'))
-async def handle_export_menu_btn(message: Message):
+@dp.message_handler(is_menu_button('export_main_menu_btn'))
+async def handle_export_main_menu(message: Message):
     await message.answer(translate(get_lang(), 'export_menu_msg'), reply_markup=export_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(is_menu_button('notification_menu_btn'))
-async def handle_notification_menu(message: Message):
+@dp.message_handler(is_menu_button('monitoring_settings_btn'))
+async def handle_monitoring_settings(message: Message):
+    await message.answer(translate(get_lang(), 'monitoring_menu_msg'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
+
+@dp.message_handler(is_menu_button('scan_settings_btn'))
+async def handle_scan_settings(message: Message):
+    await message.answer(translate(get_lang(), 'scan_menu_msg'), reply_markup=scan_menu_keyboard(lang=get_lang()))
+
+@dp.message_handler(is_menu_button('notification_settings_btn'))
+async def handle_notification_settings(message: Message):
     await message.answer(translate(get_lang(), 'notification_menu_msg'), reply_markup=notification_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(is_menu_button('router_menu_btn'))
-async def handle_router_menu(message: Message):
+@dp.message_handler(is_menu_button('router_settings_btn'))
+async def handle_router_settings(message: Message):
     await message.answer(translate(get_lang(), 'router_menu_msg'), reply_markup=router_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(is_menu_button('interface_menu_btn'))
-async def handle_interface_menu(message: Message):
+@dp.message_handler(is_menu_button('interface_settings_btn'))
+async def handle_interface_settings(message: Message):
     await message.answer(translate(get_lang(), 'interface_menu_msg'), reply_markup=interface_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(is_menu_button('security_menu_btn'))
-async def handle_security_menu(message: Message):
+@dp.message_handler(is_menu_button('security_settings_btn'))
+async def handle_security_settings(message: Message):
     await message.answer(translate(get_lang(), 'security_menu_msg'), reply_markup=security_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(is_menu_button('help_menu_btn'))
-async def handle_help_menu(message: Message):
+@dp.message_handler(is_menu_button('help_main_menu_btn'))
+async def handle_help_main_menu(message: Message):
     await message.answer(translate(get_lang(), 'help_menu_msg'), reply_markup=help_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(is_menu_button('back_to_main_btn'))

@@ -3,11 +3,11 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 def main_menu_keyboard(lang=None):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row(KeyboardButton(translate(lang, 'status_btn')))
-    kb.row(KeyboardButton(translate(lang, 'router_status_btn')))
+    kb.row(KeyboardButton(translate(lang, 'status_main_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'router_status_main_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'scan_main_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'settings_main_menu_btn')))
-    kb.row(KeyboardButton(translate(lang, 'help_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'help_main_menu_btn')))
     return kb
 
 def settings_menu_keyboard(lang=None):
@@ -89,27 +89,27 @@ def cancel_keyboard(lang=None):
 # Главное меню сканирования
 def scan_main_menu_keyboard(lang=None):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row(KeyboardButton(translate(lang, 'scan_network_btn')))
-    kb.row(KeyboardButton(translate(lang, 'scan_miners_btn')))
-    kb.row(KeyboardButton(translate(lang, 'fast_scan_btn')))
-    kb.row(KeyboardButton(translate(lang, 'upload_file_btn')))
+    kb.row(KeyboardButton(translate(lang, 'scan_network_main_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'scan_miners_main_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'fast_scan_main_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'upload_file_main_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'back_to_main_btn')))
     return kb
 
 # Главное меню настроек
 def settings_main_menu_keyboard(lang=None):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row(KeyboardButton(translate(lang, 'settings_settings_menu_btn')))
-    kb.row(KeyboardButton(translate(lang, 'backup_menu_btn')))
-    kb.row(KeyboardButton(translate(lang, 'export_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'settings_settings_main_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'backup_main_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'export_main_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'back_to_main_btn')))
     return kb
 
 # Новое подменю "настройки-настройки"
 def settings_settings_menu_keyboard(lang=None):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row(KeyboardButton(translate(lang, 'monitoring_menu_btn')), KeyboardButton(translate(lang, 'scan_menu_btn')))
-    kb.row(KeyboardButton(translate(lang, 'notification_menu_btn')), KeyboardButton(translate(lang, 'router_menu_btn')))
-    kb.row(KeyboardButton(translate(lang, 'interface_menu_btn')), KeyboardButton(translate(lang, 'security_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'monitoring_settings_btn')), KeyboardButton(translate(lang, 'scan_settings_btn')))
+    kb.row(KeyboardButton(translate(lang, 'notification_settings_btn')), KeyboardButton(translate(lang, 'router_settings_btn')))
+    kb.row(KeyboardButton(translate(lang, 'interface_settings_btn')), KeyboardButton(translate(lang, 'security_settings_btn')))
     kb.row(KeyboardButton(translate(lang, 'back_to_settings_main_btn')))
     return kb 
