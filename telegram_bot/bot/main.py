@@ -15,7 +15,7 @@ from ..utils.statistics import StatisticsManager
 from ..utils.settings_manager import SettingsManager
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher.filters.state import State, StatesGroup, all_states
+from aiogram.dispatcher.filters.state import State, StatesGroup
 import pandas as pd
 import os
 from ..utils.network_scan import scan_network_devices
