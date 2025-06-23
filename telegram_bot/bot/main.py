@@ -84,6 +84,27 @@ class FastScanState(StatesGroup):
     waiting_for_network = State()
     waiting_for_file_request = State()
 
+class MonitoringState(StatesGroup):
+    waiting_for_interval = State()
+
+class NotificationState(StatesGroup):
+    waiting_for_level = State()
+    waiting_for_quiet_start = State()
+    waiting_for_quiet_end = State()
+
+class ScanSettingsState(StatesGroup):
+    waiting_for_timeout = State()
+    waiting_for_max_concurrent = State()
+    waiting_for_default_ports = State()
+    waiting_for_miner_ports = State()
+    waiting_for_router_ports = State()
+    waiting_for_ttl = State()
+
+class RouterSettingsState(StatesGroup):
+    waiting_for_ips = State()
+    waiting_for_ports = State()
+    waiting_for_interval = State()
+
 @dp.message_handler(commands=['start', 'menu'])
 async def send_welcome(message: Message):
     statistics_manager.record_command('start')
@@ -506,6 +527,341 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
 async def handle_statistics(message: Message):
     report = statistics_manager.generate_report()
     await message.answer(report, parse_mode='Markdown', reply_markup=main_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Интервал мониторинга')
+async def handle_monitoring_interval(message: Message):
+    current = settings_manager.get_setting('monitoring.interval', 300)
+    await message.answer(f'Текущий интервал мониторинга: {current} сек.\nВведите новый интервал в секундах:', reply_markup=types.ReplyKeyboardRemove())
+    await MonitoringState.waiting_for_interval.set()
+
+@dp.message_handler(state=MonitoringState.waiting_for_interval)
+async def process_monitoring_interval(message: Message, state: FSMContext):
+    try:
+        interval = int(message.text.strip())
+        if interval < 10 or interval > 86400:
+            await message.answer('❌ Интервал должен быть от 10 до 86400 секунд.')
+            return
+        if settings_manager.set_setting('monitoring.interval', interval):
+            await message.answer(f'✅ Интервал мониторинга установлен: {interval} сек', reply_markup=monitoring_menu_keyboard())
+        else:
+            await message.answer('❌ Ошибка при сохранении интервала.', reply_markup=monitoring_menu_keyboard())
+    except Exception:
+        await message.answer('❌ Введите целое число (секунды).', reply_markup=monitoring_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Автозапуск мониторинга')
+async def handle_monitoring_autostart(message: Message):
+    current = settings_manager.get_setting('monitoring.auto_start', False)
+    new_value = not current
+    if settings_manager.set_setting('monitoring.auto_start', new_value):
+        status = 'включён' if new_value else 'выключен'
+        await message.answer(f'Автозапуск мониторинга теперь {status}.', reply_markup=monitoring_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при изменении автозапуска.', reply_markup=monitoring_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Уведомления об изменениях')
+async def handle_monitoring_notify_change(message: Message):
+    current = settings_manager.get_setting('monitoring.notify_on_change', False)
+    new_value = not current
+    if settings_manager.set_setting('monitoring.notify_on_change', new_value):
+        status = 'включены' if new_value else 'выключены'
+        await message.answer(f'Уведомления об изменениях теперь {status}.', reply_markup=monitoring_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при изменении уведомлений.', reply_markup=monitoring_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Уведомления при запуске')
+async def handle_monitoring_notify_start(message: Message):
+    current = settings_manager.get_setting('monitoring.notify_on_start', False)
+    new_value = not current
+    if settings_manager.set_setting('monitoring.notify_on_start', new_value):
+        status = 'включены' if new_value else 'выключены'
+        await message.answer(f'Уведомления при запуске теперь {status}.', reply_markup=monitoring_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при изменении уведомлений.', reply_markup=monitoring_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Включить/выключить уведомления')
+async def handle_toggle_notifications(message: Message):
+    current = settings_manager.get_setting('notifications.enabled', True)
+    new_value = not current
+    if settings_manager.set_setting('notifications.enabled', new_value):
+        status = 'включены' if new_value else 'выключены'
+        await message.answer(f'Уведомления теперь {status}.', reply_markup=notification_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при изменении уведомлений.', reply_markup=notification_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Тихие часы')
+async def handle_toggle_quiet_hours(message: Message):
+    current = settings_manager.get_setting('notifications.quiet_hours.enabled', False)
+    new_value = not current
+    if settings_manager.set_setting('notifications.quiet_hours.enabled', new_value):
+        status = 'включены' if new_value else 'выключены'
+        await message.answer(f'Тихие часы теперь {status}.', reply_markup=notification_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при изменении тихих часов.', reply_markup=notification_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Уровни уведомлений')
+async def handle_notification_level(message: Message):
+    current = settings_manager.get_setting('notifications.level', 'INFO')
+    await message.answer(f'Текущий уровень уведомлений: {current}\nВведите новый уровень (INFO, WARNING, ERROR):', reply_markup=types.ReplyKeyboardRemove())
+    await NotificationState.waiting_for_level.set()
+
+@dp.message_handler(state=NotificationState.waiting_for_level)
+async def process_notification_level(message: Message, state: FSMContext):
+    level = message.text.strip().upper()
+    if level not in ['INFO', 'WARNING', 'ERROR']:
+        await message.answer('❌ Допустимые значения: INFO, WARNING, ERROR.')
+        return
+    if settings_manager.set_setting('notifications.level', level):
+        await message.answer(f'✅ Уровень уведомлений установлен: {level}', reply_markup=notification_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при сохранении уровня.', reply_markup=notification_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Время тихих часов')
+async def handle_quiet_hours_time(message: Message, state: FSMContext):
+    current_start = settings_manager.get_setting('notifications.quiet_hours.start', '22:00')
+    current_end = settings_manager.get_setting('notifications.quiet_hours.end', '08:00')
+    await message.answer(f'Текущее время тихих часов: {current_start} — {current_end}\nВведите время начала (чч:мм):', reply_markup=types.ReplyKeyboardRemove())
+    await NotificationState.waiting_for_quiet_start.set()
+
+@dp.message_handler(state=NotificationState.waiting_for_quiet_start)
+async def process_quiet_hours_start(message: Message, state: FSMContext):
+    start = message.text.strip()
+    if not validate_time(start):
+        await message.answer('❌ Введите время в формате чч:мм (например, 22:00).')
+        return
+    await state.update_data(quiet_start=start)
+    await message.answer('Введите время окончания (чч:мм):')
+    await NotificationState.waiting_for_quiet_end.set()
+
+@dp.message_handler(state=NotificationState.waiting_for_quiet_end)
+async def process_quiet_hours_end(message: Message, state: FSMContext):
+    end = message.text.strip()
+    if not validate_time(end):
+        await message.answer('❌ Введите время в формате чч:мм (например, 08:00).')
+        return
+    data = await state.get_data()
+    start = data.get('quiet_start', '22:00')
+    ok1 = settings_manager.set_setting('notifications.quiet_hours.start', start)
+    ok2 = settings_manager.set_setting('notifications.quiet_hours.end', end)
+    if ok1 and ok2:
+        await message.answer(f'✅ Время тихих часов установлено: {start} — {end}', reply_markup=notification_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при сохранении времени.', reply_markup=notification_menu_keyboard())
+    await state.finish()
+
+def validate_time(s):
+    import re
+    return bool(re.match(r'^[0-2][0-9]:[0-5][0-9]$', s))
+
+@dp.message_handler(lambda m: m.text == 'Таймаут сканирования')
+async def handle_scan_timeout(message: Message):
+    current = settings_manager.get_setting('scanning.default_timeout', 5)
+    await message.answer(f'Текущий таймаут: {current} сек.\nВведите новый таймаут (1-60 сек):', reply_markup=types.ReplyKeyboardRemove())
+    await ScanSettingsState.waiting_for_timeout.set()
+
+@dp.message_handler(state=ScanSettingsState.waiting_for_timeout)
+async def process_scan_timeout(message: Message, state: FSMContext):
+    try:
+        timeout = int(message.text.strip())
+        if timeout < 1 or timeout > 60:
+            await message.answer('❌ Таймаут должен быть от 1 до 60 секунд.')
+            return
+        if settings_manager.set_setting('scanning.default_timeout', timeout):
+            await message.answer(f'✅ Таймаут сканирования установлен: {timeout} сек', reply_markup=scan_menu_keyboard())
+        else:
+            await message.answer('❌ Ошибка при сохранении таймаута.', reply_markup=scan_menu_keyboard())
+    except Exception:
+        await message.answer('❌ Введите целое число (секунды).', reply_markup=scan_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Макс. параллельных сканирований')
+async def handle_scan_max_concurrent(message: Message):
+    current = settings_manager.get_setting('scanning.max_concurrent_scans', 3)
+    await message.answer(f'Текущее максимальное число параллельных сканирований: {current}\nВведите новое значение (1-20):', reply_markup=types.ReplyKeyboardRemove())
+    await ScanSettingsState.waiting_for_max_concurrent.set()
+
+@dp.message_handler(state=ScanSettingsState.waiting_for_max_concurrent)
+async def process_scan_max_concurrent(message: Message, state: FSMContext):
+    try:
+        value = int(message.text.strip())
+        if value < 1 or value > 20:
+            await message.answer('❌ Значение должно быть от 1 до 20.')
+            return
+        if settings_manager.set_setting('scanning.max_concurrent_scans', value):
+            await message.answer(f'✅ Максимальное число параллельных сканирований: {value}', reply_markup=scan_menu_keyboard())
+        else:
+            await message.answer('❌ Ошибка при сохранении.', reply_markup=scan_menu_keyboard())
+    except Exception:
+        await message.answer('❌ Введите целое число.', reply_markup=scan_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Порты для сканирования')
+async def handle_scan_ports(message: Message):
+    current = settings_manager.get_setting('scanning.default_ports', [80, 22, 443])
+    await message.answer(f'Текущие порты: {", ".join(map(str, current))}\nВведите новые порты через запятую:', reply_markup=types.ReplyKeyboardRemove())
+    await ScanSettingsState.waiting_for_default_ports.set()
+
+@dp.message_handler(state=ScanSettingsState.waiting_for_default_ports)
+async def process_scan_ports(message: Message, state: FSMContext):
+    ports = parse_ports(message.text)
+    if not ports:
+        await message.answer('❌ Введите список портов через запятую, например: 80,22,443', reply_markup=scan_menu_keyboard())
+        await state.finish()
+        return
+    if settings_manager.set_setting('scanning.default_ports', ports):
+        await message.answer(f'✅ Порты для сканирования установлены: {", ".join(map(str, ports))}', reply_markup=scan_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при сохранении портов.', reply_markup=scan_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Порты майнеров')
+async def handle_miner_ports(message: Message):
+    current = settings_manager.get_setting('scanning.miner_ports', [4028, 3333])
+    await message.answer(f'Текущие порты майнеров: {", ".join(map(str, current))}\nВведите новые порты через запятую:', reply_markup=types.ReplyKeyboardRemove())
+    await ScanSettingsState.waiting_for_miner_ports.set()
+
+@dp.message_handler(state=ScanSettingsState.waiting_for_miner_ports)
+async def process_miner_ports(message: Message, state: FSMContext):
+    ports = parse_ports(message.text)
+    if not ports:
+        await message.answer('❌ Введите список портов через запятую, например: 4028,3333', reply_markup=scan_menu_keyboard())
+        await state.finish()
+        return
+    if settings_manager.set_setting('scanning.miner_ports', ports):
+        await message.answer(f'✅ Порты майнеров установлены: {", ".join(map(str, ports))}', reply_markup=scan_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при сохранении портов.', reply_markup=scan_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Порты роутеров')
+async def handle_router_ports(message: Message):
+    current = settings_manager.get_setting('scanning.router_ports', [8080, 80, 22])
+    await message.answer(f'Текущие порты роутеров: {", ".join(map(str, current))}\nВведите новые порты через запятую:', reply_markup=types.ReplyKeyboardRemove())
+    await ScanSettingsState.waiting_for_router_ports.set()
+
+@dp.message_handler(state=ScanSettingsState.waiting_for_router_ports)
+async def process_router_ports(message: Message, state: FSMContext):
+    ports = parse_ports(message.text)
+    if not ports:
+        await message.answer('❌ Введите список портов через запятую, например: 8080,80,22', reply_markup=scan_menu_keyboard())
+        await state.finish()
+        return
+    if settings_manager.set_setting('scanning.router_ports', ports):
+        await message.answer(f'✅ Порты роутеров установлены: {", ".join(map(str, ports))}', reply_markup=scan_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при сохранении портов.', reply_markup=scan_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'TTL результатов')
+async def handle_scan_ttl(message: Message):
+    current = settings_manager.get_setting('scanning.results_ttl', 3600)
+    await message.answer(f'Текущий TTL результатов: {current} сек.\nВведите новый TTL (60-86400 сек):', reply_markup=types.ReplyKeyboardRemove())
+    await ScanSettingsState.waiting_for_ttl.set()
+
+@dp.message_handler(state=ScanSettingsState.waiting_for_ttl)
+async def process_scan_ttl(message: Message, state: FSMContext):
+    try:
+        ttl = int(message.text.strip())
+        if ttl < 60 or ttl > 86400:
+            await message.answer('❌ TTL должен быть от 60 до 86400 секунд.')
+            return
+        if settings_manager.set_setting('scanning.results_ttl', ttl):
+            await message.answer(f'✅ TTL результатов установлен: {ttl} сек', reply_markup=scan_menu_keyboard())
+        else:
+            await message.answer('❌ Ошибка при сохранении TTL.', reply_markup=scan_menu_keyboard())
+    except Exception:
+        await message.answer('❌ Введите целое число (секунды).', reply_markup=scan_menu_keyboard())
+    await state.finish()
+
+def parse_ports(text):
+    try:
+        return [int(p.strip()) for p in text.split(',') if p.strip().isdigit()]
+    except Exception:
+        return []
+
+@dp.message_handler(lambda m: m.text == 'IP адреса роутеров')
+async def handle_router_ips(message: Message):
+    current = settings_manager.get_setting('routers.ips', [])
+    current_str = ', '.join(current) if current else 'не задано'
+    await message.answer(f'Текущие IP адреса роутеров: {current_str}\nВведите новые IP через запятую или с новой строки:', reply_markup=types.ReplyKeyboardRemove())
+    await RouterSettingsState.waiting_for_ips.set()
+
+@dp.message_handler(state=RouterSettingsState.waiting_for_ips)
+async def process_router_ips(message: Message, state: FSMContext):
+    text = message.text.replace('\n', ',').replace(';', ',')
+    ips = [ip.strip() for ip in text.split(',') if ip.strip()]
+    if not all(validate_ip(ip) for ip in ips):
+        await message.answer('❌ Введите корректные IP-адреса через запятую или с новой строки.', reply_markup=router_menu_keyboard())
+        await state.finish()
+        return
+    if settings_manager.update_router_ips(ips):
+        await message.answer(f'✅ IP адреса роутеров обновлены: {", ".join(ips)}', reply_markup=router_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при сохранении IP.', reply_markup=router_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Порты роутеров')
+async def handle_router_ports_setting(message: Message):
+    current = settings_manager.get_setting('routers.ports', [8080, 80, 22])
+    await message.answer(f'Текущие порты роутеров: {", ".join(map(str, current))}\nВведите новые порты через запятую:', reply_markup=types.ReplyKeyboardRemove())
+    await RouterSettingsState.waiting_for_ports.set()
+
+@dp.message_handler(state=RouterSettingsState.waiting_for_ports)
+async def process_router_ports_setting(message: Message, state: FSMContext):
+    ports = parse_ports(message.text)
+    if not ports:
+        await message.answer('❌ Введите список портов через запятую, например: 8080,80,22', reply_markup=router_menu_keyboard())
+        await state.finish()
+        return
+    if settings_manager.update_router_ports(ports):
+        await message.answer(f'✅ Порты роутеров обновлены: {", ".join(map(str, ports))}', reply_markup=router_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при сохранении портов.', reply_markup=router_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Интервал проверки')
+async def handle_router_interval(message: Message):
+    current = settings_manager.get_setting('routers.interval', 300)
+    await message.answer(f'Текущий интервал проверки роутеров: {current} сек.\nВведите новый интервал (10-86400 сек):', reply_markup=types.ReplyKeyboardRemove())
+    await RouterSettingsState.waiting_for_interval.set()
+
+@dp.message_handler(state=RouterSettingsState.waiting_for_interval)
+async def process_router_interval(message: Message, state: FSMContext):
+    try:
+        interval = int(message.text.strip())
+        if interval < 10 or interval > 86400:
+            await message.answer('❌ Интервал должен быть от 10 до 86400 секунд.', reply_markup=router_menu_keyboard())
+            return
+        if settings_manager.set_setting('routers.interval', interval):
+            await message.answer(f'✅ Интервал проверки роутеров установлен: {interval} сек', reply_markup=router_menu_keyboard())
+        else:
+            await message.answer('❌ Ошибка при сохранении интервала.', reply_markup=router_menu_keyboard())
+    except Exception:
+        await message.answer('❌ Введите целое число (секунды).', reply_markup=router_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Статус роутеров')
+async def handle_router_status_menu(message: Message):
+    statistics_manager.record_command('status_routers')
+    await message.answer("Проверяю статус роутеров...")
+    ips = settings_manager.get_setting('routers.ips', [])
+    ports = settings_manager.get_setting('routers.ports', [])
+    results = await check_routers_status(ips, ports)
+    online_count = sum(1 for r in results if r['status'] == 'online')
+    statistics_manager.record_router_check(online_count, len(ips))
+    text = "🌐 *Статус роутеров:*\n\n"
+    for r in results:
+        emoji = "🟢" if r['status'] == 'online' else "🔴"
+        text += f"{emoji} *{r['ip']}*: {r['status']}\n"
+        if r['open_ports']:
+            text += f"   📡 Порт(ы): {', '.join(map(str, r['open_ports']))}\n"
+        text += "\n"
+    await message.answer(text, parse_mode='Markdown', reply_markup=router_menu_keyboard())
+
+def validate_ip(ip):
+    import re
+    return bool(re.match(r'^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$', ip))
 
 if __name__ == '__main__':
     executor.start_polling(
