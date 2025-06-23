@@ -53,7 +53,7 @@ active_scans_count = 0
 
 # Инициализация новых модулей
 background_monitor = BackgroundMonitor(bot, CHAT_ID)
-notification_manager = NotificationManager(bot, CHAT_ID)
+notification_manager = NotificationManager(bot)
 statistics_manager = StatisticsManager(UPLOAD_DIR)
 help_system = HelpSystem()
 
