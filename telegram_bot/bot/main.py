@@ -120,6 +120,14 @@ class BackupSettingsState(StatesGroup):
     waiting_for_import = State()
     waiting_for_auto = State()
 
+# --- Universal menu button filter ---
+def is_menu_button(key):
+    def inner(m):
+        # Получаем язык пользователя (по chat_id, если поддерживается)
+        lang = settings_manager.get_setting('interface.language', 'ru')
+        return m.text == translate(lang, key)
+    return inner
+
 @dp.message_handler(commands=['start', 'menu'])
 async def send_welcome(message: Message):
     statistics_manager.record_command('start')
@@ -130,51 +138,51 @@ async def send_welcome(message: Message):
         reply_markup=main_menu_keyboard(lang=get_lang())
     )
 
-@dp.message_handler(lambda m: m.text == translate(get_lang(), 'settings_menu'))
+@dp.message_handler(is_menu_button('settings_menu'))
 async def handle_settings_menu(message: Message):
     await message.answer(translate(get_lang(), 'settings_menu'), reply_markup=settings_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(lambda m: m.text == translate(get_lang(), 'monitoring_menu'))
+@dp.message_handler(is_menu_button('monitoring_menu'))
 async def handle_monitoring_menu(message: Message):
     await message.answer(translate(get_lang(), 'monitoring_menu'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(lambda m: m.text == translate(get_lang(), 'scan_menu'))
+@dp.message_handler(is_menu_button('scan_menu'))
 async def handle_scan_menu(message: Message):
     await message.answer(translate(get_lang(), 'scan_menu'), reply_markup=scan_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(lambda m: m.text == translate(get_lang(), 'notification_menu'))
+@dp.message_handler(is_menu_button('notification_menu'))
 async def handle_notification_menu(message: Message):
     await message.answer(translate(get_lang(), 'notification_menu'), reply_markup=notification_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(lambda m: m.text == translate(get_lang(), 'router_menu'))
+@dp.message_handler(is_menu_button('router_menu'))
 async def handle_router_menu(message: Message):
     await message.answer(translate(get_lang(), 'router_menu'), reply_markup=router_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(lambda m: m.text == translate(get_lang(), 'interface_menu'))
+@dp.message_handler(is_menu_button('interface_menu'))
 async def handle_interface_menu(message: Message):
     await message.answer(translate(get_lang(), 'interface_menu'), reply_markup=interface_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(lambda m: m.text == translate(get_lang(), 'security_menu'))
+@dp.message_handler(is_menu_button('security_menu'))
 async def handle_security_menu(message: Message):
     await message.answer(translate(get_lang(), 'security_menu'), reply_markup=security_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(lambda m: m.text == translate(get_lang(), 'backup_menu'))
+@dp.message_handler(is_menu_button('backup_menu'))
 async def handle_backup_menu(message: Message):
     await message.answer(translate(get_lang(), 'backup_menu'), reply_markup=backup_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(lambda m: m.text == translate(get_lang(), 'export_menu'))
+@dp.message_handler(is_menu_button('export_menu'))
 async def handle_export_menu(message: Message):
     await message.answer(translate(get_lang(), 'export_menu'), reply_markup=export_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(lambda m: m.text == translate(get_lang(), 'help_menu'))
+@dp.message_handler(is_menu_button('help_menu'))
 async def handle_help_menu(message: Message):
     await message.answer(translate(get_lang(), 'help_menu'), reply_markup=help_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(lambda m: m.text == translate(get_lang(), 'back_to_main'))
+@dp.message_handler(is_menu_button('back_to_main'))
 async def handle_back_to_main(message: Message):
     await message.answer(translate(get_lang(), 'back_to_main'), reply_markup=main_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(lambda m: m.text == translate(get_lang(), 'back_to_settings'))
+@dp.message_handler(is_menu_button('back_to_settings'))
 async def handle_back_to_settings(message: Message):
     await message.answer(translate(get_lang(), 'back_to_settings'), reply_markup=settings_menu_keyboard(lang=get_lang()))
 
