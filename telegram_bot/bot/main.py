@@ -246,6 +246,11 @@ async def on_startup(dp):
     # Запускаем систему уведомлений
     await notification_manager.start()
     
+    # Автозапуск мониторинга, если включено в настройках
+    if settings_manager.get_setting('monitoring.auto_start', True):
+        interval = settings_manager.get_setting('monitoring.interval', 300)
+        await background_monitor.start_monitoring(interval)
+    
     # Отправляем уведомление о запуске
     await notification_manager.send_notification(
         level=NotificationLevel.INFO,

@@ -20,6 +20,7 @@ TRANSLATIONS = {
         'settings_error': '❌ Ошибка при сохранении настроек.',
         'input_error': '❌ Некорректный ввод.',
         'done': '✅ Готово.',
+        'monitoring_autostart_set': 'Автозапуск мониторинга: {status}',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -42,6 +43,7 @@ TRANSLATIONS = {
         'settings_error': '❌ Error saving settings.',
         'input_error': '❌ Invalid input.',
         'done': '✅ Done.',
+        'monitoring_autostart_set': 'Monitoring autostart: {status}',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -64,6 +66,7 @@ TRANSLATIONS = {
         'settings_error': '❌ Fehler beim Speichern der Einstellungen.',
         'input_error': '❌ Ungültige Eingabe.',
         'done': '✅ Fertig.',
+        'monitoring_autostart_set': 'Überwachungsautostart: {status}',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -86,6 +89,7 @@ TRANSLATIONS = {
         'settings_error': '❌ Fout bij het opslaan van instellingen.',
         'input_error': '❌ Ongeldige invoer.',
         'done': '✅ Klaar.',
+        'monitoring_autostart_set': 'Monitoring autostart: {status}',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -108,6 +112,7 @@ TRANSLATIONS = {
         'settings_error': '❌ 保存设置时出错。',
         'input_error': '❌ 输入无效。',
         'done': '✅ 完成。',
+        'monitoring_autostart_set': '监控自动启动: {status}',
     },
 }
 

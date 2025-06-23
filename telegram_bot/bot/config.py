@@ -10,6 +10,9 @@ CONFIG = {
     ],
     "ROUTER_PORTS": [8080, 8022, 80, 22],
     "SCAN_RESULTS_TTL": 360000,  # 1 час
+    "monitoring": {
+        "auto_start": True
+    },
     # Здесь можно добавить другие настройки:
     # "MONITOR_INTERVAL": 300,
     # "NOTIFICATIONS_ENABLED": True,
