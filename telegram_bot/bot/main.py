@@ -1,16 +1,11 @@
 import logging
 from aiogram import Bot, Dispatcher, types, executor
-from aiogram.types import Message, ContentType, CallbackQuery
-from .keyboards import main_menu_keyboard
-from .inline_keyboards import (
-    get_main_inline_keyboard, get_monitoring_control_keyboard, 
-    get_scan_options_keyboard, get_settings_keyboard, get_export_keyboard,
-    get_help_keyboard, get_help_submenu_keyboard,
-    get_monitoring_settings_keyboard, get_notification_settings_keyboard,
-    get_scanning_settings_keyboard, get_router_settings_keyboard,
-    get_interface_settings_keyboard, get_security_settings_keyboard,
-    get_backup_settings_keyboard, get_export_settings_keyboard,
-    get_interval_keyboard, get_toggle_keyboard
+from aiogram.types import Message, ContentType
+from .keyboards import (
+    main_menu_keyboard, settings_menu_keyboard, monitoring_menu_keyboard,
+    scan_menu_keyboard, notification_menu_keyboard, router_menu_keyboard,
+    interface_menu_keyboard, security_menu_keyboard, backup_menu_keyboard,
+    export_menu_keyboard, help_menu_keyboard
 )
 from ..utils.router_monitor import check_routers_status
 from ..utils.miner_scan import scan_network_for_miners, scan_miners_from_list
@@ -94,922 +89,67 @@ async def send_welcome(message: Message):
     statistics_manager.record_command('start')
     await message.answer(
         "Привет! Я бот для мониторинга и сканирования.\n\nВыберите действие:",
-        reply_markup=get_main_inline_keyboard()
+        reply_markup=main_menu_keyboard()
     )
 
-@dp.callback_query_handler(lambda c: True)
-async def process_callback_query(callback_query: CallbackQuery):
-    """Обработчик inline-кнопок"""
-    data = callback_query.data
-    
-    if data == "status_routers":
-        await callback_query.answer("Проверяю статус роутеров...")
-        statistics_manager.record_command('status_routers')
-        results = await check_routers_status(ROUTER_IPS, ROUTER_PORTS)
-        
-        online_count = sum(1 for r in results if r['status'] == 'online')
-        statistics_manager.record_router_check(online_count, len(ROUTER_IPS))
-        
-        text = "🌐 *Статус роутеров:*\n\n"
-        for r in results:
-            emoji = "🟢" if r['status'] == 'online' else "🔴"
-            text += f"{emoji} *{r['ip']}*: {r['status']}\n"
-            if r['open_ports']:
-                text += f"   📡 Порт(ы): {', '.join(map(str, r['open_ports']))}\n"
-            text += "\n"
-        
-        await bot.send_message(callback_query.from_user.id, text, parse_mode='Markdown')
-        
-    elif data == "scan_network":
-        await callback_query.answer("Выберите тип сканирования")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_scan_options_keyboard()
-        )
-        
-    elif data == "scan_full":
-        await callback_query.answer("Введите сеть для полного сканирования")
-        await bot.send_message(callback_query.from_user.id, "Введите сеть и маску (например, 192.168.1.0/24):")
-        await ScanDevicesState.waiting_for_network.set()
-        
-    elif data == "scan_fast":
-        await callback_query.answer("Введите сеть для быстрого сканирования")
-        await bot.send_message(callback_query.from_user.id, "Введите сеть и маску для быстрого сканирования:")
-        await FastScanState.waiting_for_network.set()
-        
-    elif data == "scan_miners":
-        await callback_query.answer("Введите сеть для поиска майнеров")
-        await bot.send_message(callback_query.from_user.id, "Введите сеть и маску для поиска майнеров:")
-        await ScanMinersState.waiting_for_network.set()
-        
-    elif data == "statistics":
-        await callback_query.answer("Генерирую отчёт...")
-        report = statistics_manager.generate_report()
-        await bot.send_message(callback_query.from_user.id, report, parse_mode='Markdown')
-        
-    elif data == "settings":
-        await callback_query.answer("Настройки")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_settings_keyboard()
-        )
-        
-    elif data == "monitor_start":
-        await callback_query.answer("Запускаю мониторинг...")
-        await background_monitor.start_monitoring()
-        await notification_manager.send_notification(
-            level=NotificationLevel.SUCCESS,
-            notification_type=NotificationType.SYSTEM_ALERT,
-            title="Мониторинг запущен",
-            message="Фоновый мониторинг роутеров успешно запущен"
-        )
-        
-    elif data == "monitor_stop":
-        await callback_query.answer("Останавливаю мониторинг...")
-        await background_monitor.stop_monitoring()
-        await notification_manager.send_notification(
-            level=NotificationLevel.INFO,
-            notification_type=NotificationType.SYSTEM_ALERT,
-            title="Мониторинг остановлен",
-            message="Фоновый мониторинг роутеров остановлен"
-        )
-        
-    elif data == "monitor_status":
-        await callback_query.answer("Статус мониторинга")
-        status = "🟢 Активен" if background_monitor.is_running else "🔴 Остановлен"
-        await bot.send_message(
-            callback_query.from_user.id,
-            f"📊 **Статус мониторинга:** {status}"
-        )
-        
-    elif data == "back_to_main":
-        await callback_query.answer("Главное меню")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_main_inline_keyboard()
-        )
-        
-    elif data.startswith("network_"):
-        network = data.replace("network_", "")
-        await callback_query.answer(f"Выбрана сеть: {network}")
-        await bot.send_message(callback_query.from_user.id, f"Сканирую сеть {network}...")
-        # Запуск сканирования выбранной сети (аналогично process_devices_network_input)
-        cleanup_old_results()
-        global active_scans_count
-        active_scans_count += 1
-        start_time = time.time()
-        try:
-            net = ipaddress.IPv4Network(network, strict=False)
-        except Exception as e:
-            await bot.send_message(callback_query.from_user.id, f"Ошибка: некорректный формат сети: {network}")
-            active_scans_count -= 1
-            return
-        progress_msg = await bot.send_message(callback_query.from_user.id, f"Начинаю сканирование сети {network} на устройства... 0%")
-        async def on_progress(done, total):
-            percent = int(done / total * 100)
-            bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
-            await bot.edit_message_text(
-                f"Сканирование: [{bar}] {percent}% ({done}/{total})",
-                chat_id=progress_msg.chat.id,
-                message_id=progress_msg.message_id
-            )
-        try:
-            devices = await scan_network_devices(network, on_progress=on_progress)
-            duration = time.time() - start_time
-            await bot.edit_message_text(
-                f"Сканирование завершено! Найдено устройств: {len(devices)}",
-                chat_id=progress_msg.chat.id,
-                message_id=progress_msg.message_id
-            )
-            statistics_manager.record_scan('network', len(devices), net.num_addresses, duration)
-            await notification_manager.scan_completed('сети', len(devices), duration)
-            if not devices:
-                await bot.send_message(callback_query.from_user.id, "Устройства не найдены.")
-                active_scans_count -= 1
-                return
-            text = f"Найдено устройств: {len(devices)}\n"
-            for d in devices:
-                if d.get('type') == 'miner':
-                    text += f"{d['ip']}: miner (hashrate: {d.get('hashrate')}, uptime: {d.get('uptime')})\n"
-                else:
-                    text += f"{d['ip']}: (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
-            text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
-            result_msg = await bot.send_message(callback_query.from_user.id, text)
-            scan_results_storage[result_msg.message_id] = {
-                'devices': devices,
-                'type': 'devices',
-                'timestamp': time.time()
-            }
-        except Exception as e:
-            await bot.send_message(callback_query.from_user.id, f"Ошибка сканирования: {e}")
-            statistics_manager.record_error('scan_network', str(e))
-            await notification_manager.scan_error('сети', str(e))
-        active_scans_count -= 1
-        return
-        
-    # Обработчики помощи
-    elif data == "help":
-        await callback_query.answer("Открываю справку")
-        help_text = help_system.get_main_help()
-        await bot.edit_message_text(
-            text=help_text,
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            parse_mode='Markdown',
-            reply_markup=get_help_keyboard()
-        )
-        
-    elif data.startswith("help_"):
-        section = data.replace("help_", "")
-        await callback_query.answer(f"Загружаю раздел: {section}")
-        help_section = help_system.get_help_section(section)
-        
-        await bot.edit_message_text(
-            text=help_section['content'],
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            parse_mode='Markdown',
-            reply_markup=get_help_submenu_keyboard()
-        )
-        
-    elif data == "help_search":
-        await callback_query.answer("Функция поиска в разработке")
-        await bot.send_message(
-            callback_query.from_user.id,
-            "🔍 *Поиск по справке*\n\nВведите ваш вопрос, и я найду подходящий раздел справки.",
-            parse_mode='Markdown'
-        )
-        
-    elif data == "help_all_sections":
-        await callback_query.answer("Показываю все разделы")
-        sections = help_system.get_all_sections()
-        sections_text = "*📋 Все разделы справки:*\n\n"
-        
-        for section in sections:
-            help_section = help_system.get_help_section(section)
-            sections_text += f"• {help_section['title']}\n"
-            
-        sections_text += "\nНажмите на кнопку раздела для просмотра подробной информации."
-        
-        await bot.edit_message_text(
-            text=sections_text,
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            parse_mode='Markdown',
-            reply_markup=get_help_keyboard()
-        )
-        
-    elif data == "help_contact":
-        await callback_query.answer("Информация о поддержке")
-        contact_text = """
-*📞 Связаться с поддержкой*
+@dp.message_handler(lambda m: m.text == 'Настройки')
+async def handle_settings_menu(message: Message):
+    await message.answer("⚙️ Меню настроек:", reply_markup=settings_menu_keyboard())
 
-*Способы связи:*
-• Создать issue в репозитории проекта
-• Написать разработчику в Telegram
-• Отправить email с описанием проблемы
+@dp.message_handler(lambda m: m.text == 'Мониторинг')
+async def handle_monitoring_menu(message: Message):
+    await message.answer("🌐 Настройки мониторинга:", reply_markup=monitoring_menu_keyboard())
 
-*При обращении укажите:*
-• Версию бота и Python
-• Описание проблемы
-• Логи ошибок
-• Шаги для воспроизведения
+@dp.message_handler(lambda m: m.text == 'Сканирование')
+async def handle_scan_menu(message: Message):
+    await message.answer("🔍 Настройки сканирования:", reply_markup=scan_menu_keyboard())
 
-*Время ответа:* 24-48 часов
-        """
-        await bot.send_message(
-            callback_query.from_user.id,
-            contact_text,
-            parse_mode='Markdown'
-        )
-        
-    elif data == "help_docs":
-        await callback_query.answer("Документация")
-        docs_text = """
-*📚 Документация*
+@dp.message_handler(lambda m: m.text == 'Уведомления')
+async def handle_notification_menu(message: Message):
+    await message.answer("🔔 Настройки уведомлений:", reply_markup=notification_menu_keyboard())
 
-*Основные документы:*
-• README.md - Общее описание проекта
-• requirements.txt - Зависимости
-• config.py - Конфигурация
+@dp.message_handler(lambda m: m.text == 'Роутеры')
+async def handle_router_menu(message: Message):
+    await message.answer("🌐 Настройки роутеров:", reply_markup=router_menu_keyboard())
 
-*Дополнительные материалы:*
-• Примеры использования
-• Руководство по настройке
-• API документация
+@dp.message_handler(lambda m: m.text == 'Интерфейс')
+async def handle_interface_menu(message: Message):
+    await message.answer("🎨 Настройки интерфейса:", reply_markup=interface_menu_keyboard())
 
-*Полезные ссылки:*
-• GitHub репозиторий
-• Wiki проекта
-• Примеры конфигураций
-        """
-        await bot.send_message(
-            callback_query.from_user.id,
-            docs_text,
-            parse_mode='Markdown'
-        )
-        
-    # Обработчики настроек
-    elif data == "settings":
-        await callback_query.answer("Настройки")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_settings_keyboard()
-        )
-        
-    elif data == "settings_summary":
-        await callback_query.answer("Сводка настроек")
-        summary = settings_manager.get_settings_summary()
-        await bot.send_message(
-            callback_query.from_user.id,
-            summary,
-            parse_mode='Markdown'
-        )
-        
-    elif data == "settings_reset":
-        await callback_query.answer("Сброс настроек")
-        if settings_manager.reset_to_defaults():
-            await bot.send_message(
-                callback_query.from_user.id,
-                "✅ Настройки сброшены к значениям по умолчанию"
-            )
-        else:
-            await bot.send_message(
-                callback_query.from_user.id,
-                "❌ Ошибка при сбросе настроек"
-            )
-            
-    # Настройки мониторинга
-    elif data == "settings_monitoring":
-        await callback_query.answer("Настройки мониторинга")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_monitoring_settings_keyboard()
-        )
-        
-    elif data == "setting_monitor_interval":
-        await callback_query.answer("Выберите интервал")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_interval_keyboard()
-        )
-        
-    elif data.startswith("interval_"):
-        interval = int(data.replace("interval_", ""))
-        if settings_manager.update_monitoring_interval(interval):
-            await callback_query.answer(f"Интервал изменён на {interval} сек")
-            await bot.send_message(
-                callback_query.from_user.id,
-                f"✅ Интервал мониторинга изменён на `{interval}` секунд",
-                parse_mode='Markdown'
-            )
-        else:
-            await callback_query.answer("Ошибка изменения интервала")
-            
-    elif data == "setting_monitor_auto_start":
-        current = settings_manager.get_setting('monitoring.auto_start', False)
-        await callback_query.answer("Автозапуск мониторинга")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_toggle_keyboard(current)
-        )
-        
-    # Настройки уведомлений
-    elif data == "settings_notifications":
-        await callback_query.answer("Настройки уведомлений")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_notification_settings_keyboard()
-        )
-        
-    elif data == "setting_notifications_toggle":
-        current = settings_manager.get_setting('notifications.enabled', True)
-        await callback_query.answer("Включение/выключение уведомлений")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_toggle_keyboard(current)
-        )
-        
-    elif data in ["toggle_on", "toggle_off"]:
-        value = data == "toggle_on"
-        # Определяем, какую настройку изменяем
-        if callback_query.message.reply_markup and callback_query.message.reply_markup.inline_keyboard:
-            first_button = callback_query.message.reply_markup.inline_keyboard[0][0]
-            if "мониторинг" in first_button.text.lower():
-                settings_manager.toggle_monitoring(value)
-                setting_name = "мониторинг"
-            elif "уведомления" in first_button.text.lower():
-                settings_manager.toggle_notifications(value)
-                setting_name = "уведомления"
-            else:
-                setting_name = "настройка"
-                
-        await callback_query.answer(f"{setting_name.capitalize()} {'включён' if value else 'выключен'}")
-        await bot.send_message(
-            callback_query.from_user.id,
-            f"✅ {setting_name.capitalize()} {'включён' if value else 'выключен'}"
-        )
-        
-    # Настройки сканирования
-    elif data == "settings_scanning":
-        await callback_query.answer("Настройки сканирования")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_scanning_settings_keyboard()
-        )
-        
-    elif data == "setting_scan_timeout":
-        current_timeout = settings_manager.get_setting('scanning.default_timeout', 5)
-        await callback_query.answer(f"Текущий таймаут: {current_timeout} сек")
-        await bot.send_message(
-            callback_query.from_user.id,
-            f"⏱️ Текущий таймаут сканирования: `{current_timeout}` сек\n\nВведите новое значение таймаута (в секундах, например 5):",
-            parse_mode='Markdown'
-        )
-        await ScanDevicesState.waiting_for_timeout.set()
-        
-    elif data == "setting_scan_ports":
-        current_ports = settings_manager.get_setting('scanning.default_ports', [22, 80, 443, 8080, 8022, 4028])
-        await callback_query.answer("Порты для сканирования")
-        await bot.send_message(
-            callback_query.from_user.id,
-            f"🔌 Текущие порты для сканирования: `{', '.join(map(str, current_ports))}`\n\n"
-            "Введите новые порты через запятую (например: 22,80,443,8080):",
-            parse_mode='Markdown'
-        )
-        
-    # Настройки роутеров
-    elif data == "settings_routers":
-        await callback_query.answer("Настройки роутеров")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_router_settings_keyboard()
-        )
-        
-    elif data == "setting_routers_ips":
-        current_ips = settings_manager.get_setting('routers.ips', ROUTER_IPS)
-        await callback_query.answer("IP адреса роутеров")
-        await bot.send_message(
-            callback_query.from_user.id,
-            f"🌐 Текущие IP роутеров: `{', '.join(current_ips)}`\n\n"
-            "Введите новые IP адреса через запятую:",
-            parse_mode='Markdown'
-        )
-        
-    # Настройки интерфейса
-    elif data == "settings_interface":
-        await callback_query.answer("Настройки интерфейса")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_interface_settings_keyboard()
-        )
-        
-    # Настройки безопасности
-    elif data == "settings_security":
-        await callback_query.answer("Настройки безопасности")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_security_settings_keyboard()
-        )
-        
-    # Настройки резервного копирования
-    elif data == "settings_backup":
-        await callback_query.answer("Настройки резервного копирования")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_backup_settings_keyboard()
-        )
-        
-    elif data == "setting_backup_create_now":
-        await callback_query.answer("Создание резервной копии")
-        # Путь к файлу статистики (если есть)
-        stats_file = os.path.join(UPLOAD_DIR, 'stats.csv')
-        backup_path = settings_manager.create_backup(stats_file=stats_file)
-        if backup_path.startswith("ERROR"):
-            await bot.send_message(
-                callback_query.from_user.id,
-                f"❌ Ошибка создания резервной копии: {backup_path}"
-            )
-        else:
-            await bot.send_message(
-                callback_query.from_user.id,
-                f"✅ Резервная копия создана: {os.path.basename(backup_path)}"
-            )
-            # Отправляем файл архивом
-            with open(backup_path, "rb") as f:
-                await bot.send_document(callback_query.from_user.id, f, caption="Резервная копия настроек и статистики")
-        
-    # Настройки экспорта/импорта
-    elif data == "settings_export":
-        await callback_query.answer("Экспорт/Импорт")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_export_settings_keyboard()
-        )
-        
-    elif data == "setting_export_settings":
-        await callback_query.answer("Экспорт настроек")
-        settings_json = settings_manager.export_settings()
-        await bot.send_message(
-            callback_query.from_user.id,
-            f"📄 *Экспорт настроек:*\n\n```json\n{settings_json}\n```",
-            parse_mode='Markdown'
-        )
-        
-    elif data == "setting_export_stats":
-        await callback_query.answer("Экспорт статистики")
-        report = statistics_manager.generate_report()
-        await bot.send_message(
-            callback_query.from_user.id,
-            f"📊 *Экспорт статистики:*\n\n{report}",
-            parse_mode='Markdown'
-        )
-        
-    # Навигация по настройкам
-    elif data == "back_to_settings":
-        await callback_query.answer("Назад к настройкам")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_settings_keyboard()
-        )
-        
-    else:
-        await callback_query.answer("Функция в разработке")
+@dp.message_handler(lambda m: m.text == 'Безопасность')
+async def handle_security_menu(message: Message):
+    await message.answer("🔒 Настройки безопасности:", reply_markup=security_menu_keyboard())
 
-@dp.message_handler(lambda m: m.text == 'Статус роутеров')
-async def handle_router_status(message: Message):
-    statistics_manager.record_command('status_routers')
-    await message.answer("Проверяю статус роутеров...")
-    results = await check_routers_status(ROUTER_IPS, ROUTER_PORTS)
-    
-    online_count = sum(1 for r in results if r['status'] == 'online')
-    statistics_manager.record_router_check(online_count, len(ROUTER_IPS))
-    
-    text = "🌐 *Статус роутеров:*\n\n"
-    for r in results:
-        emoji = "🟢" if r['status'] == 'online' else "🔴"
-        text += f"{emoji} *{r['ip']}*: {r['status']}\n"
-        if r['open_ports']:
-            text += f"   📡 Порт(ы): {', '.join(map(str, r['open_ports']))}\n"
-        text += "\n"
-    
-    await message.answer(text, parse_mode='Markdown')
+@dp.message_handler(lambda m: m.text == 'Резервное копирование')
+async def handle_backup_menu(message: Message):
+    await message.answer("💾 Настройки резервного копирования:", reply_markup=backup_menu_keyboard())
 
-@dp.message_handler(lambda m: m.text == 'Сканировать сеть')
-async def handle_scan_network(message: Message):
-    statistics_manager.record_command('scan_network')
-    await message.answer("Введите сеть и маску (например, 192.168.1.0/24):")
-    await ScanDevicesState.waiting_for_network.set()
+@dp.message_handler(lambda m: m.text == 'Экспорт/Импорт')
+async def handle_export_menu(message: Message):
+    await message.answer("📊 Экспорт/Импорт:", reply_markup=export_menu_keyboard())
 
-@dp.message_handler(state=ScanDevicesState.waiting_for_network)
-async def process_devices_network_input(message: Message, state: FSMContext):
-    # Очищаем старые результаты перед новым сканированием
-    cleanup_old_results()
-    
-    global active_scans_count
-    active_scans_count += 1
-    
-    network = message.text.strip()
-    start_time = time.time()
-    logging.info(f"[SCAN] Запрошено сканирование сети: {network}")
-    
-    try:
-        net = ipaddress.IPv4Network(network, strict=False)
-    except Exception as e:
-        logging.error(f"[SCAN] Некорректный формат сети: {network}, ошибка: {e}")
-        await message.answer("Ошибка: некорректный формат сети. Пример: 192.168.1.0/24")
-        active_scans_count -= 1
-        await state.finish()
-        return
-        
-    progress_msg = await message.answer(f"Начинаю сканирование сети {network} на устройства... 0%")
-    
-    async def on_progress(done, total):
-        percent = int(done / total * 100)
-        bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
-        logging.info(f"[SCAN] Прогресс: {done}/{total} ({percent}%)")
-        await bot.edit_message_text(
-            f"Сканирование: [{bar}] {percent}% ({done}/{total})",
-            chat_id=progress_msg.chat.id,
-            message_id=progress_msg.message_id
-        )
-        
-    try:
-        logging.info(f"[SCAN] Запуск scan_network_devices({network})")
-        devices = await scan_network_devices(network, on_progress=on_progress)
-        duration = time.time() - start_time
-        
-        logging.info(f"[SCAN] Сканирование завершено, найдено устройств: {len(devices)}")
-        await bot.edit_message_text(
-            f"Сканирование завершено! Найдено устройств: {len(devices)}",
-            chat_id=progress_msg.chat.id,
-            message_id=progress_msg.message_id
-        )
-        
-        # Записываем статистику
-        statistics_manager.record_scan('network', len(devices), net.num_addresses, duration)
-        
-        # Отправляем уведомление
-        await notification_manager.scan_completed('сети', len(devices), duration)
-        
-        if not devices:
-            await message.answer("Устройства не найдены.")
-            active_scans_count -= 1
-            await state.finish()
-            return
-            
-        text = f"Найдено устройств: {len(devices)}\n"
-        for d in devices:
-            if d.get('type') == 'miner':
-                text += f"{d['ip']}: miner (hashrate: {d.get('hashrate')}, uptime: {d.get('uptime')})\n"
-            else:
-                text += f"{d['ip']}: (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
-        text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
-        result_msg = await message.answer(text)
-        
-        # Сохраняем результаты с привязкой к message_id
-        scan_results_storage[result_msg.message_id] = {
-            'devices': devices,
-            'type': 'devices',
-            'timestamp': time.time()
-        }
-        await state.update_data(devices=devices)
-        await ScanDevicesState.waiting_for_file_request.set()
-        
-    except Exception as e:
-        logging.error(f"[SCAN] Ошибка сканирования: {e}")
-        statistics_manager.record_error('scan_network', str(e))
-        await notification_manager.scan_error('сети', str(e))
-        
-        await bot.edit_message_text(
-            f"Ошибка сканирования: {e}",
-            chat_id=progress_msg.chat.id,
-            message_id=progress_msg.message_id
-        )
-        active_scans_count -= 1
-        await state.finish()
+@dp.message_handler(lambda m: m.text == 'Помощь')
+async def handle_help_menu(message: Message):
+    await message.answer("📋 Справка:", reply_markup=help_menu_keyboard())
 
-@dp.message_handler(lambda m: m.text == 'Загрузить файл для сканирования')
-async def handle_upload_file(message: Message):
-    statistics_manager.record_command('upload_file')
-    await message.answer("Пожалуйста, отправьте CSV-файл со списком IP-адресов.")
+@dp.message_handler(lambda m: m.text == 'Назад в меню')
+async def handle_back_to_main(message: Message):
+    await message.answer("Главное меню:", reply_markup=main_menu_keyboard())
 
-@dp.message_handler(content_types=ContentType.DOCUMENT)
-async def process_csv_file(message: Message):
-    file = message.document
-    if not file.file_name.lower().endswith('.csv'):
-        await message.answer("Пожалуйста, отправьте файл в формате CSV.")
-        return
-        
-    file_path = os.path.join(UPLOAD_DIR, file.file_name)
-    await message.document.download(destination_file=file_path)
-    
-    try:
-        df = pd.read_csv(file_path)
-        if 'ip' not in df.columns:
-            await message.answer("В файле должен быть столбец 'ip'.")
-            return
-            
-        ip_list = df['ip'].dropna().astype(str).tolist()
-        await message.answer(f"Сканирую {len(ip_list)} адресов из файла...")
-        
-        start_time = time.time()
-        miners = await scan_miners_from_list(ip_list)
-        duration = time.time() - start_time
-        
-        # Записываем статистику
-        statistics_manager.record_scan('file_upload', len(miners), len(ip_list), duration)
-        
-        if not miners:
-            await message.answer("Майнеры не найдены.")
-        else:
-            text = "Результаты сканирования:\n"
-            for m in miners:
-                text += f"{m['ip']}: status={m['status']}, hashrate={m['hashrate']}, uptime={m['uptime']}\n"
-            await message.answer(text)
-            
-    except Exception as e:
-        statistics_manager.record_error('file_processing', str(e))
-        await message.answer(f"Ошибка обработки файла: {e}")
-    finally:
-        if os.path.exists(file_path):
-            os.remove(file_path)
+@dp.message_handler(lambda m: m.text == 'Назад к настройкам')
+async def handle_back_to_settings(message: Message):
+    await message.answer("Меню настроек:", reply_markup=settings_menu_keyboard())
 
-@dp.message_handler(lambda m: m.text == 'Сканировать майнеры')
-async def handle_scan_miners(message: Message):
-    statistics_manager.record_command('scan_miners')
-    await message.answer("Введите сеть и маску для поиска майнеров (например, 192.168.1.0/24):")
-    await ScanMinersState.waiting_for_network.set()
-
-@dp.message_handler(state=ScanDevicesState.waiting_for_file_request)
-async def process_devices_file_request(message: Message, state: FSMContext):
-    if message.text.strip().lower() == 'файл':
-        data = await state.get_data()
-        devices = data.get('devices', [])
-        if not devices:
-            await message.answer("Нет данных для файла.")
-            await state.finish()
-            return
-        import pandas as pd
-        import tempfile
-        await bot.send_chat_action(message.chat.id, types.ChatActions.UPLOAD_DOCUMENT)
-        for d in devices:
-            if d.get('type') != 'miner':
-                d['type'] = ''
-                d['hashrate'] = ''
-                d['uptime'] = ''
-            else:
-                d['hashrate'] = d.get('hashrate', '')
-                d['uptime'] = d.get('uptime', '')
-        df = pd.DataFrame(devices)
-        with tempfile.NamedTemporaryFile('w+', suffix='.csv', delete=False) as tmp:
-            df.to_csv(tmp.name, index=False)
-            tmp.flush()
-            await message.answer_document(types.InputFile(tmp.name), caption="Результаты сканирования сети")
-        os.remove(tmp.name)
-    else:
-        await message.answer("Завершено.")
-    await state.finish()
-
-@dp.message_handler(state=ScanMinersState.waiting_for_network)
-async def process_miners_network_input(message: Message, state: FSMContext):
-    # Очищаем старые результаты перед новым сканированием
-    cleanup_old_results()
-    
-    global active_scans_count
-    active_scans_count += 1
-    
-    network = message.text.strip()
-    try:
-        net = ipaddress.IPv4Network(network, strict=False)
-    except Exception:
-        await message.answer("Ошибка: некорректный формат сети. Пример: 192.168.1.0/24")
-        active_scans_count -= 1
-        await state.finish()
-        return
-    progress_msg = await message.answer(f"Начинаю сканирование сети {network} только на майнеры... 0%")
-    async def on_progress(done, total):
-        percent = int(done / total * 100)
-        bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
-        await bot.edit_message_text(
-            f"Сканирование: [{bar}] {percent}% ({done}/{total})",
-            chat_id=progress_msg.chat.id,
-            message_id=progress_msg.message_id
-        )
-    try:
-        miners = await scan_network_for_miners(network, on_progress=on_progress)
-        await bot.edit_message_text(
-            f"Сканирование завершено! Найдено майнеров: {len(miners)}",
-            chat_id=progress_msg.chat.id,
-            message_id=progress_msg.message_id
-        )
-        if not miners:
-            await message.answer("Майнеры не найдены.")
-            active_scans_count -= 1
-            await state.finish()
-            return
-        text = "Найдено майнеров: {}\n".format(len(miners))
-        for m in miners:
-            text += f"{m['ip']}: miner (hashrate: {m.get('hashrate')}, uptime: {m.get('uptime')})\n"
-        text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
-        result_msg = await message.answer(text)
-        # Сохраняем результаты с привязкой к message_id
-        scan_results_storage[result_msg.message_id] = {
-            'miners': miners,
-            'type': 'miners',
-            'timestamp': time.time()
-        }
-        await state.update_data(miners=miners)
-        await ScanMinersState.waiting_for_file_request.set()
-    except Exception as e:
-        await bot.edit_message_text(
-            f"Ошибка сканирования: {e}",
-            chat_id=progress_msg.chat.id,
-            message_id=progress_msg.message_id
-        )
-        active_scans_count -= 1
-        await state.finish()
-
-@dp.message_handler(state=ScanMinersState.waiting_for_file_request)
-async def process_miners_file_request(message: Message, state: FSMContext):
-    if message.text.strip().lower() == 'файл':
-        data = await state.get_data()
-        miners = data.get('miners', [])
-        if not miners:
-            await message.answer("Нет данных для файла.")
-            await state.finish()
-            return
-        import pandas as pd
-        import tempfile
-        await bot.send_chat_action(message.chat.id, types.ChatActions.UPLOAD_DOCUMENT)
-        for m in miners:
-            m['type'] = 'miner'
-            m['hashrate'] = m.get('hashrate', '')
-            m['uptime'] = m.get('uptime', '')
-        df = pd.DataFrame(miners)
-        with tempfile.NamedTemporaryFile('w+', suffix='.csv', delete=False) as tmp:
-            df.to_csv(tmp.name, index=False)
-            tmp.flush()
-            await message.answer_document(types.InputFile(tmp.name), caption="Результаты сканирования майнеров")
-        os.remove(tmp.name)
-    else:
-        await message.answer("Завершено.")
-    await state.finish()
-
-@dp.message_handler(lambda m: m.text == 'Быстрое сканирование сети')
-async def handle_fast_scan(message: Message):
-    await message.answer("Введите сеть и маску для быстрого сканирования (например, 192.168.1.0/24):")
-    await FastScanState.waiting_for_network.set()
-
-@dp.message_handler(state=FastScanState.waiting_for_network)
-async def process_fast_scan_network_input(message: Message, state: FSMContext):
-    # Очищаем старые результаты перед новым сканированием
-    cleanup_old_results()
-    
-    global active_scans_count
-    active_scans_count += 1
-    
-    import ipaddress
-    network = message.text.strip()
-    try:
-        net = ipaddress.IPv4Network(network, strict=False)
-    except Exception:
-        await message.answer("Ошибка: некорректный формат сети. Пример: 192.168.1.0/24")
-        active_scans_count -= 1
-        await state.finish()
-        return
-    progress_msg = await message.answer(f"Начинаю быстрое сканирование сети {network}... 0%")
-    async def on_progress(done, total):
-        percent = int(done / total * 100)
-        bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
-        await bot.edit_message_text(
-            f"Быстрое сканирование: [{bar}] {percent}% ({done}/{total})",
-            chat_id=progress_msg.chat.id,
-            message_id=progress_msg.message_id
-        )
-    try:
-        devices = await fast_scan_network(network, on_progress=on_progress)
-        await bot.edit_message_text(
-            f"Быстрое сканирование завершено! Найдено устройств: {len(devices)}",
-            chat_id=progress_msg.chat.id,
-            message_id=progress_msg.message_id
-        )
-        if not devices:
-            await message.answer("Устройства не найдены.")
-            active_scans_count -= 1
-            await state.finish()
-            return
-        text = f"Найдено устройств: {len(devices)}\n"
-        for d in devices:
-            if d.get('type') == 'miner':
-                text += f"{d['ip']}: miner (hashrate: {d.get('hashrate')}, uptime: {d.get('uptime')})\n"
-            else:
-                text += f"{d['ip']}: {d.get('type', 'unknown')} (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
-        text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
-        result_msg = await message.answer(text)
-        # Сохраняем результаты с привязкой к message_id
-        scan_results_storage[result_msg.message_id] = {
-            'devices': devices,
-            'type': 'fast_scan',
-            'timestamp': time.time()
-        }
-        await state.update_data(devices=devices)
-        await FastScanState.waiting_for_file_request.set()
-    except Exception as e:
-        await bot.edit_message_text(
-            f"Ошибка быстрого сканирования: {e}",
-            chat_id=progress_msg.chat.id,
-            message_id=progress_msg.message_id
-        )
-        active_scans_count -= 1
-        await state.finish()
-
-@dp.message_handler(state=FastScanState.waiting_for_file_request)
-async def process_fast_scan_file_request(message: Message, state: FSMContext):
-    if message.text.strip().lower() == 'файл':
-        data = await state.get_data()
-        devices = data.get('devices', [])
-        if not devices:
-            await message.answer("Нет данных для файла.")
-            await state.finish()
-            return
-        import pandas as pd
-        import tempfile
-        await bot.send_chat_action(message.chat.id, types.ChatActions.UPLOAD_DOCUMENT)
-        df = pd.DataFrame(devices)
-        with tempfile.NamedTemporaryFile('w+', suffix='.csv', delete=False) as tmp:
-            df.to_csv(tmp.name, index=False)
-            tmp.flush()
-            await message.answer_document(types.InputFile(tmp.name), caption="Результаты быстрого сканирования сети")
-        os.remove(tmp.name)
-    else:
-        await message.answer("Завершено.")
-    await state.finish()
-
-@dp.message_handler(lambda m: m.reply_to_message and m.text.lower() == 'файл')
-async def handle_reply_file_request(message: Message):
-    # Очищаем старые результаты перед обработкой
-    cleanup_old_results()
-    
-    reply_msg_id = message.reply_to_message.message_id
-    if reply_msg_id in scan_results_storage:
-        data = scan_results_storage[reply_msg_id]
-        devices = data.get('devices', [])
-        miners = data.get('miners', [])
-        scan_type = data.get('type', '')
-        
-        if not devices and not miners:
-            await message.answer("Нет данных для файла.")
-            return
-            
-        import pandas as pd
-        import tempfile
-        await bot.send_chat_action(message.chat.id, types.ChatActions.UPLOAD_DOCUMENT)
-        
-        if scan_type == 'miners':
-            # Обработка результатов сканирования майнеров
-            for m in miners:
-                m['type'] = 'miner'
-                m['hashrate'] = str(m.get('hashrate') or '')
-                m['uptime'] = str(m.get('uptime') or '')
-            df = pd.DataFrame(miners)
-            caption = "Результаты сканирования майнеров"
-        else:
-            # Обработка результатов сканирования устройств
-            for d in devices:
-                if d.get('type') != 'miner':
-                    d['type'] = ''
-                    d['hashrate'] = ''
-                    d['uptime'] = ''
-                else:
-                    d['hashrate'] = str(d.get('hashrate') or '')
-                    d['uptime'] = str(d.get('uptime') or '')
-            df = pd.DataFrame(devices)
-            caption = "Результаты сканирования сети"
-            
-        with tempfile.NamedTemporaryFile('w+', suffix='.csv', delete=False) as tmp:
-            df.to_csv(tmp.name, index=False)
-            tmp.flush()
-            await message.answer_document(types.InputFile(tmp.name), caption=caption)
-        os.remove(tmp.name)
-    else:
-        await message.answer("Результаты этого сканирования недоступны или устарели. Запустите сканирование заново.")
+@dp.message_handler(commands=['help'])
+async def handle_help_command(message: Message):
+    """Команда для получения справки"""
+    statistics_manager.record_command('help')
+    help_text = help_system.get_main_help()
+    await message.answer(
+        help_text,
+        parse_mode='Markdown',
+        reply_markup=help_menu_keyboard()
+    )
 
 @dp.message_handler(commands=['status'])
 async def handle_status(message: Message):
@@ -1034,21 +174,6 @@ async def handle_stats_command(message: Message):
     report = statistics_manager.generate_report()
     await message.answer(report, parse_mode='Markdown')
 
-@dp.message_handler(commands=['export_stats'])
-async def handle_export_stats(message: Message):
-    """Команда для экспорта статистики в CSV"""
-    csv_content = statistics_manager.export_csv()
-    
-    import tempfile
-    with tempfile.NamedTemporaryFile('w+', suffix='.csv', delete=False) as tmp:
-        tmp.write(csv_content)
-        tmp.flush()
-        await message.answer_document(
-            types.InputFile(tmp.name), 
-            caption="📊 Статистика за последние 30 дней"
-        )
-    os.remove(tmp.name)
-
 @dp.message_handler(commands=['monitor_start'])
 async def handle_monitor_start(message: Message):
     """Команда для запуска мониторинга"""
@@ -1072,17 +197,6 @@ async def handle_monitor_stop(message: Message):
         message="Фоновый мониторинг роутеров остановлен"
     )
     await message.answer("⏹️ Мониторинг роутеров остановлен")
-
-@dp.message_handler(commands=['help'])
-async def handle_help_command(message: Message):
-    """Команда для получения справки"""
-    statistics_manager.record_command('help')
-    help_text = help_system.get_main_help()
-    await message.answer(
-        help_text,
-        parse_mode='Markdown',
-        reply_markup=get_help_keyboard()
-    )
 
 async def send_notify_to_owner(text: str):
     await bot.send_message(CHAT_ID, text)
@@ -1141,6 +255,257 @@ async def process_timeout_input(message: Message, state: FSMContext):
     except Exception:
         await message.answer("❌ Введите целое число (секунды)")
     await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Статус роутеров')
+async def handle_router_status(message: Message):
+    statistics_manager.record_command('status_routers')
+    await message.answer("Проверяю статус роутеров...")
+    results = await check_routers_status(ROUTER_IPS, ROUTER_PORTS)
+    online_count = sum(1 for r in results if r['status'] == 'online')
+    statistics_manager.record_router_check(online_count, len(ROUTER_IPS))
+    text = "🌐 *Статус роутеров:*\n\n"
+    for r in results:
+        emoji = "🟢" if r['status'] == 'online' else "🔴"
+        text += f"{emoji} *{r['ip']}*: {r['status']}\n"
+        if r['open_ports']:
+            text += f"   📡 Порт(ы): {', '.join(map(str, r['open_ports']))}\n"
+        text += "\n"
+    await message.answer(text, parse_mode='Markdown', reply_markup=main_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Сканировать сеть')
+async def handle_scan_network(message: Message):
+    statistics_manager.record_command('scan_network')
+    await message.answer("Введите сеть и маску (например, 192.168.1.0/24):", reply_markup=scan_menu_keyboard())
+    await ScanDevicesState.waiting_for_network.set()
+
+@dp.message_handler(state=ScanDevicesState.waiting_for_network)
+async def process_devices_network_input(message: Message, state: FSMContext):
+    cleanup_old_results()
+    global active_scans_count
+    active_scans_count += 1
+    network = message.text.strip()
+    start_time = time.time()
+    try:
+        net = ipaddress.IPv4Network(network, strict=False)
+    except Exception as e:
+        await message.answer("Ошибка: некорректный формат сети. Пример: 192.168.1.0/24", reply_markup=main_menu_keyboard())
+        active_scans_count -= 1
+        await state.finish()
+        return
+    progress_msg = await message.answer(f"Начинаю сканирование сети {network} на устройства... 0%")
+    async def on_progress(done, total):
+        percent = int(done / total * 100)
+        bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
+        await bot.edit_message_text(
+            f"Сканирование: [{bar}] {percent}% ({done}/{total})",
+            chat_id=progress_msg.chat.id,
+            message_id=progress_msg.message_id
+        )
+    try:
+        devices = await scan_network_devices(network, on_progress=on_progress)
+        duration = time.time() - start_time
+        await bot.edit_message_text(
+            f"Сканирование завершено! Найдено устройств: {len(devices)}",
+            chat_id=progress_msg.chat.id,
+            message_id=progress_msg.message_id
+        )
+        statistics_manager.record_scan('network', len(devices), net.num_addresses, duration)
+        await notification_manager.scan_completed('сети', len(devices), duration)
+        if not devices:
+            await message.answer("Устройства не найдены.", reply_markup=main_menu_keyboard())
+            active_scans_count -= 1
+            await state.finish()
+            return
+        text = f"Найдено устройств: {len(devices)}\n"
+        for d in devices:
+            if d.get('type') == 'miner':
+                text += f"{d['ip']}: miner (hashrate: {d.get('hashrate')}, uptime: {d.get('uptime')})\n"
+            else:
+                text += f"{d['ip']}: (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
+        text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
+        result_msg = await message.answer(text, reply_markup=main_menu_keyboard())
+        scan_results_storage[result_msg.message_id] = {
+            'devices': devices,
+            'type': 'devices',
+            'timestamp': time.time()
+        }
+        await state.update_data(devices=devices)
+        await ScanDevicesState.waiting_for_file_request.set()
+    except Exception as e:
+        await bot.edit_message_text(
+            f"Ошибка сканирования: {e}",
+            chat_id=progress_msg.chat.id,
+            message_id=progress_msg.message_id
+        )
+        active_scans_count -= 1
+        await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Загрузить файл для сканирования')
+async def handle_upload_file(message: Message):
+    statistics_manager.record_command('upload_file')
+    await message.answer("Пожалуйста, отправьте CSV-файл со списком IP-адресов.", reply_markup=main_menu_keyboard())
+
+@dp.message_handler(content_types=ContentType.DOCUMENT)
+async def process_csv_file(message: Message):
+    file = message.document
+    if not file.file_name.lower().endswith('.csv'):
+        await message.answer("Пожалуйста, отправьте файл в формате CSV.", reply_markup=main_menu_keyboard())
+        return
+    file_path = os.path.join(UPLOAD_DIR, file.file_name)
+    await message.document.download(destination_file=file_path)
+    try:
+        df = pd.read_csv(file_path)
+        if 'ip' not in df.columns:
+            await message.answer("В файле должен быть столбец 'ip'.", reply_markup=main_menu_keyboard())
+            return
+        ip_list = df['ip'].dropna().astype(str).tolist()
+        await message.answer(f"Сканирую {len(ip_list)} адресов из файла...", reply_markup=main_menu_keyboard())
+        start_time = time.time()
+        miners = await scan_miners_from_list(ip_list)
+        duration = time.time() - start_time
+        statistics_manager.record_scan('file_upload', len(miners), len(ip_list), duration)
+        if not miners:
+            await message.answer("Майнеры не найдены.", reply_markup=main_menu_keyboard())
+        else:
+            text = "Результаты сканирования:\n"
+            for m in miners:
+                text += f"{m['ip']}: status={m['status']}, hashrate={m['hashrate']}, uptime={m['uptime']}\n"
+            await message.answer(text, reply_markup=main_menu_keyboard())
+    except Exception as e:
+        statistics_manager.record_error('file_processing', str(e))
+        await message.answer(f"Ошибка обработки файла: {e}", reply_markup=main_menu_keyboard())
+    finally:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+@dp.message_handler(lambda m: m.text == 'Сканировать майнеры')
+async def handle_scan_miners(message: Message):
+    statistics_manager.record_command('scan_miners')
+    await message.answer("Введите сеть и маску для поиска майнеров (например, 192.168.1.0/24):", reply_markup=scan_menu_keyboard())
+    await ScanMinersState.waiting_for_network.set()
+
+@dp.message_handler(state=ScanMinersState.waiting_for_network)
+async def process_miners_network_input(message: Message, state: FSMContext):
+    cleanup_old_results()
+    global active_scans_count
+    active_scans_count += 1
+    network = message.text.strip()
+    try:
+        net = ipaddress.IPv4Network(network, strict=False)
+    except Exception:
+        await message.answer("Ошибка: некорректный формат сети. Пример: 192.168.1.0/24", reply_markup=main_menu_keyboard())
+        active_scans_count -= 1
+        await state.finish()
+        return
+    progress_msg = await message.answer(f"Начинаю сканирование сети {network} только на майнеры... 0%")
+    async def on_progress(done, total):
+        percent = int(done / total * 100)
+        bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
+        await bot.edit_message_text(
+            f"Сканирование: [{bar}] {percent}% ({done}/{total})",
+            chat_id=progress_msg.chat.id,
+            message_id=progress_msg.message_id
+        )
+    try:
+        miners = await scan_network_for_miners(network, on_progress=on_progress)
+        await bot.edit_message_text(
+            f"Сканирование завершено! Найдено майнеров: {len(miners)}",
+            chat_id=progress_msg.chat.id,
+            message_id=progress_msg.message_id
+        )
+        if not miners:
+            await message.answer("Майнеры не найдены.", reply_markup=main_menu_keyboard())
+            active_scans_count -= 1
+            await state.finish()
+            return
+        text = "Найдено майнеров: {}\n".format(len(miners))
+        for m in miners:
+            text += f"{m['ip']}: miner (hashrate: {m.get('hashrate')}, uptime: {m.get('uptime')})\n"
+        text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
+        result_msg = await message.answer(text, reply_markup=main_menu_keyboard())
+        scan_results_storage[result_msg.message_id] = {
+            'miners': miners,
+            'type': 'miners',
+            'timestamp': time.time()
+        }
+        await state.update_data(miners=miners)
+        await ScanMinersState.waiting_for_file_request.set()
+    except Exception as e:
+        await bot.edit_message_text(
+            f"Ошибка сканирования: {e}",
+            chat_id=progress_msg.chat.id,
+            message_id=progress_msg.message_id
+        )
+        active_scans_count -= 1
+        await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Быстрое сканирование сети')
+async def handle_fast_scan(message: Message):
+    await message.answer("Введите сеть и маску для быстрого сканирования (например, 192.168.1.0/24):", reply_markup=scan_menu_keyboard())
+    await FastScanState.waiting_for_network.set()
+
+@dp.message_handler(state=FastScanState.waiting_for_network)
+async def process_fast_scan_network_input(message: Message, state: FSMContext):
+    cleanup_old_results()
+    global active_scans_count
+    active_scans_count += 1
+    network = message.text.strip()
+    try:
+        net = ipaddress.IPv4Network(network, strict=False)
+    except Exception:
+        await message.answer("Ошибка: некорректный формат сети. Пример: 192.168.1.0/24", reply_markup=main_menu_keyboard())
+        active_scans_count -= 1
+        await state.finish()
+        return
+    progress_msg = await message.answer(f"Начинаю быстрое сканирование сети {network}... 0%")
+    async def on_progress(done, total):
+        percent = int(done / total * 100)
+        bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
+        await bot.edit_message_text(
+            f"Быстрое сканирование: [{bar}] {percent}% ({done}/{total})",
+            chat_id=progress_msg.chat.id,
+            message_id=progress_msg.message_id
+        )
+    try:
+        devices = await fast_scan_network(network, on_progress=on_progress)
+        await bot.edit_message_text(
+            f"Быстрое сканирование завершено! Найдено устройств: {len(devices)}",
+            chat_id=progress_msg.chat.id,
+            message_id=progress_msg.message_id
+        )
+        if not devices:
+            await message.answer("Устройства не найдены.", reply_markup=main_menu_keyboard())
+            active_scans_count -= 1
+            await state.finish()
+            return
+        text = f"Найдено устройств: {len(devices)}\n"
+        for d in devices:
+            if d.get('type') == 'miner':
+                text += f"{d['ip']}: miner (hashrate: {d.get('hashrate')}, uptime: {d.get('uptime')})\n"
+            else:
+                text += f"{d['ip']}: {d.get('type', 'unknown')} (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
+        text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
+        result_msg = await message.answer(text, reply_markup=main_menu_keyboard())
+        scan_results_storage[result_msg.message_id] = {
+            'devices': devices,
+            'type': 'fast_scan',
+            'timestamp': time.time()
+        }
+        await state.update_data(devices=devices)
+        await FastScanState.waiting_for_file_request.set()
+    except Exception as e:
+        await bot.edit_message_text(
+            f"Ошибка быстрого сканирования: {e}",
+            chat_id=progress_msg.chat.id,
+            message_id=progress_msg.message_id
+        )
+        active_scans_count -= 1
+        await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Статистика')
+async def handle_statistics(message: Message):
+    report = statistics_manager.generate_report()
+    await message.answer(report, parse_mode='Markdown', reply_markup=main_menu_keyboard())
 
 if __name__ == '__main__':
     executor.start_polling(
