@@ -80,11 +80,14 @@ class FastScanState(StatesGroup):
 
 class MonitoringState(StatesGroup):
     waiting_for_interval = State()
+    waiting_for_autostart = State()
+    waiting_for_notify_change = State()
+    waiting_for_notify_start = State()
 
 class NotificationState(StatesGroup):
     waiting_for_level = State()
-    waiting_for_quiet_start = State()
-    waiting_for_quiet_end = State()
+    waiting_for_quiet_toggle = State()
+    waiting_for_toggle = State()
 
 class ScanSettingsState(StatesGroup):
     waiting_for_timeout = State()
@@ -109,11 +112,13 @@ class SecuritySettingsState(StatesGroup):
     waiting_for_users = State()
     waiting_for_log_level = State()
     waiting_for_token = State()
+    waiting_for_admin_only = State()
 
 class BackupSettingsState(StatesGroup):
     waiting_for_interval = State()
     waiting_for_max_count = State()
     waiting_for_import = State()
+    waiting_for_auto = State()
 
 @dp.message_handler(commands=['start', 'menu'])
 async def send_welcome(message: Message):
@@ -560,7 +565,7 @@ async def handle_statistics(message: Message):
     await message.answer(status_text, parse_mode='Markdown')
     await message.answer(report, parse_mode='Markdown', reply_markup=main_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(lambda m: m.text == 'Интервал мониторинга')
+@dp.message_handler(lambda m: m.text == translate(get_lang(), 'monitoring_interval'))
 async def handle_monitoring_interval(message: Message):
     current = settings_manager.get_setting('monitoring.interval', 300)
     await message.answer(translate(get_lang(), 'monitoring_interval_prompt', value=current), reply_markup=cancel_keyboard(lang=get_lang()))
@@ -581,114 +586,80 @@ async def process_monitoring_interval(message: Message, state: FSMContext):
         await message.answer(translate(get_lang(), 'monitoring_interval_input_error'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
     await state.finish()
 
-@dp.message_handler(lambda m: m.text == 'Автозапуск мониторинга')
+@dp.message_handler(lambda m: m.text == translate(get_lang(), 'monitoring_autostart'))
 async def handle_monitoring_autostart(message: Message):
-    current = settings_manager.get_setting('monitoring.auto_start', False)
-    new_value = not current
+    current = settings_manager.get_setting('monitoring.auto_start', True)
+    value = 'да' if current else 'нет'
+    await message.answer(translate(get_lang(), 'monitoring_autostart_prompt', value=value), reply_markup=cancel_keyboard(lang=get_lang()))
+    await MonitoringState.waiting_for_autostart.set()
+
+@dp.message_handler(state=MonitoringState.waiting_for_autostart)
+async def process_monitoring_autostart(message: Message, state: FSMContext):
+    text = message.text.strip().lower()
+    if text in ['да', 'yes', 'y', 'oui', 'ja', '是']:
+        new_value = True
+    elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
+        new_value = False
+    else:
+        await message.answer(translate(get_lang(), 'input_error'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
+        await state.finish()
+        return
     if settings_manager.set_setting('monitoring.auto_start', new_value):
         status = 'включён' if new_value else 'выключен'
         await message.answer(translate(get_lang(), 'monitoring_autostart_set', status=status), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
     else:
-        await message.answer(translate(get_lang(), 'monitoring_autostart_error'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
+    await state.finish()
 
-@dp.message_handler(lambda m: m.text == 'Уведомления об изменениях')
+@dp.message_handler(lambda m: m.text == translate(get_lang(), 'monitoring_notify_change'))
 async def handle_monitoring_notify_change(message: Message):
-    current = settings_manager.get_setting('monitoring.notify_on_change', False)
-    new_value = not current
+    current = settings_manager.get_setting('monitoring.notify_on_change', True)
+    value = 'да' if current else 'нет'
+    await message.answer(translate(get_lang(), 'monitoring_notify_change_prompt', value=value), reply_markup=cancel_keyboard(lang=get_lang()))
+    await MonitoringState.waiting_for_notify_change.set()
+
+@dp.message_handler(state=MonitoringState.waiting_for_notify_change)
+async def process_monitoring_notify_change(message: Message, state: FSMContext):
+    text = message.text.strip().lower()
+    if text in ['да', 'yes', 'y', 'oui', 'ja', '是']:
+        new_value = True
+    elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
+        new_value = False
+    else:
+        await message.answer(translate(get_lang(), 'input_error'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
+        await state.finish()
+        return
     if settings_manager.set_setting('monitoring.notify_on_change', new_value):
         status = 'включены' if new_value else 'выключены'
         await message.answer(translate(get_lang(), 'monitoring_notify_change_set', status=status), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
     else:
-        await message.answer(translate(get_lang(), 'monitoring_notify_change_error'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
+    await state.finish()
 
-@dp.message_handler(lambda m: m.text == 'Уведомления при запуске')
+@dp.message_handler(lambda m: m.text == translate(get_lang(), 'monitoring_notify_start'))
 async def handle_monitoring_notify_start(message: Message):
-    current = settings_manager.get_setting('monitoring.notify_on_start', False)
-    new_value = not current
+    current = settings_manager.get_setting('monitoring.notify_on_start', True)
+    value = 'да' if current else 'нет'
+    await message.answer(translate(get_lang(), 'monitoring_notify_start_prompt', value=value), reply_markup=cancel_keyboard(lang=get_lang()))
+    await MonitoringState.waiting_for_notify_start.set()
+
+@dp.message_handler(state=MonitoringState.waiting_for_notify_start)
+async def process_monitoring_notify_start(message: Message, state: FSMContext):
+    text = message.text.strip().lower()
+    if text in ['да', 'yes', 'y', 'oui', 'ja', '是']:
+        new_value = True
+    elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
+        new_value = False
+    else:
+        await message.answer(translate(get_lang(), 'input_error'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
+        await state.finish()
+        return
     if settings_manager.set_setting('monitoring.notify_on_start', new_value):
         status = 'включены' if new_value else 'выключены'
         await message.answer(translate(get_lang(), 'monitoring_notify_start_set', status=status), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
     else:
-        await message.answer(translate(get_lang(), 'monitoring_notify_start_error'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
-
-@dp.message_handler(lambda m: m.text == 'Включить/выключить уведомления')
-async def handle_toggle_notifications(message: Message):
-    current = settings_manager.get_setting('notifications.enabled', True)
-    new_value = not current
-    if settings_manager.set_setting('notifications.enabled', new_value):
-        status = 'включены' if new_value else 'выключены'
-        await message.answer(translate(get_lang(), 'notifications_toggle_set', status=status), reply_markup=notification_menu_keyboard(lang=get_lang()))
-    else:
-        await message.answer(translate(get_lang(), 'notifications_toggle_error'), reply_markup=notification_menu_keyboard(lang=get_lang()))
-
-@dp.message_handler(lambda m: m.text == 'Тихие часы')
-async def handle_toggle_quiet_hours(message: Message):
-    current = settings_manager.get_setting('notifications.quiet_hours.enabled', False)
-    new_value = not current
-    if settings_manager.set_setting('notifications.quiet_hours.enabled', new_value):
-        status = 'включены' if new_value else 'выключены'
-        await message.answer(translate(get_lang(), 'quiet_hours_toggle_set', status=status), reply_markup=notification_menu_keyboard(lang=get_lang()))
-    else:
-        await message.answer(translate(get_lang(), 'quiet_hours_toggle_error'), reply_markup=notification_menu_keyboard(lang=get_lang()))
-
-@dp.message_handler(lambda m: m.text == 'Уровни уведомлений')
-async def handle_notification_level(message: Message):
-    current = settings_manager.get_setting('notifications.level', 'INFO')
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add(KeyboardButton('INFO'), KeyboardButton('WARNING'), KeyboardButton('ERROR'))
-    keyboard.add(KeyboardButton('Отмена'))
-    await message.answer(translate(get_lang(), 'notifications_level_current', value=current), reply_markup=keyboard)
-    await NotificationState.waiting_for_level.set()
-
-@dp.message_handler(state=NotificationState.waiting_for_level)
-async def process_notification_level(message: Message, state: FSMContext):
-    level = message.text.strip().upper()
-    if level not in ['INFO', 'WARNING', 'ERROR']:
-        await message.answer(translate(get_lang(), 'notifications_level_error'), reply_markup=notification_menu_keyboard(lang=get_lang()))
-        await state.finish()
-        return
-    if settings_manager.set_setting('notifications.level', level):
-        await message.answer(translate(get_lang(), 'notifications_level_set', value=level), reply_markup=notification_menu_keyboard(lang=get_lang()))
-    else:
-        await message.answer(translate(get_lang(), 'notifications_level_save_error'), reply_markup=notification_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
     await state.finish()
-
-@dp.message_handler(lambda m: m.text == 'Время тихих часов')
-async def handle_quiet_hours_time(message: Message, state: FSMContext):
-    current_start = settings_manager.get_setting('notifications.quiet_hours.start', '22:00')
-    current_end = settings_manager.get_setting('notifications.quiet_hours.end', '08:00')
-    await message.answer(translate(get_lang(), 'quiet_hours_current', start=current_start, end=current_end), reply_markup=cancel_keyboard(lang=get_lang()))
-    await NotificationState.waiting_for_quiet_start.set()
-
-@dp.message_handler(state=NotificationState.waiting_for_quiet_start)
-async def process_quiet_hours_start(message: Message, state: FSMContext):
-    start = message.text.strip()
-    if not validate_time(start):
-        await message.answer(translate(get_lang(), 'quiet_hours_start_error'))
-        return
-    await state.update_data(quiet_start=start)
-    await message.answer(translate(get_lang(), 'quiet_hours_end_prompt'))
-    await NotificationState.waiting_for_quiet_end.set()
-
-@dp.message_handler(state=NotificationState.waiting_for_quiet_end)
-async def process_quiet_hours_end(message: Message, state: FSMContext):
-    end = message.text.strip()
-    if not validate_time(end):
-        await message.answer(translate(get_lang(), 'quiet_hours_end_error'))
-        return
-    data = await state.get_data()
-    start = data.get('quiet_start', '22:00')
-    ok1 = settings_manager.set_setting('notifications.quiet_hours.start', start)
-    ok2 = settings_manager.set_setting('notifications.quiet_hours.end', end)
-    if ok1 and ok2:
-        await message.answer(translate(get_lang(), 'quiet_hours_set', start=start, end=end), reply_markup=notification_menu_keyboard(lang=get_lang()))
-    else:
-        await message.answer(translate(get_lang(), 'quiet_hours_save_error'), reply_markup=notification_menu_keyboard(lang=get_lang()))
-    await state.finish()
-
-def validate_time(s):
-    import re
-    return bool(re.match(r'^[0-2][0-9]:[0-5][0-9]$', s))
 
 @dp.message_handler(lambda m: m.text == 'Таймаут сканирования')
 async def handle_scan_timeout(message: Message):
@@ -1018,12 +989,27 @@ async def process_security_users(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Только админ настройки')
 async def handle_security_admin_only(message: Message):
     current = settings_manager.get_setting('security.admin_only', False)
-    new_value = not current
+    value = 'да' if current else 'нет'
+    await message.answer(translate(get_lang(), 'security_admin_only_prompt', value=value), reply_markup=cancel_keyboard(lang=get_lang()))
+    await SecuritySettingsState.waiting_for_admin_only.set()
+
+@dp.message_handler(state=SecuritySettingsState.waiting_for_admin_only)
+async def process_security_admin_only(message: Message, state: FSMContext):
+    text = message.text.strip().lower()
+    if text in ['да', 'yes', 'y', 'oui', 'ja', '是']:
+        new_value = True
+    elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
+        new_value = False
+    else:
+        await message.answer(translate(get_lang(), 'input_error'), reply_markup=security_menu_keyboard(lang=get_lang()))
+        await state.finish()
+        return
     if settings_manager.set_setting('security.admin_only', new_value):
         status = 'только админ' if new_value else 'все пользователи'
         await message.answer(translate(get_lang(), 'security_admin_only_set', status=status), reply_markup=security_menu_keyboard(lang=get_lang()))
     else:
-        await message.answer(translate(get_lang(), 'security_admin_only_error'), reply_markup=security_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=security_menu_keyboard(lang=get_lang()))
+    await state.finish()
 
 @dp.message_handler(lambda m: m.text == 'Уровень логирования')
 async def handle_security_log_level(message: Message):
@@ -1065,12 +1051,27 @@ async def process_security_token(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Авторезервное копирование')
 async def handle_backup_auto(message: Message):
     current = settings_manager.get_setting('backup.auto', False)
-    new_value = not current
+    value = 'да' if current else 'нет'
+    await message.answer(translate(get_lang(), 'backup_auto_prompt', value=value), reply_markup=cancel_keyboard(lang=get_lang()))
+    await BackupSettingsState.waiting_for_auto.set()
+
+@dp.message_handler(state=BackupSettingsState.waiting_for_auto)
+async def process_backup_auto(message: Message, state: FSMContext):
+    text = message.text.strip().lower()
+    if text in ['да', 'yes', 'y', 'oui', 'ja', '是']:
+        new_value = True
+    elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
+        new_value = False
+    else:
+        await message.answer(translate(get_lang(), 'input_error'), reply_markup=backup_menu_keyboard(lang=get_lang()))
+        await state.finish()
+        return
     if settings_manager.set_setting('backup.auto', new_value):
         status = 'включено' if new_value else 'выключено'
         await message.answer(translate(get_lang(), 'backup_auto_set', status=status), reply_markup=backup_menu_keyboard(lang=get_lang()))
     else:
-        await message.answer(translate(get_lang(), 'backup_auto_error'), reply_markup=backup_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=backup_menu_keyboard(lang=get_lang()))
+    await state.finish()
 
 @dp.message_handler(lambda m: m.text == 'Интервал резервного копирования')
 async def handle_backup_interval(message: Message):
