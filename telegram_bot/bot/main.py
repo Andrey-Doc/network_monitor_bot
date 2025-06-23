@@ -105,6 +105,19 @@ class RouterSettingsState(StatesGroup):
     waiting_for_ports = State()
     waiting_for_interval = State()
 
+class InterfaceSettingsState(StatesGroup):
+    waiting_for_language = State()
+
+class SecuritySettingsState(StatesGroup):
+    waiting_for_users = State()
+    waiting_for_log_level = State()
+    waiting_for_token = State()
+
+class BackupSettingsState(StatesGroup):
+    waiting_for_interval = State()
+    waiting_for_max_count = State()
+    waiting_for_import = State()
+
 @dp.message_handler(commands=['start', 'menu'])
 async def send_welcome(message: Message):
     statistics_manager.record_command('start')
@@ -862,6 +875,256 @@ async def handle_router_status_menu(message: Message):
 def validate_ip(ip):
     import re
     return bool(re.match(r'^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$', ip))
+
+@dp.message_handler(lambda m: m.text == 'Язык интерфейса')
+async def handle_interface_language(message: Message):
+    current = settings_manager.get_setting('interface.language', 'ru')
+    await message.answer(f'Текущий язык интерфейса: {current}\nВведите новый язык (ru/en):', reply_markup=types.ReplyKeyboardRemove())
+    await InterfaceSettingsState.waiting_for_language.set()
+
+@dp.message_handler(state=InterfaceSettingsState.waiting_for_language)
+async def process_interface_language(message: Message, state: FSMContext):
+    lang = message.text.strip().lower()
+    if lang not in ['ru', 'en']:
+        await message.answer('❌ Допустимые значения: ru, en.', reply_markup=interface_menu_keyboard())
+        await state.finish()
+        return
+    if settings_manager.set_setting('interface.language', lang):
+        await message.answer(f'✅ Язык интерфейса установлен: {lang}', reply_markup=interface_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при сохранении языка.', reply_markup=interface_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Показывать прогресс')
+async def handle_interface_progress(message: Message):
+    current = settings_manager.get_setting('interface.show_progress', True)
+    new_value = not current
+    if settings_manager.set_setting('interface.show_progress', new_value):
+        status = 'будет показываться' if new_value else 'не будет показываться'
+        await message.answer(f'Прогресс {status}.', reply_markup=interface_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при изменении.', reply_markup=interface_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Показывать время')
+async def handle_interface_time(message: Message):
+    current = settings_manager.get_setting('interface.show_time', True)
+    new_value = not current
+    if settings_manager.set_setting('interface.show_time', new_value):
+        status = 'будет показываться' if new_value else 'не будет показываться'
+        await message.answer(f'Время {status}.', reply_markup=interface_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при изменении.', reply_markup=interface_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Компактный режим')
+async def handle_interface_compact(message: Message):
+    current = settings_manager.get_setting('interface.compact_mode', False)
+    new_value = not current
+    if settings_manager.set_setting('interface.compact_mode', new_value):
+        status = 'включён' if new_value else 'выключен'
+        await message.answer(f'Компактный режим теперь {status}.', reply_markup=interface_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при изменении.', reply_markup=interface_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Разрешенные пользователи')
+async def handle_security_users(message: Message):
+    current = settings_manager.get_setting('security.allowed_users', [])
+    current_str = ', '.join(map(str, current)) if current else 'не задано'
+    await message.answer(f'Текущие разрешённые пользователи: {current_str}\nВведите user_id через запятую или с новой строки:', reply_markup=types.ReplyKeyboardRemove())
+    await SecuritySettingsState.waiting_for_users.set()
+
+@dp.message_handler(state=SecuritySettingsState.waiting_for_users)
+async def process_security_users(message: Message, state: FSMContext):
+    text = message.text.replace('\n', ',').replace(';', ',')
+    users = [u.strip() for u in text.split(',') if u.strip().isdigit()]
+    if not users:
+        await message.answer('❌ Введите список user_id через запятую или с новой строки.', reply_markup=security_menu_keyboard())
+        await state.finish()
+        return
+    users = [int(u) for u in users]
+    if settings_manager.set_setting('security.allowed_users', users):
+        await message.answer(f'✅ Разрешённые пользователи обновлены: {", ".join(map(str, users))}', reply_markup=security_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при сохранении.', reply_markup=security_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Только админ настройки')
+async def handle_security_admin_only(message: Message):
+    current = settings_manager.get_setting('security.admin_only', False)
+    new_value = not current
+    if settings_manager.set_setting('security.admin_only', new_value):
+        status = 'только админ' if new_value else 'все пользователи'
+        await message.answer(f'Настройки теперь доступны: {status}.', reply_markup=security_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при изменении.', reply_markup=security_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Уровень логирования')
+async def handle_security_log_level(message: Message):
+    current = settings_manager.get_setting('security.log_level', 'INFO')
+    await message.answer(f'Текущий уровень логирования: {current}\nВведите новый уровень (DEBUG, INFO, WARNING, ERROR):', reply_markup=types.ReplyKeyboardRemove())
+    await SecuritySettingsState.waiting_for_log_level.set()
+
+@dp.message_handler(state=SecuritySettingsState.waiting_for_log_level)
+async def process_security_log_level(message: Message, state: FSMContext):
+    level = message.text.strip().upper()
+    if level not in ['DEBUG', 'INFO', 'WARNING', 'ERROR']:
+        await message.answer('❌ Допустимые значения: DEBUG, INFO, WARNING, ERROR.', reply_markup=security_menu_keyboard())
+        await state.finish()
+        return
+    if settings_manager.set_setting('security.log_level', level):
+        await message.answer(f'✅ Уровень логирования установлен: {level}', reply_markup=security_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при сохранении.', reply_markup=security_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Изменить токен')
+async def handle_security_token(message: Message):
+    await message.answer('Введите новый токен для Telegram-бота:', reply_markup=types.ReplyKeyboardRemove())
+    await SecuritySettingsState.waiting_for_token.set()
+
+@dp.message_handler(state=SecuritySettingsState.waiting_for_token)
+async def process_security_token(message: Message, state: FSMContext):
+    token = message.text.strip()
+    if not token or len(token) < 30:
+        await message.answer('❌ Введите корректный токен.', reply_markup=security_menu_keyboard())
+        await state.finish()
+        return
+    if settings_manager.set_setting('TELEGRAM_BOT_TOKEN', token):
+        await message.answer('✅ Токен Telegram-бота обновлён. Перезапустите бота для применения.', reply_markup=security_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при сохранении токена.', reply_markup=security_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Авторезервное копирование')
+async def handle_backup_auto(message: Message):
+    current = settings_manager.get_setting('backup.auto', False)
+    new_value = not current
+    if settings_manager.set_setting('backup.auto', new_value):
+        status = 'включено' if new_value else 'выключено'
+        await message.answer(f'Авторезервное копирование {status}.', reply_markup=backup_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при изменении.', reply_markup=backup_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Интервал резервного копирования')
+async def handle_backup_interval(message: Message):
+    current = settings_manager.get_setting('backup.interval', 24)
+    await message.answer(f'Текущий интервал резервного копирования: {current} ч.\nВведите новый интервал в часах (1-168):', reply_markup=types.ReplyKeyboardRemove())
+    await BackupSettingsState.waiting_for_interval.set()
+
+@dp.message_handler(state=BackupSettingsState.waiting_for_interval)
+async def process_backup_interval(message: Message, state: FSMContext):
+    try:
+        interval = int(message.text.strip())
+        if interval < 1 or interval > 168:
+            await message.answer('❌ Интервал должен быть от 1 до 168 часов.', reply_markup=backup_menu_keyboard())
+            return
+        if settings_manager.set_setting('backup.interval', interval):
+            await message.answer(f'✅ Интервал резервного копирования установлен: {interval} ч.', reply_markup=backup_menu_keyboard())
+        else:
+            await message.answer('❌ Ошибка при сохранении.', reply_markup=backup_menu_keyboard())
+    except Exception:
+        await message.answer('❌ Введите целое число (часы).', reply_markup=backup_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Макс. количество резервных копий')
+async def handle_backup_max_count(message: Message):
+    current = settings_manager.get_setting('backup.max_count', 10)
+    await message.answer(f'Текущее максимальное количество резервных копий: {current}\nВведите новое значение (1-100):', reply_markup=types.ReplyKeyboardRemove())
+    await BackupSettingsState.waiting_for_max_count.set()
+
+@dp.message_handler(state=BackupSettingsState.waiting_for_max_count)
+async def process_backup_max_count(message: Message, state: FSMContext):
+    try:
+        value = int(message.text.strip())
+        if value < 1 or value > 100:
+            await message.answer('❌ Значение должно быть от 1 до 100.', reply_markup=backup_menu_keyboard())
+            return
+        if settings_manager.set_setting('backup.max_count', value):
+            await message.answer(f'✅ Максимальное количество резервных копий: {value}', reply_markup=backup_menu_keyboard())
+        else:
+            await message.answer('❌ Ошибка при сохранении.', reply_markup=backup_menu_keyboard())
+    except Exception:
+        await message.answer('❌ Введите целое число.', reply_markup=backup_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Создать резервную копию сейчас')
+async def handle_backup_now(message: Message):
+    backup_path = settings_manager.create_backup()
+    if backup_path and backup_path.endswith('.zip') and os.path.exists(backup_path):
+        with open(backup_path, 'rb') as f:
+            await message.answer_document(f, caption='Резервная копия создана.', reply_markup=backup_menu_keyboard())
+    else:
+        await message.answer(f'❌ Ошибка при создании резервной копии: {backup_path}', reply_markup=backup_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Экспорт настроек')
+async def handle_export_settings(message: Message):
+    json_str = settings_manager.export_settings()
+    await message.answer_document(('settings_export.json', json_str.encode('utf-8')), caption='Экспорт настроек.', reply_markup=export_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Импорт настроек')
+async def handle_import_settings(message: Message):
+    await message.answer('Отправьте файл или вставьте JSON с настройками для импорта:', reply_markup=types.ReplyKeyboardRemove())
+    await BackupSettingsState.waiting_for_import.set()
+
+@dp.message_handler(state=BackupSettingsState.waiting_for_import, content_types=ContentType.DOCUMENT)
+async def process_import_settings_file(message: Message, state: FSMContext):
+    file = message.document
+    file_path = os.path.join(UPLOAD_DIR, file.file_name)
+    await message.document.download(destination_file=file_path)
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            json_str = f.read()
+        ok = settings_manager.import_settings(json_str)
+        if ok:
+            await message.answer('✅ Настройки успешно импортированы.', reply_markup=export_menu_keyboard())
+        else:
+            await message.answer('❌ Ошибка при импорте настроек.', reply_markup=export_menu_keyboard())
+    except Exception as e:
+        await message.answer(f'❌ Ошибка: {e}', reply_markup=export_menu_keyboard())
+    finally:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+    await state.finish()
+
+@dp.message_handler(state=BackupSettingsState.waiting_for_import, content_types=ContentType.TEXT)
+async def process_import_settings_text(message: Message, state: FSMContext):
+    json_str = message.text.strip()
+    ok = settings_manager.import_settings(json_str)
+    if ok:
+        await message.answer('✅ Настройки успешно импортированы.', reply_markup=export_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при импорте настроек.', reply_markup=export_menu_keyboard())
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text == 'Экспорт статистики')
+async def handle_export_stats(message: Message):
+    stats_path = os.path.join(UPLOAD_DIR, 'statistics.json')
+    if os.path.exists(stats_path):
+        with open(stats_path, 'rb') as f:
+            await message.answer_document(f, caption='Экспорт статистики.', reply_markup=export_menu_keyboard())
+    else:
+        await message.answer('❌ Файл статистики не найден.', reply_markup=export_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Экспорт логов')
+async def handle_export_logs(message: Message):
+    log_path = os.path.join(UPLOAD_DIR, 'bot.log')
+    if os.path.exists(log_path):
+        with open(log_path, 'rb') as f:
+            await message.answer_document(f, caption='Экспорт логов.', reply_markup=export_menu_keyboard())
+    else:
+        await message.answer('❌ Файл логов не найден.', reply_markup=export_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Сводка настроек')
+async def handle_settings_summary(message: Message):
+    summary = settings_manager.get_settings_summary()
+    await message.answer(summary, parse_mode='Markdown', reply_markup=settings_menu_keyboard())
+
+@dp.message_handler(lambda m: m.text == 'Сбросить настройки')
+async def handle_settings_reset(message: Message):
+    ok = settings_manager.reset_to_defaults()
+    if ok:
+        await message.answer('✅ Настройки сброшены к значениям по умолчанию.', reply_markup=settings_menu_keyboard())
+    else:
+        await message.answer('❌ Ошибка при сбросе настроек.', reply_markup=settings_menu_keyboard())
 
 if __name__ == '__main__':
     executor.start_polling(
