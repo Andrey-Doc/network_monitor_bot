@@ -21,6 +21,10 @@ TRANSLATIONS = {
         'input_error': '❌ Некорректный ввод.',
         'done': '✅ Готово.',
         'monitoring_autostart_set': 'Автозапуск мониторинга: {status}',
+        'monitoring_notify_change_set': 'Уведомления об изменениях: {status}',
+        'monitoring_notify_start_set': 'Уведомления при запуске: {status}',
+        'notifications_toggle_set': 'Уведомления: {status}',
+        'quiet_hours_toggle_set': 'Тихие часы: {status}',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -44,6 +48,10 @@ TRANSLATIONS = {
         'input_error': '❌ Invalid input.',
         'done': '✅ Done.',
         'monitoring_autostart_set': 'Monitoring autostart: {status}',
+        'monitoring_notify_change_set': 'Change notifications: {status}',
+        'monitoring_notify_start_set': 'Start notifications: {status}',
+        'notifications_toggle_set': 'Notifications: {status}',
+        'quiet_hours_toggle_set': 'Quiet hours: {status}',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -67,6 +75,10 @@ TRANSLATIONS = {
         'input_error': '❌ Ungültige Eingabe.',
         'done': '✅ Fertig.',
         'monitoring_autostart_set': 'Überwachungsautostart: {status}',
+        'monitoring_notify_change_set': 'Benachrichtigungen bei Änderungen: {status}',
+        'monitoring_notify_start_set': 'Benachrichtigungen beim Start: {status}',
+        'notifications_toggle_set': 'Benachrichtigungen: {status}',
+        'quiet_hours_toggle_set': 'Ruhezeiten: {status}',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -90,6 +102,10 @@ TRANSLATIONS = {
         'input_error': '❌ Ongeldige invoer.',
         'done': '✅ Klaar.',
         'monitoring_autostart_set': 'Monitoring autostart: {status}',
+        'monitoring_notify_change_set': 'Wijzigingsmeldingen: {status}',
+        'monitoring_notify_start_set': 'Startmeldingen: {status}',
+        'notifications_toggle_set': 'Meldingen: {status}',
+        'quiet_hours_toggle_set': 'Stille uren: {status}',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -113,6 +129,10 @@ TRANSLATIONS = {
         'input_error': '❌ 输入无效。',
         'done': '✅ 完成。',
         'monitoring_autostart_set': '监控自动启动: {status}',
+        'monitoring_notify_change_set': '变更通知: {status}',
+        'monitoring_notify_start_set': '启动通知: {status}',
+        'notifications_toggle_set': '通知: {status}',
+        'quiet_hours_toggle_set': '安静时段: {status}',
     },
 }
 
