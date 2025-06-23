@@ -8,12 +8,16 @@ import logging
 from typing import Dict, Any, Optional
 from datetime import datetime
 import shutil
+import importlib.util
 
 class SettingsManager:
-    """Менеджер настроек бота"""
+    """Менеджер настроек бота с синхронизацией config.py <-> settings.json"""
     
-    def __init__(self, config_file: str = "data/settings.json"):
+    def __init__(self, config_file: str = "data/settings.json", config_py: str = "bot/config.py"):
         self.config_file = config_file
+        self.config_py = config_py
+        self.config_py_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", config_py))
+        self.config_dict = self._load_config_py()
         self.settings = self._load_settings()
         self._ensure_data_dir()
         
@@ -21,70 +25,33 @@ class SettingsManager:
         """Создаёт директорию для данных если её нет"""
         os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
         
-    def _load_settings(self) -> Dict[str, Any]:
-        """Загружает настройки из файла"""
-        default_settings = {
-            'monitoring': {
-                'enabled': True,
-                'interval': 300,  # 5 минут
-                'auto_start': False,
-                'notify_on_change': True,
-                'notify_on_startup': True
-            },
-            'notifications': {
-                'enabled': True,
-                'levels': ['info', 'warning', 'critical', 'success'],
-                'quiet_hours': {
-                    'enabled': False,
-                    'start': '22:00',
-                    'end': '08:00'
-                }
-            },
-            'scanning': {
-                'default_timeout': 5,
-                'max_concurrent_scans': 3,
-                'default_ports': [22, 80, 443, 8080, 8022, 4028],
-                'miner_ports': [4028],
-                'router_ports': [8080, 8022],
-                'results_ttl': 3600
-            },
-            'routers': {
-                'ips': ['11.250.0.1', '11.250.0.2', '11.250.0.3', '11.250.0.4', '11.250.0.5'],
-                'ports': [8080, 8022],
-                'check_interval': 60
-            },
-            'interface': {
-                'language': 'ru',
-                'show_progress': True,
-                'show_timestamps': True,
-                'compact_mode': False
-            },
-            'security': {
-                'allowed_users': [],
-                'admin_only_settings': True,
-                'log_level': 'INFO'
-            },
-            'backup': {
-                'auto_backup': True,
-                'backup_interval': 86400,  # 24 часа
-                'max_backups': 7
-            }
-        }
-        
+    def _load_config_py(self) -> dict:
+        """Загружает CONFIG из config.py как словарь"""
         try:
-            if os.path.exists(self.config_file):
+            spec = importlib.util.spec_from_file_location("config", self.config_py_path)
+            config_mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(config_mod)
+            return dict(getattr(config_mod, "CONFIG", {}))
+        except Exception as e:
+            logging.error(f"[SETTINGS] Ошибка загрузки config.py: {e}")
+            return {}
+        
+    def _load_settings(self) -> Dict[str, Any]:
+        """Загружает настройки из файла или инициализирует из config.py"""
+        if os.path.exists(self.config_file):
+            try:
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     loaded_settings = json.load(f)
-                    # Объединяем с настройками по умолчанию
-                    return self._merge_settings(default_settings, loaded_settings)
-            else:
-                # Создаём файл с настройками по умолчанию
-                self._save_settings(default_settings)
-                return default_settings
-        except Exception as e:
-            logging.error(f"[SETTINGS] Ошибка загрузки настроек: {e}")
-            return default_settings
-            
+                # Объединяем с config.py (config.py — источник по умолчанию)
+                return self._merge_settings(self.config_dict, loaded_settings)
+            except Exception as e:
+                logging.error(f"[SETTINGS] Ошибка загрузки settings.json: {e}")
+                return self.config_dict.copy()
+        else:
+            # Если файла нет — инициализируем из config.py
+            self._save_settings(self.config_dict)
+            return self.config_dict.copy()
+        
     def _merge_settings(self, default: Dict, loaded: Dict) -> Dict:
         """Объединяет настройки по умолчанию с загруженными"""
         result = default.copy()
@@ -100,13 +67,26 @@ class SettingsManager:
         return result
         
     def _save_settings(self, settings: Dict[str, Any]):
-        """Сохраняет настройки в файл"""
+        """Сохраняет настройки в файл и обновляет config.py"""
         try:
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, indent=2, ensure_ascii=False)
-            logging.info("[SETTINGS] Настройки сохранены")
+            self._update_config_py(settings)
+            logging.info("[SETTINGS] Настройки сохранены и config.py обновлён")
         except Exception as e:
             logging.error(f"[SETTINGS] Ошибка сохранения настроек: {e}")
+            
+    def _update_config_py(self, settings: Dict[str, Any]):
+        """Обновляет CONFIG в config.py на основе settings"""
+        try:
+            lines = ["CONFIG = {\n"]
+            for k, v in settings.items():
+                lines.append(f"    {json.dumps(k)}: {json.dumps(v, ensure_ascii=False)},\n")
+            lines.append("}\n")
+            with open(self.config_py_path, 'w', encoding='utf-8') as f:
+                f.writelines(lines)
+        except Exception as e:
+            logging.error(f"[SETTINGS] Ошибка обновления config.py: {e}")
             
     def get_setting(self, path: str, default: Any = None) -> Any:
         """Получает значение настройки по пути (например, 'monitoring.interval')"""

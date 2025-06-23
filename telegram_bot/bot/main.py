@@ -1,7 +1,6 @@
 import logging
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import Message, ContentType, CallbackQuery
-from .config import TELEGRAM_BOT_TOKEN, CHAT_ID, ROUTER_IPS, ROUTER_PORTS, SCAN_RESULTS_TTL
 from .keyboards import main_menu_keyboard
 from .inline_keyboards import (
     get_main_inline_keyboard, get_monitoring_control_keyboard, 
@@ -33,11 +32,19 @@ from ..utils.help_system import HelpSystem
 
 logging.basicConfig(level=logging.INFO)
 
+UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data'))
+settings_manager = SettingsManager(os.path.join(UPLOAD_DIR, 'settings.json'), config_py="bot/config.py")
+
+# Получаем основные параметры из settings_manager
+TELEGRAM_BOT_TOKEN = settings_manager.get_setting('TELEGRAM_BOT_TOKEN')
+CHAT_ID = settings_manager.get_setting('CHAT_ID')
+ROUTER_IPS = settings_manager.get_setting('ROUTER_IPS')
+ROUTER_PORTS = settings_manager.get_setting('ROUTER_PORTS')
+SCAN_RESULTS_TTL = settings_manager.get_setting('SCAN_RESULTS_TTL', 3600)
+
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
-
-UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data'))
 
 # Глобальное хранилище результатов сканирования с TTL
 scan_results_storage = {}
@@ -49,7 +56,11 @@ background_monitor = BackgroundMonitor(bot, CHAT_ID)
 notification_manager = NotificationManager(bot, CHAT_ID)
 statistics_manager = StatisticsManager(UPLOAD_DIR)
 help_system = HelpSystem()
-settings_manager = SettingsManager(os.path.join(UPLOAD_DIR, 'settings.json'))
+
+# SCAN_RESULTS_TTL: сначала из настроек, потом из config.py
+SCAN_RESULTS_TTL = settings_manager.get_setting('scanning.results_ttl') or SCAN_RESULTS_TTL
+# DEFAULT_TIMEOUT: сначала из настроек, потом дефолт
+DEFAULT_TIMEOUT = settings_manager.get_setting('scanning.default_timeout') or 5
 
 def cleanup_old_results():
     """Очищает старые результаты сканирования"""
@@ -68,6 +79,7 @@ def cleanup_old_results():
 class ScanDevicesState(StatesGroup):
     waiting_for_network = State()
     waiting_for_file_request = State()
+    waiting_for_timeout = State()
 
 class ScanMinersState(StatesGroup):
     waiting_for_network = State()
@@ -461,10 +473,10 @@ async def process_callback_query(callback_query: CallbackQuery):
         await callback_query.answer(f"Текущий таймаут: {current_timeout} сек")
         await bot.send_message(
             callback_query.from_user.id,
-            f"⏱️ Текущий таймаут сканирования: `{current_timeout}` сек\n\n"
-            "Введите новое значение (в секундах):",
+            f"⏱️ Текущий таймаут сканирования: `{current_timeout}` сек\n\nВведите новое значение таймаута (в секундах, например 5):",
             parse_mode='Markdown'
         )
+        await ScanDevicesState.waiting_for_timeout.set()
         
     elif data == "setting_scan_ports":
         current_ports = settings_manager.get_setting('scanning.default_ports', [22, 80, 443, 8080, 8022, 4028])
@@ -1114,6 +1126,21 @@ async def on_shutdown(dp):
         pass
     
     logging.info("[SHUTDOWN] Бот остановлен")
+
+@dp.message_handler(state=ScanDevicesState.waiting_for_timeout)
+async def process_timeout_input(message: Message, state: FSMContext):
+    try:
+        timeout = int(message.text.strip())
+        if timeout < 1 or timeout > 60:
+            await message.answer("❌ Таймаут должен быть от 1 до 60 секунд")
+            return
+        if settings_manager.set_setting('scanning.default_timeout', timeout):
+            await message.answer(f"✅ Таймаут сканирования установлен: `{timeout}` сек", parse_mode='Markdown')
+        else:
+            await message.answer("❌ Ошибка при сохранении таймаута")
+    except Exception:
+        await message.answer("❌ Введите целое число (секунды)")
+    await state.finish()
 
 if __name__ == '__main__':
     executor.start_polling(
