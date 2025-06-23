@@ -31,7 +31,12 @@ class SettingsManager:
             spec = importlib.util.spec_from_file_location("config", self.config_py_path)
             config_mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(config_mod)
-            return dict(getattr(config_mod, "CONFIG", {}))
+            config = dict(getattr(config_mod, "CONFIG", {}))
+            if not config:
+                logging.warning("[SETTINGS] CONFIG из config.py пустой! Проверьте структуру config.py.")
+            else:
+                logging.info(f"[SETTINGS] CONFIG из config.py: {config}")
+            return config
         except Exception as e:
             logging.error(f"[SETTINGS] Ошибка загрузки config.py: {e}")
             return {}
@@ -43,12 +48,20 @@ class SettingsManager:
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     loaded_settings = json.load(f)
                 # Объединяем с config.py (config.py — источник по умолчанию)
-                return self._merge_settings(self.config_dict, loaded_settings)
+                merged = self._merge_settings(self.config_dict, loaded_settings)
+                if not merged:
+                    logging.warning("[SETTINGS] settings.json пустой, инициализация из config.py")
+                    self._save_settings(self.config_dict)
+                    return self.config_dict.copy()
+                return merged
             except Exception as e:
                 logging.error(f"[SETTINGS] Ошибка загрузки settings.json: {e}")
                 return self.config_dict.copy()
         else:
             # Если файла нет — инициализируем из config.py
+            if not self.config_dict:
+                logging.warning("[SETTINGS] config.py пустой, settings.json не будет создан!")
+                return {}
             self._save_settings(self.config_dict)
             return self.config_dict.copy()
         
