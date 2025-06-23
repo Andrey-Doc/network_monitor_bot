@@ -300,7 +300,7 @@ def get_help_submenu_keyboard():
         InlineKeyboardButton("📋 Все разделы", callback_data="help_all_sections"),
     )
     keyboard.add(
-        InlineKeyboardButton("�� Связаться с поддержкой", callback_data="help_contact"),
+        InlineKeyboardButton("📞 Связаться с поддержкой", callback_data="help_contact"),
         InlineKeyboardButton("📚 Документация", callback_data="help_docs"),
     )
     keyboard.add(
@@ -308,44 +308,4 @@ def get_help_submenu_keyboard():
     )
     return keyboard
 
-# Обработчики callback-запросов
-async def handle_callback_query(callback_query: CallbackQuery, bot, dp):
-    """Обрабатывает нажатия на inline-кнопки"""
-    data = callback_query.data
-    
-    if data == "status_routers":
-        await callback_query.answer("Проверяю статус роутеров...")
-        # Здесь будет логика проверки статуса
-        await bot.send_message(callback_query.from_user.id, "🌐 Проверяю статус роутеров...")
-        
-    elif data == "scan_network":
-        await callback_query.answer("Выберите тип сканирования")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_scan_options_keyboard()
-        )
-        
-    elif data == "monitor_start":
-        await callback_query.answer("Запускаю мониторинг...")
-        # Здесь будет логика запуска мониторинга
-        
-    elif data == "monitor_stop":
-        await callback_query.answer("Останавливаю мониторинг...")
-        # Здесь будет логика остановки мониторинга
-        
-    elif data == "back_to_main":
-        await callback_query.answer("Возвращаюсь в главное меню")
-        await bot.edit_message_reply_markup(
-            chat_id=callback_query.from_user.id,
-            message_id=callback_query.message.message_id,
-            reply_markup=get_main_inline_keyboard()
-        )
-        
-    elif data.startswith("network_"):
-        network = data.replace("network_", "")
-        await callback_query.answer(f"Выбрана сеть: {network}")
-        # Здесь будет логика запуска сканирования выбранной сети
-        
-    else:
-        await callback_query.answer("Функция в разработке") 
+# Удалён устаревший обработчик handle_callback_query, используйте основной обработчик в main.py 

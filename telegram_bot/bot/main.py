@@ -184,7 +184,59 @@ async def process_callback_query(callback_query: CallbackQuery):
         network = data.replace("network_", "")
         await callback_query.answer(f"Выбрана сеть: {network}")
         await bot.send_message(callback_query.from_user.id, f"Сканирую сеть {network}...")
-        # Здесь можно добавить логику сканирования
+        # Запуск сканирования выбранной сети (аналогично process_devices_network_input)
+        cleanup_old_results()
+        global active_scans_count
+        active_scans_count += 1
+        start_time = time.time()
+        try:
+            net = ipaddress.IPv4Network(network, strict=False)
+        except Exception as e:
+            await bot.send_message(callback_query.from_user.id, f"Ошибка: некорректный формат сети: {network}")
+            active_scans_count -= 1
+            return
+        progress_msg = await bot.send_message(callback_query.from_user.id, f"Начинаю сканирование сети {network} на устройства... 0%")
+        async def on_progress(done, total):
+            percent = int(done / total * 100)
+            bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
+            await bot.edit_message_text(
+                f"Сканирование: [{bar}] {percent}% ({done}/{total})",
+                chat_id=progress_msg.chat.id,
+                message_id=progress_msg.message_id
+            )
+        try:
+            devices = await scan_network_devices(network, on_progress=on_progress)
+            duration = time.time() - start_time
+            await bot.edit_message_text(
+                f"Сканирование завершено! Найдено устройств: {len(devices)}",
+                chat_id=progress_msg.chat.id,
+                message_id=progress_msg.message_id
+            )
+            statistics_manager.record_scan('network', len(devices), net.num_addresses, duration)
+            await notification_manager.scan_completed('сети', len(devices), duration)
+            if not devices:
+                await bot.send_message(callback_query.from_user.id, "Устройства не найдены.")
+                active_scans_count -= 1
+                return
+            text = f"Найдено устройств: {len(devices)}\n"
+            for d in devices:
+                if d.get('type') == 'miner':
+                    text += f"{d['ip']}: miner (hashrate: {d.get('hashrate')}, uptime: {d.get('uptime')})\n"
+                else:
+                    text += f"{d['ip']}: (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
+            text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
+            result_msg = await bot.send_message(callback_query.from_user.id, text)
+            scan_results_storage[result_msg.message_id] = {
+                'devices': devices,
+                'type': 'devices',
+                'timestamp': time.time()
+            }
+        except Exception as e:
+            await bot.send_message(callback_query.from_user.id, f"Ошибка сканирования: {e}")
+            statistics_manager.record_error('scan_network', str(e))
+            await notification_manager.scan_error('сети', str(e))
+        active_scans_count -= 1
+        return
         
     # Обработчики помощи
     elif data == "help":
@@ -472,11 +524,22 @@ async def process_callback_query(callback_query: CallbackQuery):
         
     elif data == "setting_backup_create_now":
         await callback_query.answer("Создание резервной копии")
-        # Здесь будет логика создания резервной копии
-        await bot.send_message(
-            callback_query.from_user.id,
-            "💾 Создание резервной копии...\n\nФункция в разработке"
-        )
+        # Путь к файлу статистики (если есть)
+        stats_file = os.path.join(UPLOAD_DIR, 'stats.csv')
+        backup_path = settings_manager.create_backup(stats_file=stats_file)
+        if backup_path.startswith("ERROR"):
+            await bot.send_message(
+                callback_query.from_user.id,
+                f"❌ Ошибка создания резервной копии: {backup_path}"
+            )
+        else:
+            await bot.send_message(
+                callback_query.from_user.id,
+                f"✅ Резервная копия создана: {os.path.basename(backup_path)}"
+            )
+            # Отправляем файл архивом
+            with open(backup_path, "rb") as f:
+                await bot.send_document(callback_query.from_user.id, f, caption="Резервная копия настроек и статистики")
         
     # Настройки экспорта/импорта
     elif data == "settings_export":

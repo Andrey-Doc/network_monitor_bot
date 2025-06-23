@@ -7,6 +7,7 @@ import os
 import logging
 from typing import Dict, Any, Optional
 from datetime import datetime
+import shutil
 
 class SettingsManager:
     """Менеджер настроек бота"""
@@ -249,4 +250,26 @@ class SettingsManager:
             return True
         except Exception as e:
             logging.error(f"[SETTINGS] Ошибка импорта настроек: {e}")
-            return False 
+            return False
+            
+    def create_backup(self, stats_file: str = None) -> str:
+        """Создаёт резервную копию настроек (и статистики, если указано) в папке data/backups. Возвращает путь к архиву или ошибку."""
+        backup_dir = os.path.join(os.path.dirname(self.config_file), 'backups')
+        os.makedirs(backup_dir, exist_ok=True)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_name = f"backup_{timestamp}"
+        backup_path = os.path.join(backup_dir, backup_name)
+        files_to_backup = [self.config_file]
+        if stats_file and os.path.exists(stats_file):
+            files_to_backup.append(stats_file)
+        try:
+            # Создаём zip-архив
+            shutil.make_archive(backup_path, 'zip', root_dir=os.path.dirname(self.config_file), base_dir='settings.json')
+            # Добавляем статистику, если есть
+            if stats_file and os.path.exists(stats_file):
+                import zipfile
+                with zipfile.ZipFile(backup_path + '.zip', 'a') as zf:
+                    zf.write(stats_file, arcname=os.path.basename(stats_file))
+            return backup_path + '.zip'
+        except Exception as e:
+            return f"ERROR: {e}" 
