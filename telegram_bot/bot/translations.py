@@ -151,6 +151,9 @@ TRANSLATIONS = {
         'upload_file_prompt': 'Пожалуйста, отправьте CSV-файл с IP-адресами для сканирования.',
         'scan_cancel_confirm': 'Вы уверены, что хотите отменить сканирование? Нажмите Отмена ещё раз для подтверждения или Главное меню для возврата.',
         'scan_cancelled': 'Сканирование отменено.',
+        'help_btn': 'Справка',
+        'help_bot_btn': 'Справка по боту',
+        'help_bot_text': 'Это бот для мониторинга и сканирования устройств в сети. Доступные команды и функции: ...',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -304,6 +307,9 @@ TRANSLATIONS = {
         'upload_file_prompt': 'Please send a CSV file with IP addresses for scanning.',
         'scan_cancel_confirm': 'Вы уверены, что хотите отменить сканирование? Нажмите Отмена ещё раз для подтверждения или Главное меню для возврата.',
         'scan_cancelled': 'Сканирование отменено.',
+        'help_btn': 'Справка',
+        'help_bot_btn': 'Справка по боту',
+        'help_bot_text': 'Это бот для мониторинга и сканирования устройств в сети. Доступные команды и функции: ...',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -457,6 +463,9 @@ TRANSLATIONS = {
         'upload_file_prompt': 'Please send a CSV file with IP addresses for scanning.',
         'scan_cancel_confirm': 'Вы уверены, что хотите отменить сканирование? Нажмите Отмена ещё раз для подтверждения или Главное меню для возврата.',
         'scan_cancelled': 'Сканирование отменено.',
+        'help_btn': 'Справка',
+        'help_bot_btn': 'Справка по боту',
+        'help_bot_text': 'Это бот для мониторинга и сканирования устройств в сети. Доступные команды и функции: ...',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -610,6 +619,9 @@ TRANSLATIONS = {
         'upload_file_prompt': 'Please send a CSV file with IP addresses for scanning.',
         'scan_cancel_confirm': 'Вы уверены, что хотите отменить сканирование? Нажмите Отмена ещё раз для подтверждения или Главное меню для возврата.',
         'scan_cancelled': 'Сканирование отменено.',
+        'help_btn': 'Справка',
+        'help_bot_btn': 'Справка по боту',
+        'help_bot_text': 'Это бот для мониторинга и сканирования устройств в сети. Доступные команды и функции: ...',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -763,6 +775,9 @@ TRANSLATIONS = {
         'upload_file_prompt': 'Please send a CSV file with IP addresses for scanning.',
         'scan_cancel_confirm': 'Вы уверены, что хотите отменить сканирование? Нажмите Отмена ещё раз для подтверждения или Главное меню для возврата.',
         'scan_cancelled': 'Сканирование отменено.',
+        'help_btn': 'Справка',
+        'help_bot_btn': 'Справка по боту',
+        'help_bot_text': 'Это бот для мониторинга и сканирования устройств в сети. Доступные команды и функции: ...',
     },
 }
 

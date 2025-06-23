@@ -1212,6 +1212,14 @@ async def handle_back_to_main_any(message: Message, state: FSMContext):
     await message.answer(translate(get_lang(), 'main_menu'), reply_markup=main_menu_keyboard(lang=get_lang()))
     # Не завершаем FSM, если оно есть
 
+@dp.message_handler(is_menu_button('help_btn'))
+async def handle_help_btn(message: Message):
+    await message.answer(translate(get_lang(), 'help_menu_msg'), reply_markup=help_menu_keyboard(lang=get_lang()))
+
+@dp.message_handler(is_menu_button('help_bot_btn'))
+async def handle_help_bot_btn(message: Message):
+    await message.answer(translate(get_lang(), 'help_bot_text'), reply_markup=help_menu_keyboard(lang=get_lang()))
+
 if __name__ == '__main__':
     executor.start_polling(
         dp, 
