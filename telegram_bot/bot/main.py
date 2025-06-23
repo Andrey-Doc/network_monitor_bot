@@ -690,7 +690,7 @@ def validate_time(s):
 @dp.message_handler(lambda m: m.text == 'Таймаут сканирования')
 async def handle_scan_timeout(message: Message):
     current = settings_manager.get_setting('scanning.default_timeout', 5)
-    await message.answer(translate(get_lang(), 'scan_timeout_current', value=current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_timeout_prompt', value=current), reply_markup=cancel_keyboard())
     await ScanSettingsState.waiting_for_timeout.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_timeout)
@@ -701,7 +701,7 @@ async def process_scan_timeout(message: Message, state: FSMContext):
             await message.answer(translate(get_lang(), 'scan_timeout_error'))
             return
         if settings_manager.set_setting('scanning.default_timeout', timeout):
-            await message.answer(translate(get_lang(), 'scan_timeout_set', timeout=timeout))
+            await message.answer(translate(get_lang(), 'scan_timeout_set', value=timeout))
         else:
             await message.answer(translate(get_lang(), 'scan_timeout_save_error'))
     except Exception:
@@ -711,7 +711,7 @@ async def process_scan_timeout(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Макс. параллельных сканирований')
 async def handle_scan_max_concurrent(message: Message):
     current = settings_manager.get_setting('scanning.max_concurrent_scans', 3)
-    await message.answer(translate(get_lang(), 'scan_max_concurrent_current', value=current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_max_concurrent_prompt', value=current), reply_markup=cancel_keyboard())
     await ScanSettingsState.waiting_for_max_concurrent.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_max_concurrent)
@@ -732,7 +732,7 @@ async def process_scan_max_concurrent(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Порты для сканирования')
 async def handle_scan_ports(message: Message):
     current = settings_manager.get_setting('scanning.default_ports', [80, 22, 443])
-    await message.answer(translate(get_lang(), 'scan_ports_current', value=', '.join(map(str, current))), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_ports_prompt', value=', '.join(map(str, current))), reply_markup=cancel_keyboard())
     await ScanSettingsState.waiting_for_default_ports.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_default_ports)
