@@ -62,8 +62,6 @@ TRANSLATIONS = {
         'settings_menu_msg': 'Меню настроек:',
         'monitoring_menu_btn': 'Мониторинг',
         'monitoring_menu_msg': 'Меню мониторинга:',
-        'scan_menu_btn': 'Сканирование',
-        'scan_menu_msg': 'Настройки сканирования:',
         'notification_menu_btn': 'Уведомления',
         'notification_menu_msg': 'Меню уведомлений:',
         'router_menu_btn': 'Роутеры',
@@ -357,7 +355,7 @@ TRANSLATIONS = {
 - «Резервное копирование»: создание и восстановление резервных копий.
 - «Экспорт/Импорт»: экспорт и импорт настроек и статистики.
 
-Если возникли вопросы — напишите /help или воспользуйтесь кнопкой «Справка» в главном меню.''',
+Если возникли вопросы — напишите /help oder воспользуйтесь кнопкой «Справка» in главном меню.''',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -756,7 +754,7 @@ TRANSLATIONS = {
         'scan_ports_set': '扫描端口已设置为: {value}。',
         'scan_miner_ports_prompt': '当前矿工端口: {value}。\n请输入用逗号分隔的新端口列表：',
         'scan_miner_ports_set': '矿工端口已设置为: {value}。',
-        'scan_router_ports_prompt': '当前路由器端口: {value}。\n请输入用逗号分隔的新端口列表：',
+        'scan_router_ports_prompt': '当前路由器端口: {value}.\n请输入用逗号分隔的新端口列表：',
         'scan_router_ports_set': '路由器端口已设置为: {value}。',
         'scan_ttl_prompt': '当前结果 TTL: {value} 秒。\n请输入新的秒数：',
         'scan_ttl_set': '结果 TTL 已设置为: {value} 秒。',
