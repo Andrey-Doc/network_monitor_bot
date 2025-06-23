@@ -144,7 +144,21 @@ async def handle_status_main_menu(message: Message):
 
 @dp.message_handler(is_menu_button('router_status_main_menu_btn'))
 async def handle_router_status_main_menu(message: Message):
-    await handle_router_status_menu(message)
+    router_ips = settings_manager.get_setting('ROUTER_IPS', [])
+    router_ports = settings_manager.get_setting('ROUTER_PORTS', [])
+    if not router_ips or not router_ports:
+        await message.answer("Роутеры не настроены.")
+        return
+    await message.answer("⏳ Проверяю статус роутеров...")
+    results = await check_routers_status(router_ips, router_ports)
+    text = "🌐 <b>Статус роутеров:</b>\n\n"
+    for r in results:
+        emoji = "🟢" if r['status'] == 'online' else "🔴"
+        text += f"{emoji} <b>{r['ip']}</b>: {r['status']}"
+        if r['open_ports']:
+            text += f" (открытые порты: {', '.join(map(str, r['open_ports']))})"
+        text += "\n"
+    await message.answer(text, parse_mode='HTML')
 
 @dp.message_handler(is_menu_button('scan_main_menu_btn'))
 async def handle_scan_main_menu(message: Message):
