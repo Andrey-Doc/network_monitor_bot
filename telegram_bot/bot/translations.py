@@ -123,6 +123,8 @@ TRANSLATIONS = {
         'scan_miners_btn': 'Сканировать майнеры',
         'fast_scan_btn': 'Быстрое сканирование',
         'upload_file_btn': 'Загрузить файл',
+        'settings_settings_menu_btn': 'Настройки',
+        'back_to_settings_main_btn': 'Назад к настройкам',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -248,6 +250,8 @@ TRANSLATIONS = {
         'scan_miners_btn': 'Scan miners',
         'fast_scan_btn': 'Fast scan',
         'upload_file_btn': 'Upload file',
+        'settings_settings_menu_btn': 'Settings',
+        'back_to_settings_main_btn': 'Back to settings',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -373,6 +377,8 @@ TRANSLATIONS = {
         'scan_miners_btn': 'Miner scannen',
         'fast_scan_btn': 'Schnelles scannen',
         'upload_file_btn': 'Datei hochladen',
+        'settings_settings_menu_btn': 'Einstellungen',
+        'back_to_settings_main_btn': 'Zurück zu Einstellungen',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -498,6 +504,8 @@ TRANSLATIONS = {
         'scan_miners_btn': 'Miner scannen',
         'fast_scan_btn': 'Schnelles scannen',
         'upload_file_btn': 'Bestand uploaden',
+        'settings_settings_menu_btn': 'Instellingen',
+        'back_to_settings_main_btn': 'Terug naar instellingen',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -623,6 +631,8 @@ TRANSLATIONS = {
         'scan_miners_btn': '扫描矿机',
         'fast_scan_btn': '快速扫描',
         'upload_file_btn': '上传文件',
+        'settings_settings_menu_btn': '设置',
+        'back_to_settings_main_btn': '返回设置',
     },
 }
 

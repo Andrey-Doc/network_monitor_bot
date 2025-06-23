@@ -6,7 +6,7 @@ from .keyboards import (
     scan_menu_keyboard, notification_menu_keyboard, router_menu_keyboard,
     interface_menu_keyboard, security_menu_keyboard, backup_menu_keyboard,
     export_menu_keyboard, help_menu_keyboard, cancel_keyboard,
-    scan_main_menu_keyboard, settings_main_menu_keyboard
+    scan_main_menu_keyboard, settings_main_menu_keyboard, settings_settings_menu_keyboard
 )
 from ..utils.router_monitor import check_routers_status
 from ..utils.miner_scan import scan_network_for_miners, scan_miners_from_list
@@ -1243,6 +1243,14 @@ async def handle_settings_reset(message: Message):
 async def cancel_any_state(message: Message, state: FSMContext):
     await state.finish()
     await message.answer('Действие отменено.', reply_markup=settings_menu_keyboard(lang=get_lang()))
+
+@dp.message_handler(is_menu_button('settings_settings_menu_btn'))
+async def handle_settings_settings_menu(message: Message):
+    await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_settings_menu_keyboard(lang=get_lang()))
+
+@dp.message_handler(is_menu_button('back_to_settings_main_btn'))
+async def handle_back_to_settings_main(message: Message):
+    await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_main_menu_keyboard(lang=get_lang()))
 
 if __name__ == '__main__':
     executor.start_polling(
