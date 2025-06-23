@@ -287,7 +287,7 @@ async def process_timeout_input(message: Message, state: FSMContext):
             await message.answer(translate(get_lang(), 'timeout_error'))
             return
         if settings_manager.set_setting('scanning.default_timeout', timeout):
-            await message.answer(translate(get_lang(), 'timeout_set', timeout))
+            await message.answer(translate(get_lang(), 'timeout_set', timeout=timeout))
         else:
             await message.answer(translate(get_lang(), 'timeout_save_error'))
     except Exception:
@@ -330,12 +330,12 @@ async def process_devices_network_input(message: Message, state: FSMContext):
         active_scans_count -= 1
         await state.finish()
         return
-    progress_msg = await message.answer(translate(get_lang(), 'scanning_network', network))
+    progress_msg = await message.answer(translate(get_lang(), 'scanning_network', network=network))
     async def on_progress(done, total):
         percent = int(done / total * 100)
         bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
         await bot.edit_message_text(
-            translate(get_lang(), 'scanning_progress', bar, percent, done, total),
+            translate(get_lang(), 'scanning_progress', bar=bar, percent=percent, done=done, total=total),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
@@ -343,7 +343,7 @@ async def process_devices_network_input(message: Message, state: FSMContext):
         devices = await scan_network_devices(network, on_progress=on_progress)
         duration = time.time() - start_time
         await bot.edit_message_text(
-            translate(get_lang(), 'scan_completed', len(devices)),
+            translate(get_lang(), 'scan_completed', count=len(devices)),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
@@ -371,7 +371,7 @@ async def process_devices_network_input(message: Message, state: FSMContext):
         await ScanDevicesState.waiting_for_file_request.set()
     except Exception as e:
         await bot.edit_message_text(
-            translate(get_lang(), 'scan_error', e),
+            translate(get_lang(), 'scan_error', e=e),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
@@ -398,7 +398,7 @@ async def process_csv_file(message: Message):
             return
         ip_list = df['ip'].dropna().astype(str).tolist()
         await message.answer(
-            translate(get_lang(), 'scanning_ips', len(ip_list)),
+            translate(get_lang(), 'scanning_ips', count=len(ip_list)),
             reply_markup=main_menu_keyboard()
         )
         start_time = time.time()
@@ -414,7 +414,7 @@ async def process_csv_file(message: Message):
             await message.answer(text, reply_markup=main_menu_keyboard())
     except Exception as e:
         statistics_manager.record_error('file_processing', str(e))
-        await message.answer(translate(get_lang(), 'file_processing_error', e), reply_markup=main_menu_keyboard())
+        await message.answer(translate(get_lang(), 'file_processing_error', e=e), reply_markup=main_menu_keyboard())
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -438,19 +438,19 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         active_scans_count -= 1
         await state.finish()
         return
-    progress_msg = await message.answer(translate(get_lang(), 'scanning_miners', network))
+    progress_msg = await message.answer(translate(get_lang(), 'scanning_miners', network=network))
     async def on_progress(done, total):
         percent = int(done / total * 100)
         bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
         await bot.edit_message_text(
-            translate(get_lang(), 'scanning_progress', bar, percent, done, total),
+            translate(get_lang(), 'scanning_progress', bar=bar, percent=percent, done=done, total=total),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
     try:
         miners = await scan_network_for_miners(network, on_progress=on_progress)
         await bot.edit_message_text(
-            translate(get_lang(), 'scan_completed', len(miners)),
+            translate(get_lang(), 'scan_completed', count=len(miners)),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
@@ -473,7 +473,7 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         await ScanMinersState.waiting_for_file_request.set()
     except Exception as e:
         await bot.edit_message_text(
-            translate(get_lang(), 'scan_error', e),
+            translate(get_lang(), 'scan_error', e=e),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
@@ -498,19 +498,19 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
         active_scans_count -= 1
         await state.finish()
         return
-    progress_msg = await message.answer(translate(get_lang(), 'fast_scanning', network))
+    progress_msg = await message.answer(translate(get_lang(), 'fast_scanning', network=network))
     async def on_progress(done, total):
         percent = int(done / total * 100)
         bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
         await bot.edit_message_text(
-            translate(get_lang(), 'fast_scanning_progress', bar, percent, done, total),
+            translate(get_lang(), 'fast_scanning_progress', bar=bar, percent=percent, done=done, total=total),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
     try:
         devices = await fast_scan_network(network, on_progress=on_progress)
         await bot.edit_message_text(
-            translate(get_lang(), 'fast_scan_completed', len(devices)),
+            translate(get_lang(), 'fast_scan_completed', count=len(devices)),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
@@ -536,7 +536,7 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
         await FastScanState.waiting_for_file_request.set()
     except Exception as e:
         await bot.edit_message_text(
-            translate(get_lang(), 'fast_scan_error', e),
+            translate(get_lang(), 'fast_scan_error', e=e),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
@@ -565,7 +565,7 @@ async def handle_statistics(message: Message):
 @dp.message_handler(lambda m: m.text == 'Интервал мониторинга')
 async def handle_monitoring_interval(message: Message):
     current = settings_manager.get_setting('monitoring.interval', 300)
-    await message.answer(translate(get_lang(), 'monitoring_interval_current', current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'monitoring_interval_current', value=current), reply_markup=cancel_keyboard())
     await MonitoringState.waiting_for_interval.set()
 
 @dp.message_handler(state=MonitoringState.waiting_for_interval)
@@ -576,7 +576,7 @@ async def process_monitoring_interval(message: Message, state: FSMContext):
             await message.answer(translate(get_lang(), 'monitoring_interval_error'), reply_markup=monitoring_menu_keyboard())
             return
         if settings_manager.set_setting('monitoring.interval', interval):
-            await message.answer(translate(get_lang(), 'monitoring_interval_set', interval), reply_markup=monitoring_menu_keyboard())
+            await message.answer(translate(get_lang(), 'monitoring_interval_set', value=interval), reply_markup=monitoring_menu_keyboard())
         else:
             await message.answer(translate(get_lang(), 'monitoring_interval_save_error'), reply_markup=monitoring_menu_keyboard())
     except Exception:
@@ -589,7 +589,7 @@ async def handle_monitoring_autostart(message: Message):
     new_value = not current
     if settings_manager.set_setting('monitoring.auto_start', new_value):
         status = 'включён' if new_value else 'выключен'
-        await message.answer(translate(get_lang(), 'monitoring_autostart_set', status), reply_markup=monitoring_menu_keyboard())
+        await message.answer(translate(get_lang(), 'monitoring_autostart_set', status=status), reply_markup=monitoring_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'monitoring_autostart_error'), reply_markup=monitoring_menu_keyboard())
 
@@ -599,7 +599,7 @@ async def handle_monitoring_notify_change(message: Message):
     new_value = not current
     if settings_manager.set_setting('monitoring.notify_on_change', new_value):
         status = 'включены' if new_value else 'выключены'
-        await message.answer(translate(get_lang(), 'monitoring_notify_change_set', status), reply_markup=monitoring_menu_keyboard())
+        await message.answer(translate(get_lang(), 'monitoring_notify_change_set', status=status), reply_markup=monitoring_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'monitoring_notify_change_error'), reply_markup=monitoring_menu_keyboard())
 
@@ -609,7 +609,7 @@ async def handle_monitoring_notify_start(message: Message):
     new_value = not current
     if settings_manager.set_setting('monitoring.notify_on_start', new_value):
         status = 'включены' if new_value else 'выключены'
-        await message.answer(translate(get_lang(), 'monitoring_notify_start_set', status), reply_markup=monitoring_menu_keyboard())
+        await message.answer(translate(get_lang(), 'monitoring_notify_start_set', status=status), reply_markup=monitoring_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'monitoring_notify_start_error'), reply_markup=monitoring_menu_keyboard())
 
@@ -619,7 +619,7 @@ async def handle_toggle_notifications(message: Message):
     new_value = not current
     if settings_manager.set_setting('notifications.enabled', new_value):
         status = 'включены' if new_value else 'выключены'
-        await message.answer(translate(get_lang(), 'notifications_toggle_set', status), reply_markup=notification_menu_keyboard())
+        await message.answer(translate(get_lang(), 'notifications_toggle_set', status=status), reply_markup=notification_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'notifications_toggle_error'), reply_markup=notification_menu_keyboard())
 
@@ -629,14 +629,14 @@ async def handle_toggle_quiet_hours(message: Message):
     new_value = not current
     if settings_manager.set_setting('notifications.quiet_hours.enabled', new_value):
         status = 'включены' if new_value else 'выключены'
-        await message.answer(translate(get_lang(), 'quiet_hours_toggle_set', status), reply_markup=notification_menu_keyboard())
+        await message.answer(translate(get_lang(), 'quiet_hours_toggle_set', status=status), reply_markup=notification_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'quiet_hours_toggle_error'), reply_markup=notification_menu_keyboard())
 
 @dp.message_handler(lambda m: m.text == 'Уровни уведомлений')
 async def handle_notification_level(message: Message):
     current = settings_manager.get_setting('notifications.level', 'INFO')
-    await message.answer(translate(get_lang(), 'notifications_level_current', current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'notifications_level_current', value=current), reply_markup=cancel_keyboard())
     await NotificationState.waiting_for_level.set()
 
 @dp.message_handler(state=NotificationState.waiting_for_level)
@@ -646,7 +646,7 @@ async def process_notification_level(message: Message, state: FSMContext):
         await message.answer(translate(get_lang(), 'notifications_level_error'), reply_markup=notification_menu_keyboard())
         return
     if settings_manager.set_setting('notifications.level', level):
-        await message.answer(translate(get_lang(), 'notifications_level_set', level), reply_markup=notification_menu_keyboard())
+        await message.answer(translate(get_lang(), 'notifications_level_set', value=level), reply_markup=notification_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'notifications_level_save_error'), reply_markup=notification_menu_keyboard())
     await state.finish()
@@ -655,7 +655,7 @@ async def process_notification_level(message: Message, state: FSMContext):
 async def handle_quiet_hours_time(message: Message, state: FSMContext):
     current_start = settings_manager.get_setting('notifications.quiet_hours.start', '22:00')
     current_end = settings_manager.get_setting('notifications.quiet_hours.end', '08:00')
-    await message.answer(translate(get_lang(), 'quiet_hours_current', current_start, current_end), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'quiet_hours_current', start=current_start, end=current_end), reply_markup=cancel_keyboard())
     await NotificationState.waiting_for_quiet_start.set()
 
 @dp.message_handler(state=NotificationState.waiting_for_quiet_start)
@@ -679,7 +679,7 @@ async def process_quiet_hours_end(message: Message, state: FSMContext):
     ok1 = settings_manager.set_setting('notifications.quiet_hours.start', start)
     ok2 = settings_manager.set_setting('notifications.quiet_hours.end', end)
     if ok1 and ok2:
-        await message.answer(translate(get_lang(), 'quiet_hours_set', start, end), reply_markup=notification_menu_keyboard())
+        await message.answer(translate(get_lang(), 'quiet_hours_set', start=start, end=end), reply_markup=notification_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'quiet_hours_save_error'), reply_markup=notification_menu_keyboard())
     await state.finish()
@@ -691,7 +691,7 @@ def validate_time(s):
 @dp.message_handler(lambda m: m.text == 'Таймаут сканирования')
 async def handle_scan_timeout(message: Message):
     current = settings_manager.get_setting('scanning.default_timeout', 5)
-    await message.answer(translate(get_lang(), 'scan_timeout_current', current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_timeout_current', value=current), reply_markup=cancel_keyboard())
     await ScanSettingsState.waiting_for_timeout.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_timeout)
@@ -702,7 +702,7 @@ async def process_scan_timeout(message: Message, state: FSMContext):
             await message.answer(translate(get_lang(), 'scan_timeout_error'))
             return
         if settings_manager.set_setting('scanning.default_timeout', timeout):
-            await message.answer(translate(get_lang(), 'scan_timeout_set', timeout))
+            await message.answer(translate(get_lang(), 'scan_timeout_set', timeout=timeout))
         else:
             await message.answer(translate(get_lang(), 'scan_timeout_save_error'))
     except Exception:
@@ -712,7 +712,7 @@ async def process_scan_timeout(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Макс. параллельных сканирований')
 async def handle_scan_max_concurrent(message: Message):
     current = settings_manager.get_setting('scanning.max_concurrent_scans', 3)
-    await message.answer(translate(get_lang(), 'scan_max_concurrent_current', current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_max_concurrent_current', value=current), reply_markup=cancel_keyboard())
     await ScanSettingsState.waiting_for_max_concurrent.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_max_concurrent)
@@ -723,7 +723,7 @@ async def process_scan_max_concurrent(message: Message, state: FSMContext):
             await message.answer(translate(get_lang(), 'scan_max_concurrent_error'))
             return
         if settings_manager.set_setting('scanning.max_concurrent_scans', value):
-            await message.answer(translate(get_lang(), 'scan_max_concurrent_set', value))
+            await message.answer(translate(get_lang(), 'scan_max_concurrent_set', value=value))
         else:
             await message.answer(translate(get_lang(), 'scan_max_concurrent_save_error'))
     except Exception:
@@ -733,7 +733,7 @@ async def process_scan_max_concurrent(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Порты для сканирования')
 async def handle_scan_ports(message: Message):
     current = settings_manager.get_setting('scanning.default_ports', [80, 22, 443])
-    await message.answer(translate(get_lang(), 'scan_ports_current', ', '.join(map(str, current))), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_ports_current', value=', '.join(map(str, current))), reply_markup=cancel_keyboard())
     await ScanSettingsState.waiting_for_default_ports.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_default_ports)
@@ -744,7 +744,7 @@ async def process_scan_ports(message: Message, state: FSMContext):
         await state.finish()
         return
     if settings_manager.set_setting('scanning.default_ports', ports):
-        await message.answer(translate(get_lang(), 'scan_ports_set', ', '.join(map(str, ports))), reply_markup=scan_menu_keyboard())
+        await message.answer(translate(get_lang(), 'scan_ports_set', value=', '.join(map(str, ports))), reply_markup=scan_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'scan_ports_save_error'), reply_markup=scan_menu_keyboard())
     await state.finish()
@@ -752,7 +752,7 @@ async def process_scan_ports(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Порты майнеров')
 async def handle_miner_ports(message: Message):
     current = settings_manager.get_setting('scanning.miner_ports', [4028, 3333])
-    await message.answer(translate(get_lang(), 'scan_miner_ports_current', ', '.join(map(str, current))), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_miner_ports_current', value=', '.join(map(str, current))), reply_markup=cancel_keyboard())
     await ScanSettingsState.waiting_for_miner_ports.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_miner_ports)
@@ -763,7 +763,7 @@ async def process_miner_ports(message: Message, state: FSMContext):
         await state.finish()
         return
     if settings_manager.set_setting('scanning.miner_ports', ports):
-        await message.answer(translate(get_lang(), 'scan_miner_ports_set', ', '.join(map(str, ports))), reply_markup=scan_menu_keyboard())
+        await message.answer(translate(get_lang(), 'scan_miner_ports_set', value=', '.join(map(str, ports))), reply_markup=scan_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'scan_miner_ports_save_error'), reply_markup=scan_menu_keyboard())
     await state.finish()
@@ -771,7 +771,7 @@ async def process_miner_ports(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Порты роутеров')
 async def handle_router_ports(message: Message):
     current = settings_manager.get_setting('scanning.router_ports', [8080, 80, 22])
-    await message.answer(translate(get_lang(), 'scan_router_ports_current', ', '.join(map(str, current))), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_router_ports_current', value=', '.join(map(str, current))), reply_markup=cancel_keyboard())
     await ScanSettingsState.waiting_for_router_ports.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_router_ports)
@@ -782,7 +782,7 @@ async def process_router_ports(message: Message, state: FSMContext):
         await state.finish()
         return
     if settings_manager.set_setting('scanning.router_ports', ports):
-        await message.answer(translate(get_lang(), 'scan_router_ports_set', ', '.join(map(str, ports))), reply_markup=scan_menu_keyboard())
+        await message.answer(translate(get_lang(), 'scan_router_ports_set', value=', '.join(map(str, ports))), reply_markup=scan_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'scan_router_ports_save_error'), reply_markup=scan_menu_keyboard())
     await state.finish()
@@ -790,7 +790,7 @@ async def process_router_ports(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'TTL результатов')
 async def handle_scan_ttl(message: Message):
     current = settings_manager.get_setting('scanning.results_ttl', 3600)
-    await message.answer(translate(get_lang(), 'scan_ttl_current', current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_ttl_current', value=current), reply_markup=cancel_keyboard())
     await ScanSettingsState.waiting_for_ttl.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_ttl)
@@ -801,7 +801,7 @@ async def process_scan_ttl(message: Message, state: FSMContext):
             await message.answer(translate(get_lang(), 'scan_ttl_error'))
             return
         if settings_manager.set_setting('scanning.results_ttl', ttl):
-            await message.answer(translate(get_lang(), 'scan_ttl_set', ttl))
+            await message.answer(translate(get_lang(), 'scan_ttl_set', ttl=ttl))
         else:
             await message.answer(translate(get_lang(), 'scan_ttl_save_error'))
     except Exception:
@@ -818,7 +818,7 @@ def parse_ports(text):
 async def handle_router_ips(message: Message):
     current = settings_manager.get_setting('routers.ips', [])
     current_str = ', '.join(current) if current else 'не задано'
-    await message.answer(translate(get_lang(), 'scan_router_ips_current', current_str), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_router_ips_current', value=current_str), reply_markup=cancel_keyboard())
     await RouterSettingsState.waiting_for_ips.set()
 
 @dp.message_handler(state=RouterSettingsState.waiting_for_ips)
@@ -830,7 +830,7 @@ async def process_router_ips(message: Message, state: FSMContext):
         await state.finish()
         return
     if settings_manager.update_router_ips(ips):
-        await message.answer(translate(get_lang(), 'scan_router_ips_set', ', '.join(ips)), reply_markup=router_menu_keyboard())
+        await message.answer(translate(get_lang(), 'scan_router_ips_set', value=', '.join(ips)), reply_markup=router_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'scan_router_ips_save_error'), reply_markup=router_menu_keyboard())
     await state.finish()
@@ -838,7 +838,7 @@ async def process_router_ips(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Порты роутеров')
 async def handle_router_ports_setting(message: Message):
     current = settings_manager.get_setting('routers.ports', [8080, 80, 22])
-    await message.answer(translate(get_lang(), 'scan_router_ports_current', ', '.join(map(str, current))), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_router_ports_current', value=', '.join(map(str, current))), reply_markup=cancel_keyboard())
     await RouterSettingsState.waiting_for_ports.set()
 
 @dp.message_handler(state=RouterSettingsState.waiting_for_ports)
@@ -849,7 +849,7 @@ async def process_router_ports_setting(message: Message, state: FSMContext):
         await state.finish()
         return
     if settings_manager.update_router_ports(ports):
-        await message.answer(translate(get_lang(), 'scan_router_ports_set', ', '.join(map(str, ports))), reply_markup=router_menu_keyboard())
+        await message.answer(translate(get_lang(), 'scan_router_ports_set', value=', '.join(map(str, ports))), reply_markup=router_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'scan_router_ports_save_error'), reply_markup=router_menu_keyboard())
     await state.finish()
@@ -857,7 +857,7 @@ async def process_router_ports_setting(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Интервал проверки')
 async def handle_router_interval(message: Message):
     current = settings_manager.get_setting('routers.interval', 300)
-    await message.answer(translate(get_lang(), 'scan_router_interval_current', current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_router_interval_current', value=current), reply_markup=cancel_keyboard())
     await RouterSettingsState.waiting_for_interval.set()
 
 @dp.message_handler(state=RouterSettingsState.waiting_for_interval)
@@ -868,7 +868,7 @@ async def process_router_interval(message: Message, state: FSMContext):
             await message.answer(translate(get_lang(), 'scan_router_interval_error'), reply_markup=router_menu_keyboard())
             return
         if settings_manager.set_setting('routers.interval', interval):
-            await message.answer(translate(get_lang(), 'scan_router_interval_set', interval), reply_markup=router_menu_keyboard())
+            await message.answer(translate(get_lang(), 'scan_router_interval_set', value=interval), reply_markup=router_menu_keyboard())
         else:
             await message.answer(translate(get_lang(), 'scan_router_interval_save_error'), reply_markup=router_menu_keyboard())
     except Exception:
@@ -900,7 +900,7 @@ def validate_ip(ip):
 @dp.message_handler(lambda m: m.text == 'Язык интерфейса')
 async def handle_interface_language(message: Message):
     current = settings_manager.get_setting('interface.language', 'ru')
-    await message.answer(translate(get_lang(), 'interface_language_current', current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'interface_language_current', value=current), reply_markup=cancel_keyboard())
     await InterfaceSettingsState.waiting_for_language.set()
 
 @dp.message_handler(state=InterfaceSettingsState.waiting_for_language)
@@ -911,7 +911,7 @@ async def process_interface_language(message: Message, state: FSMContext):
         await state.finish()
         return
     if settings_manager.set_setting('interface.language', lang):
-        await message.answer(translate(get_lang(), 'interface_language_set', lang), reply_markup=interface_menu_keyboard())
+        await message.answer(translate(get_lang(), 'interface_language_set', value=lang), reply_markup=interface_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'interface_language_save_error'), reply_markup=interface_menu_keyboard())
     await state.finish()
@@ -922,7 +922,7 @@ async def handle_interface_progress(message: Message):
     new_value = not current
     if settings_manager.set_setting('interface.show_progress', new_value):
         status = 'будет показываться' if new_value else 'не будет показываться'
-        await message.answer(translate(get_lang(), 'interface_progress_set', status), reply_markup=interface_menu_keyboard())
+        await message.answer(translate(get_lang(), 'interface_progress_set', status=status), reply_markup=interface_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'interface_progress_error'), reply_markup=interface_menu_keyboard())
 
@@ -932,7 +932,7 @@ async def handle_interface_time(message: Message):
     new_value = not current
     if settings_manager.set_setting('interface.show_time', new_value):
         status = 'будет показываться' if new_value else 'не будет показываться'
-        await message.answer(translate(get_lang(), 'interface_time_set', status), reply_markup=interface_menu_keyboard())
+        await message.answer(translate(get_lang(), 'interface_time_set', status=status), reply_markup=interface_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'interface_time_error'), reply_markup=interface_menu_keyboard())
 
@@ -942,7 +942,7 @@ async def handle_interface_compact(message: Message):
     new_value = not current
     if settings_manager.set_setting('interface.compact_mode', new_value):
         status = 'включён' if new_value else 'выключен'
-        await message.answer(translate(get_lang(), 'interface_compact_set', status), reply_markup=interface_menu_keyboard())
+        await message.answer(translate(get_lang(), 'interface_compact_set', status=status), reply_markup=interface_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'interface_compact_error'), reply_markup=interface_menu_keyboard())
 
@@ -950,7 +950,7 @@ async def handle_interface_compact(message: Message):
 async def handle_security_users(message: Message):
     current = settings_manager.get_setting('security.allowed_users', [])
     current_str = ', '.join(map(str, current)) if current else 'не задано'
-    await message.answer(translate(get_lang(), 'security_users_current', current_str), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'security_users_current', value=current_str), reply_markup=cancel_keyboard())
     await SecuritySettingsState.waiting_for_users.set()
 
 @dp.message_handler(state=SecuritySettingsState.waiting_for_users)
@@ -963,7 +963,7 @@ async def process_security_users(message: Message, state: FSMContext):
         return
     users = [int(u) for u in users]
     if settings_manager.set_setting('security.allowed_users', users):
-        await message.answer(translate(get_lang(), 'security_users_set', ', '.join(map(str, users))), reply_markup=security_menu_keyboard())
+        await message.answer(translate(get_lang(), 'security_users_set', value=', '.join(map(str, users))), reply_markup=security_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'security_users_save_error'), reply_markup=security_menu_keyboard())
     await state.finish()
@@ -974,14 +974,14 @@ async def handle_security_admin_only(message: Message):
     new_value = not current
     if settings_manager.set_setting('security.admin_only', new_value):
         status = 'только админ' if new_value else 'все пользователи'
-        await message.answer(translate(get_lang(), 'security_admin_only_set', status), reply_markup=security_menu_keyboard())
+        await message.answer(translate(get_lang(), 'security_admin_only_set', status=status), reply_markup=security_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'security_admin_only_error'), reply_markup=security_menu_keyboard())
 
 @dp.message_handler(lambda m: m.text == 'Уровень логирования')
 async def handle_security_log_level(message: Message):
     current = settings_manager.get_setting('security.log_level', 'INFO')
-    await message.answer(translate(get_lang(), 'security_log_level_current', current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'security_log_level_current', value=current), reply_markup=cancel_keyboard())
     await SecuritySettingsState.waiting_for_log_level.set()
 
 @dp.message_handler(state=SecuritySettingsState.waiting_for_log_level)
@@ -992,7 +992,7 @@ async def process_security_log_level(message: Message, state: FSMContext):
         await state.finish()
         return
     if settings_manager.set_setting('security.log_level', level):
-        await message.answer(translate(get_lang(), 'security_log_level_set', level), reply_markup=security_menu_keyboard())
+        await message.answer(translate(get_lang(), 'security_log_level_set', value=level), reply_markup=security_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'security_log_level_save_error'), reply_markup=security_menu_keyboard())
     await state.finish()
@@ -1021,14 +1021,14 @@ async def handle_backup_auto(message: Message):
     new_value = not current
     if settings_manager.set_setting('backup.auto', new_value):
         status = 'включено' if new_value else 'выключено'
-        await message.answer(translate(get_lang(), 'backup_auto_set', status), reply_markup=backup_menu_keyboard())
+        await message.answer(translate(get_lang(), 'backup_auto_set', status=status), reply_markup=backup_menu_keyboard())
     else:
         await message.answer(translate(get_lang(), 'backup_auto_error'), reply_markup=backup_menu_keyboard())
 
 @dp.message_handler(lambda m: m.text == 'Интервал резервного копирования')
 async def handle_backup_interval(message: Message):
     current = settings_manager.get_setting('backup.interval', 24)
-    await message.answer(translate(get_lang(), 'backup_interval_current', current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'backup_interval_current', value=current), reply_markup=cancel_keyboard())
     await BackupSettingsState.waiting_for_interval.set()
 
 @dp.message_handler(state=BackupSettingsState.waiting_for_interval)
@@ -1039,7 +1039,7 @@ async def process_backup_interval(message: Message, state: FSMContext):
             await message.answer(translate(get_lang(), 'backup_interval_error'), reply_markup=backup_menu_keyboard())
             return
         if settings_manager.set_setting('backup.interval', interval):
-            await message.answer(translate(get_lang(), 'backup_interval_set', interval), reply_markup=backup_menu_keyboard())
+            await message.answer(translate(get_lang(), 'backup_interval_set', value=interval), reply_markup=backup_menu_keyboard())
         else:
             await message.answer(translate(get_lang(), 'backup_interval_save_error'), reply_markup=backup_menu_keyboard())
     except Exception:
@@ -1049,7 +1049,7 @@ async def process_backup_interval(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Макс. количество резервных копий')
 async def handle_backup_max_count(message: Message):
     current = settings_manager.get_setting('backup.max_count', 10)
-    await message.answer(translate(get_lang(), 'backup_max_count_current', current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'backup_max_count_current', value=current), reply_markup=cancel_keyboard())
     await BackupSettingsState.waiting_for_max_count.set()
 
 @dp.message_handler(state=BackupSettingsState.waiting_for_max_count)
@@ -1060,7 +1060,7 @@ async def process_backup_max_count(message: Message, state: FSMContext):
             await message.answer(translate(get_lang(), 'backup_max_count_error'))
             return
         if settings_manager.set_setting('backup.max_count', value):
-            await message.answer(translate(get_lang(), 'backup_max_count_set', value), reply_markup=backup_menu_keyboard())
+            await message.answer(translate(get_lang(), 'backup_max_count_set', value=value), reply_markup=backup_menu_keyboard())
         else:
             await message.answer(translate(get_lang(), 'backup_max_count_save_error'), reply_markup=backup_menu_keyboard())
     except Exception:
@@ -1074,7 +1074,7 @@ async def handle_backup_now(message: Message):
         with open(backup_path, 'rb') as f:
             await message.answer_document(f, caption=translate(get_lang(), 'backup_created'), reply_markup=backup_menu_keyboard())
     else:
-        await message.answer(translate(get_lang(), 'backup_create_error', backup_path), reply_markup=backup_menu_keyboard())
+        await message.answer(translate(get_lang(), 'backup_create_error', value=backup_path), reply_markup=backup_menu_keyboard())
 
 @dp.message_handler(lambda m: m.text == 'Экспорт настроек')
 async def handle_export_settings(message: Message):
@@ -1100,7 +1100,7 @@ async def process_import_settings_file(message: Message, state: FSMContext):
         else:
             await message.answer(translate(get_lang(), 'settings_import_error'), reply_markup=export_menu_keyboard())
     except Exception as e:
-        await message.answer(translate(get_lang(), 'settings_import_error_detail', e), reply_markup=export_menu_keyboard())
+        await message.answer(translate(get_lang(), 'settings_import_error_detail', value=e), reply_markup=export_menu_keyboard())
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)
