@@ -751,7 +751,7 @@ async def process_scan_ports(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Порты майнеров')
 async def handle_miner_ports(message: Message):
     current = settings_manager.get_setting('scanning.miner_ports', [4028, 3333])
-    await message.answer(translate(get_lang(), 'scan_miner_ports_current', value=', '.join(map(str, current))), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_miner_ports_prompt', value=', '.join(map(str, current))), reply_markup=cancel_keyboard())
     await ScanSettingsState.waiting_for_miner_ports.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_miner_ports)
@@ -770,7 +770,7 @@ async def process_miner_ports(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Порты роутеров')
 async def handle_router_ports(message: Message):
     current = settings_manager.get_setting('scanning.router_ports', [8080, 80, 22])
-    await message.answer(translate(get_lang(), 'scan_router_ports_current', value=', '.join(map(str, current))), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_router_ports_prompt', value=', '.join(map(str, current))), reply_markup=cancel_keyboard())
     await ScanSettingsState.waiting_for_router_ports.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_router_ports)
@@ -789,7 +789,7 @@ async def process_router_ports(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'TTL результатов')
 async def handle_scan_ttl(message: Message):
     current = settings_manager.get_setting('scanning.results_ttl', 3600)
-    await message.answer(translate(get_lang(), 'scan_ttl_current', value=current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_ttl_prompt', value=current), reply_markup=cancel_keyboard())
     await ScanSettingsState.waiting_for_ttl.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_ttl)
@@ -817,7 +817,7 @@ def parse_ports(text):
 async def handle_router_ips(message: Message):
     current = settings_manager.get_setting('routers.ips', [])
     current_str = ', '.join(current) if current else 'не задано'
-    await message.answer(translate(get_lang(), 'scan_router_ips_current', value=current_str), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'router_ips_prompt', value=current_str), reply_markup=cancel_keyboard())
     await RouterSettingsState.waiting_for_ips.set()
 
 @dp.message_handler(state=RouterSettingsState.waiting_for_ips)
@@ -837,7 +837,7 @@ async def process_router_ips(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Порты роутеров')
 async def handle_router_ports_setting(message: Message):
     current = settings_manager.get_setting('routers.ports', [8080, 80, 22])
-    await message.answer(translate(get_lang(), 'scan_router_ports_current', value=', '.join(map(str, current))), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'scan_router_ports_prompt', value=', '.join(map(str, current))), reply_markup=cancel_keyboard())
     await RouterSettingsState.waiting_for_ports.set()
 
 @dp.message_handler(state=RouterSettingsState.waiting_for_ports)
@@ -856,7 +856,7 @@ async def process_router_ports_setting(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Интервал проверки')
 async def handle_router_interval(message: Message):
     current = settings_manager.get_setting('routers.interval', 300)
-    await message.answer(translate(get_lang(), 'scan_router_interval_current', value=current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'router_interval_prompt', value=current), reply_markup=cancel_keyboard())
     await RouterSettingsState.waiting_for_interval.set()
 
 @dp.message_handler(state=RouterSettingsState.waiting_for_interval)
@@ -899,7 +899,7 @@ def validate_ip(ip):
 @dp.message_handler(lambda m: m.text == 'Язык интерфейса')
 async def handle_interface_language(message: Message):
     current = settings_manager.get_setting('interface.language', 'ru')
-    await message.answer(translate(get_lang(), 'interface_language_current', value=current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'interface_language_prompt', value=current), reply_markup=cancel_keyboard())
     await InterfaceSettingsState.waiting_for_language.set()
 
 @dp.message_handler(state=InterfaceSettingsState.waiting_for_language)
@@ -949,7 +949,7 @@ async def handle_interface_compact(message: Message):
 async def handle_security_users(message: Message):
     current = settings_manager.get_setting('security.allowed_users', [])
     current_str = ', '.join(map(str, current)) if current else 'не задано'
-    await message.answer(translate(get_lang(), 'security_users_current', value=current_str), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'security_users_prompt', value=current_str), reply_markup=cancel_keyboard())
     await SecuritySettingsState.waiting_for_users.set()
 
 @dp.message_handler(state=SecuritySettingsState.waiting_for_users)
@@ -980,7 +980,7 @@ async def handle_security_admin_only(message: Message):
 @dp.message_handler(lambda m: m.text == 'Уровень логирования')
 async def handle_security_log_level(message: Message):
     current = settings_manager.get_setting('security.log_level', 'INFO')
-    await message.answer(translate(get_lang(), 'security_log_level_current', value=current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'security_log_level_prompt', value=current), reply_markup=cancel_keyboard())
     await SecuritySettingsState.waiting_for_log_level.set()
 
 @dp.message_handler(state=SecuritySettingsState.waiting_for_log_level)
@@ -1027,7 +1027,7 @@ async def handle_backup_auto(message: Message):
 @dp.message_handler(lambda m: m.text == 'Интервал резервного копирования')
 async def handle_backup_interval(message: Message):
     current = settings_manager.get_setting('backup.interval', 24)
-    await message.answer(translate(get_lang(), 'backup_interval_current', value=current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'backup_interval_prompt', value=current), reply_markup=cancel_keyboard())
     await BackupSettingsState.waiting_for_interval.set()
 
 @dp.message_handler(state=BackupSettingsState.waiting_for_interval)
@@ -1048,7 +1048,7 @@ async def process_backup_interval(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Макс. количество резервных копий')
 async def handle_backup_max_count(message: Message):
     current = settings_manager.get_setting('backup.max_count', 10)
-    await message.answer(translate(get_lang(), 'backup_max_count_current', value=current), reply_markup=cancel_keyboard())
+    await message.answer(translate(get_lang(), 'backup_max_count_prompt', value=current), reply_markup=cancel_keyboard())
     await BackupSettingsState.waiting_for_max_count.set()
 
 @dp.message_handler(state=BackupSettingsState.waiting_for_max_count)
