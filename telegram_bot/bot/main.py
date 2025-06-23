@@ -2,12 +2,11 @@ import logging
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import Message, ContentType, ReplyKeyboardMarkup, KeyboardButton
 from .keyboards import (
-    main_menu_keyboard, settings_menu_keyboard, monitoring_menu_keyboard,
+    main_menu_keyboard, settings_main_menu_keyboard, monitoring_menu_keyboard,
     scan_menu_keyboard, notification_menu_keyboard, router_menu_keyboard,
     interface_menu_keyboard, security_menu_keyboard, backup_menu_keyboard,
     export_menu_keyboard, help_menu_keyboard, cancel_keyboard,
-    scan_main_menu_keyboard, settings_main_menu_keyboard, settings_settings_menu_keyboard,
-    scan_cancel_or_main_keyboard
+    scan_main_menu_keyboard, scan_cancel_or_main_keyboard
 )
 from ..utils.router_monitor import check_routers_status
 from ..utils.miner_scan import scan_network_for_miners, scan_miners_from_list
@@ -174,10 +173,6 @@ async def handle_fast_scan_main_menu(message: Message, state: FSMContext):
 async def handle_upload_file_main_menu(message: Message):
     await message.answer(translate(get_lang(), 'upload_file_prompt'), reply_markup=cancel_keyboard(lang=get_lang()))
 
-@dp.message_handler(is_menu_button('settings_settings_main_menu_btn'))
-async def handle_settings_settings_main_menu(message: Message):
-    await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_settings_menu_keyboard(lang=get_lang()))
-
 @dp.message_handler(is_menu_button('backup_main_menu_btn'))
 async def handle_backup_main_menu(message: Message):
     await message.answer(translate(get_lang(), 'backup_menu_msg'), reply_markup=backup_menu_keyboard(lang=get_lang()))
@@ -217,10 +212,6 @@ async def handle_help_main_menu(message: Message):
 @dp.message_handler(is_menu_button('back_to_main_btn'), state=[ScanDevicesState.waiting_for_network, ScanMinersState.waiting_for_network, FastScanState.waiting_for_network])
 async def scan_back_to_main(message: Message, state: FSMContext):
     await message.answer(translate(get_lang(), 'main_menu'), reply_markup=main_menu_keyboard(lang=get_lang()))
-
-@dp.message_handler(is_menu_button('back_to_settings_btn'))
-async def handle_back_to_settings(message: Message):
-    await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(commands=['help'])
 async def handle_help_command(message: Message):
@@ -1170,46 +1161,6 @@ async def handle_backup_now(message: Message):
     else:
         await message.answer(translate(get_lang(), 'backup_create_error', value=backup_path), reply_markup=backup_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(is_menu_button('export_settings'))
-async def handle_export_settings(message: Message):
-    json_str = settings_manager.export_settings()
-    await message.answer_document(('settings_export.json', json_str.encode('utf-8')), caption=translate(get_lang(), 'settings_exported'), reply_markup=export_menu_keyboard(lang=get_lang()))
-
-@dp.message_handler(is_menu_button('import_settings'))
-async def handle_import_settings(message: Message):
-    await message.answer(translate(get_lang(), 'backup_import_prompt'), reply_markup=cancel_keyboard(lang=get_lang()))
-    await BackupSettingsState.waiting_for_import.set()
-
-@dp.message_handler(state=BackupSettingsState.waiting_for_import, content_types=ContentType.DOCUMENT)
-async def process_import_settings_file(message: Message, state: FSMContext):
-    file = message.document
-    file_path = os.path.join(UPLOAD_DIR, file.file_name)
-    await message.document.download(destination_file=file_path)
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            json_str = f.read()
-        ok = settings_manager.import_settings(json_str)
-        if ok:
-            await message.answer(translate(get_lang(), 'settings_imported'), reply_markup=export_menu_keyboard(lang=get_lang()))
-        else:
-            await message.answer(translate(get_lang(), 'settings_import_error'), reply_markup=export_menu_keyboard(lang=get_lang()))
-    except Exception as e:
-        await message.answer(translate(get_lang(), 'settings_import_error_detail', value=e), reply_markup=export_menu_keyboard(lang=get_lang()))
-    finally:
-        if os.path.exists(file_path):
-            os.remove(file_path)
-    await state.finish()
-
-@dp.message_handler(state=BackupSettingsState.waiting_for_import, content_types=ContentType.TEXT)
-async def process_import_settings_text(message: Message, state: FSMContext):
-    json_str = message.text.strip()
-    ok = settings_manager.import_settings(json_str)
-    if ok:
-        await message.answer(translate(get_lang(), 'settings_imported'), reply_markup=export_menu_keyboard(lang=get_lang()))
-    else:
-        await message.answer(translate(get_lang(), 'settings_import_error'), reply_markup=export_menu_keyboard(lang=get_lang()))
-    await state.finish()
-
 @dp.message_handler(is_menu_button('export_stats'))
 async def handle_export_stats(message: Message):
     stats_path = os.path.join(UPLOAD_DIR, 'statistics.json')
@@ -1241,24 +1192,20 @@ async def handle_settings_summary(message: Message):
         online_routers=online_routers,
         offline_routers=offline_routers
     )
-    await message.answer(summary, parse_mode='Markdown', reply_markup=settings_menu_keyboard(lang=get_lang()))
+    await message.answer(summary, parse_mode='Markdown', reply_markup=settings_main_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(is_menu_button('settings_reset'))
 async def handle_settings_reset(message: Message):
     ok = settings_manager.reset_to_defaults()
     if ok:
-        await message.answer(translate(get_lang(), 'settings_reset'), reply_markup=settings_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'settings_reset'), reply_markup=settings_main_menu_keyboard(lang=get_lang()))
     else:
-        await message.answer(translate(get_lang(), 'settings_reset_error'), reply_markup=settings_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'settings_reset_error'), reply_markup=settings_main_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(is_menu_button('cancel'), state='*')
 async def cancel_any_state(message: Message, state: FSMContext):
     await state.finish()
-    await message.answer('Действие отменено.', reply_markup=settings_menu_keyboard(lang=get_lang()))
-
-@dp.message_handler(is_menu_button('settings_settings_menu_btn'))
-async def handle_settings_settings_menu(message: Message):
-    await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_settings_menu_keyboard(lang=get_lang()))
+    await message.answer('Действие отменено.', reply_markup=settings_main_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(is_menu_button('back_to_main_btn'), state='*')
 async def handle_back_to_main_any(message: Message, state: FSMContext):
