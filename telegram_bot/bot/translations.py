@@ -63,7 +63,7 @@ TRANSLATIONS = {
         'monitoring_menu_btn': 'Мониторинг',
         'monitoring_menu_msg': 'Меню мониторинга:',
         'scan_menu_btn': 'Сканирование',
-        'scan_menu_msg': 'Меню сканирования:',
+        'scan_menu_msg': 'Настройки сканирования:',
         'notification_menu_btn': 'Уведомления',
         'notification_menu_msg': 'Меню уведомлений:',
         'router_menu_btn': 'Роутеры',
@@ -392,8 +392,8 @@ TRANSLATIONS = {
         'scan_timeout_set': 'Scan-Timeout eingestellt auf: {value} Sek.',
         'scan_max_concurrent_prompt': 'Aktuelle maximale gleichzeitige Scans: {value}.\nGeben Sie einen neuen Wert ein:',
         'scan_max_concurrent_set': 'Maximale gleichzeitige Scans eingestellt auf: {value}.',
-        'scan_ports_prompt': 'Aktuelle Scan-Ports: {value}.\nGeben Sie eine neue Liste, getrennt durch Kommas, ein:',
-        'scan_ports_set': 'Scan-Ports eingestellt auf: {value}.',
+        'scan_ports_prompt': 'Aktuelle scanpoorten: {value}.\nGeben Sie eine neue Liste, getrennt durch Kommas, ein:',
+        'scan_ports_set': 'Scanpoorten eingestellt auf: {value}.',
         'scan_miner_ports_prompt': 'Aktuelle Miner-Ports: {value}.\nGeben Sie eine neue Liste, getrennt durch Kommas, ein:',
         'scan_miner_ports_set': 'Miner-Ports eingestellt auf: {value}.',
         'scan_router_ports_prompt': 'Aktuelle Router-Ports: {value}.\nGeben Sie eine neue Liste, getrennt durch Kommas, ein:',
@@ -537,7 +537,7 @@ TRANSLATIONS = {
 - «Резервное копирование»: создание и восстановление резервных копий.
 - «Экспорт/Импорт»: экспорт и импорт настроек и статистики.
 
-Если возникли вопросы — напишите /help или воспользуйтесь кнопкой «Справка» в главном меню.''',
+Если возникли вопросы — напишите /help oder воспользуйтесь кнопкой «Справка» in главном меню.''',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -717,7 +717,7 @@ TRANSLATIONS = {
 - «Резервное копирование»: создание и восстановление резервных копий.
 - «Экспорт/Импорт»: экспорт и импорт настроек и статистики.
 
-Если возникли вопросы — напишите /help или воспользуйтесь кнопкой «Справка» в главном меню.''',
+Если возникли вопросы — напишите /help oder воспользуйтесь кнопкой «Справка» in главном меню.''',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -760,7 +760,7 @@ TRANSLATIONS = {
         'scan_router_ports_set': '路由器端口已设置为: {value}。',
         'scan_ttl_prompt': '当前结果 TTL: {value} 秒。\n请输入新的秒数：',
         'scan_ttl_set': '结果 TTL 已设置为: {value} 秒。',
-        'router_ips_prompt': '当前路由器 IP: {value}。\n请输入用逗号分隔的新 IP：',
+        'router_ips_prompt': '当前路由器 IP: {value}.\n请输入用逗号分隔的新 IP：',
         'router_ips_set': '路由器 IP 已设置为: {value}。',
         'router_interval_prompt': '当前路由器检查间隔: {value} 秒。\n请输入新的秒数：',
         'router_interval_set': '路由器检查间隔已设置为: {value} 秒。',
@@ -772,9 +772,9 @@ TRANSLATIONS = {
         'backup_interval_set': '备份间隔已设置为: {value} 小时。',
         'quiet_hours_current': '当前安静时段: {start} — {end}。\n请输入新的开始时间 (hh:mm)：',
         'quiet_hours_set': '安静时段已设置为: {start} — {end}。',
-        'interface_progress_prompt': '显示进度: {value}。\n更改？（是/否）',
+        'interface_progress_prompt': '显示进度: {value}.\n更改？（是/否）',
         'interface_progress_set': '进度显示: {status}。',
-        'interface_time_prompt': '显示时间: {value}。\n更改？（是/否）',
+        'interface_time_prompt': '显示时间: {value}.\n更改？（是/否）',
         'interface_time_set': '时间显示: {status}。',
         'interface_compact_prompt': '紧凑模式: {value}.\n更改？（是/否）',
         'interface_compact_set': '紧凑模式: {status}。',
@@ -897,7 +897,7 @@ TRANSLATIONS = {
 - «Резервное копирование»: создание и восстановление резервных копий.
 - «Экспорт/Импорт»: экспорт и импорт настроек и статистики.
 
-Если возникли вопросы — напишите /help или воспользуйтесь кнопкой «Справка» в главном меню.''',
+Если возникли вопросы — напишите /help oder воспользуйтесь кнопкой «Справка» in главном меню.''',
     },
 }
 
