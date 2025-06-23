@@ -211,10 +211,12 @@ class SettingsManager:
 
         # Роутеры
         summary += "*🌐 Роутеры:*\n"
-        summary += f"• Количество: `{len(routers.get('ips', []))}`\n"
-        summary += f"• Порты: `{', '.join(map(str, routers.get('ports', [])))}`\n"
+        summary += f"• Количество (настроено): `{len(routers.get('ips', []))}`\n"
         if online_routers is not None and offline_routers is not None:
+            total_known = online_routers + offline_routers
+            summary += f"• Количество (факт): `{total_known}`\n"
             summary += f"• Онлайн: `{online_routers}` | Оффлайн: `{offline_routers}`\n"
+        summary += f"• Порты: `{', '.join(map(str, routers.get('ports', [])))}`\n"
 
         return summary
         
