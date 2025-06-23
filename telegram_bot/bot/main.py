@@ -5,7 +5,8 @@ from .keyboards import (
     main_menu_keyboard, settings_menu_keyboard, monitoring_menu_keyboard,
     scan_menu_keyboard, notification_menu_keyboard, router_menu_keyboard,
     interface_menu_keyboard, security_menu_keyboard, backup_menu_keyboard,
-    export_menu_keyboard, help_menu_keyboard, cancel_keyboard
+    export_menu_keyboard, help_menu_keyboard, cancel_keyboard,
+    scan_main_menu_keyboard, settings_main_menu_keyboard
 )
 from ..utils.router_monitor import check_routers_status
 from ..utils.miner_scan import scan_network_for_miners, scan_miners_from_list
@@ -137,17 +138,49 @@ async def send_welcome(message: Message):
         reply_markup=main_menu_keyboard(lang=get_lang())
     )
 
+@dp.message_handler(is_menu_button('status_btn'))
+async def handle_status_btn(message: Message):
+    await handle_status(message)
+
+@dp.message_handler(is_menu_button('router_status_btn'))
+async def handle_router_status_btn(message: Message):
+    await handle_router_status_menu(message)
+
+@dp.message_handler(is_menu_button('scan_main_menu_btn'))
+async def handle_scan_main_menu(message: Message):
+    await message.answer(translate(get_lang(), 'scan_menu_msg'), reply_markup=scan_main_menu_keyboard(lang=get_lang()))
+
+@dp.message_handler(is_menu_button('settings_main_menu_btn'))
+async def handle_settings_main_menu(message: Message):
+    await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_main_menu_keyboard(lang=get_lang()))
+
+@dp.message_handler(is_menu_button('scan_network_btn'))
+async def handle_scan_network_btn(message: Message):
+    await handle_scan_network(message)
+
+@dp.message_handler(is_menu_button('scan_miners_btn'))
+async def handle_scan_miners_btn(message: Message):
+    await handle_scan_miners(message)
+
+@dp.message_handler(is_menu_button('fast_scan_btn'))
+async def handle_fast_scan_btn(message: Message):
+    await handle_fast_scan(message)
+
+@dp.message_handler(is_menu_button('upload_file_btn'))
+async def handle_upload_file_btn(message: Message):
+    await handle_upload_file(message)
+
 @dp.message_handler(is_menu_button('settings_menu_btn'))
-async def handle_settings_menu(message: Message):
+async def handle_settings_menu_btn(message: Message):
     await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(is_menu_button('monitoring_menu_btn'))
-async def handle_monitoring_menu(message: Message):
-    await message.answer(translate(get_lang(), 'monitoring_menu_msg'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
+@dp.message_handler(is_menu_button('backup_menu_btn'))
+async def handle_backup_menu_btn(message: Message):
+    await message.answer(translate(get_lang(), 'backup_menu_msg'), reply_markup=backup_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(is_menu_button('scan_menu_btn'))
-async def handle_scan_menu(message: Message):
-    await message.answer(translate(get_lang(), 'scan_menu_msg'), reply_markup=scan_menu_keyboard(lang=get_lang()))
+@dp.message_handler(is_menu_button('export_menu_btn'))
+async def handle_export_menu_btn(message: Message):
+    await message.answer(translate(get_lang(), 'export_menu_msg'), reply_markup=export_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(is_menu_button('notification_menu_btn'))
 async def handle_notification_menu(message: Message):
@@ -164,14 +197,6 @@ async def handle_interface_menu(message: Message):
 @dp.message_handler(is_menu_button('security_menu_btn'))
 async def handle_security_menu(message: Message):
     await message.answer(translate(get_lang(), 'security_menu_msg'), reply_markup=security_menu_keyboard(lang=get_lang()))
-
-@dp.message_handler(is_menu_button('backup_menu_btn'))
-async def handle_backup_menu(message: Message):
-    await message.answer(translate(get_lang(), 'backup_menu_msg'), reply_markup=backup_menu_keyboard(lang=get_lang()))
-
-@dp.message_handler(is_menu_button('export_menu_btn'))
-async def handle_export_menu(message: Message):
-    await message.answer(translate(get_lang(), 'export_menu_msg'), reply_markup=export_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(is_menu_button('help_menu_btn'))
 async def handle_help_menu(message: Message):
