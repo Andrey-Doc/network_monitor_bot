@@ -186,6 +186,8 @@ TRANSLATIONS = {
         'scanning_progress': '{bar} {percent}% ({done}/{total})',
         'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
         'backup_auto_prompt': 'Автоматическое резервное копирование: {value}. Изменить? (да/нет)',
+        'scan_file_sent': 'Файл с результатами отправлен.',
+        'scan_file_not_found': 'Файл с результатами не найден. Попробуйте ответить на сообщение с результатами или повторить запрос.',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -376,6 +378,8 @@ TRANSLATIONS = {
         'scanning_progress': '{bar} {percent}% ({done}/{total})',
         'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
         'backup_auto_prompt': 'Automatic backup: {value}. Change? (yes/no)',
+        'scan_file_sent': 'Result file sent.',
+        'scan_file_not_found': 'Result file not found. Please reply to the result message or try again.',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -566,6 +570,8 @@ TRANSLATIONS = {
         'scanning_progress': '{bar} {percent}% ({done}/{total})',
         'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
         'backup_auto_prompt': 'Автоматическое резервное копирование: {value}. Изменить? (да/нет)',
+        'scan_file_sent': 'Файл с результатами отправлен.',
+        'scan_file_not_found': 'Файл с результатами не найден. Попробуйте ответить на сообщение с результатами или повторить запрос.',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -756,6 +762,8 @@ TRANSLATIONS = {
         'scanning_progress': '{bar} {percent}% ({done}/{total})',
         'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
         'backup_auto_prompt': 'Automatic backup: {value}. Change? (yes/no)',
+        'scan_file_sent': 'Result file sent.',
+        'scan_file_not_found': 'Result file not found. Please reply to the result message or try again.',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -946,6 +954,8 @@ TRANSLATIONS = {
         'scanning_progress': '{bar} {percent}% ({done}/{total})',
         'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
         'backup_auto_prompt': 'Автоматическое резервное копирование: {value}. Изменить? (да/нет)',
+        'scan_file_sent': 'Файл с результатами отправлен.',
+        'scan_file_not_found': 'Файл с результатами не найден. Попробуйте ответить на сообщение с результатами или повторить запрос.',
     },
 }
 

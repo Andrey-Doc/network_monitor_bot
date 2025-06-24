@@ -1,12 +1,17 @@
+import os
 import time
 import threading
+import csv
+import json
 
 class ScanManager:
-    def __init__(self, ttl=3600):
+    def __init__(self, ttl=3600, results_dir=None):
         self._active_scans = 0
         self._results = {}
         self._ttl = ttl
         self._lock = threading.Lock()
+        self._results_dir = results_dir or os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data/scan_results'))
+        os.makedirs(self._results_dir, exist_ok=True)
 
     def start_scan(self):
         with self._lock:
@@ -19,6 +24,43 @@ class ScanManager:
     def add_result(self, msg_id, data):
         with self._lock:
             self._results[msg_id] = {**data, 'timestamp': time.time()}
+            # Сохраняем в JSON
+            json_path = os.path.join(self._results_dir, f'result_{msg_id}.json')
+            with open(json_path, 'w', encoding='utf-8') as f:
+                json.dump(self._results[msg_id], f, ensure_ascii=False, indent=2)
+            # Сохраняем в CSV (если есть devices или miners)
+            if 'devices' in data:
+                self._save_devices_csv(msg_id, data['devices'])
+            elif 'miners' in data:
+                self._save_miners_csv(msg_id, data['miners'])
+
+    def _save_devices_csv(self, msg_id, devices):
+        csv_path = os.path.join(self._results_dir, f'result_{msg_id}.csv')
+        if not devices:
+            return
+        keys = set()
+        for d in devices:
+            keys.update(d.keys())
+        keys = list(keys)
+        with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=keys)
+            writer.writeheader()
+            for d in devices:
+                writer.writerow(d)
+
+    def _save_miners_csv(self, msg_id, miners):
+        csv_path = os.path.join(self._results_dir, f'result_{msg_id}.csv')
+        if not miners:
+            return
+        keys = set()
+        for m in miners:
+            keys.update(m.keys())
+        keys = list(keys)
+        with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=keys)
+            writer.writeheader()
+            for m in miners:
+                writer.writerow(m)
 
     def cleanup_results(self):
         now = time.time()
@@ -26,6 +68,11 @@ class ScanManager:
             expired = [k for k, v in self._results.items() if now - v.get('timestamp', 0) > self._ttl]
             for k in expired:
                 del self._results[k]
+                # Удаляем файлы
+                for ext in ('.json', '.csv'):
+                    path = os.path.join(self._results_dir, f'result_{k}{ext}')
+                    if os.path.exists(path):
+                        os.remove(path)
 
     def get_active_count(self):
         with self._lock:
@@ -41,4 +88,15 @@ class ScanManager:
 
     def get_results(self):
         with self._lock:
-            return dict(self._results) 
+            return dict(self._results)
+
+    def get_result_file(self, msg_id, ext='csv'):
+        path = os.path.join(self._results_dir, f'result_{msg_id}.{ext}')
+        return path if os.path.exists(path) else None
+
+    def get_result_json(self, msg_id):
+        path = os.path.join(self._results_dir, f'result_{msg_id}.json')
+        if os.path.exists(path):
+            with open(path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return None 

@@ -1250,6 +1250,51 @@ async def handle_help_btn(message: Message):
 async def handle_help_bot_btn(message: Message):
     await message.answer(translate(get_lang(), 'help_bot_text'), reply_markup=help_menu_keyboard(lang=get_lang()))
 
+@dp.message_handler(lambda m: m.text.lower() == 'файл', state=ScanDevicesState.waiting_for_file_request)
+async def send_devices_file(message: Message, state: FSMContext):
+    msg_id = message.reply_to_message.message_id if message.reply_to_message else (message.message_id - 1)
+    if not isinstance(msg_id, int):
+        await message.answer(translate(get_lang(), 'scan_file_not_found'))
+        await state.finish()
+        return
+    file_path = scan_manager.get_result_file(msg_id, ext='csv')
+    if file_path and os.path.exists(file_path):
+        with open(file_path, 'rb') as f:
+            await message.answer_document(f, caption=translate(get_lang(), 'scan_file_sent'))
+    else:
+        await message.answer(translate(get_lang(), 'scan_file_not_found'))
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text.lower() == 'файл', state=ScanMinersState.waiting_for_file_request)
+async def send_miners_file(message: Message, state: FSMContext):
+    msg_id = message.reply_to_message.message_id if message.reply_to_message else (message.message_id - 1)
+    if not isinstance(msg_id, int):
+        await message.answer(translate(get_lang(), 'scan_file_not_found'))
+        await state.finish()
+        return
+    file_path = scan_manager.get_result_file(msg_id, ext='csv')
+    if file_path and os.path.exists(file_path):
+        with open(file_path, 'rb') as f:
+            await message.answer_document(f, caption=translate(get_lang(), 'scan_file_sent'))
+    else:
+        await message.answer(translate(get_lang(), 'scan_file_not_found'))
+    await state.finish()
+
+@dp.message_handler(lambda m: m.text.lower() == 'файл', state=FastScanState.waiting_for_file_request)
+async def send_fastscan_file(message: Message, state: FSMContext):
+    msg_id = message.reply_to_message.message_id if message.reply_to_message else (message.message_id - 1)
+    if not isinstance(msg_id, int):
+        await message.answer(translate(get_lang(), 'scan_file_not_found'))
+        await state.finish()
+        return
+    file_path = scan_manager.get_result_file(msg_id, ext='csv')
+    if file_path and os.path.exists(file_path):
+        with open(file_path, 'rb') as f:
+            await message.answer_document(f, caption=translate(get_lang(), 'scan_file_sent'))
+    else:
+        await message.answer(translate(get_lang(), 'scan_file_not_found'))
+    await state.finish()
+
 if __name__ == '__main__':
     executor.start_polling(
         dp, 
