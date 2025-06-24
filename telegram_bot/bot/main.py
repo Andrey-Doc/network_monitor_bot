@@ -153,16 +153,16 @@ async def handle_router_status_main_menu(message: Message):
     router_ips = settings_manager.get_setting('routers.ips', [])
     router_ports = settings_manager.get_setting('routers.ports', [])
     if not router_ips or not router_ports:
-        await message.answer("Роутеры не настроены.")
+        await message.answer(translate(get_lang(), 'routers_not_configured'))
         return
-    await message.answer("⏳ Проверяю статус роутеров...")
+    await message.answer(translate(get_lang(), 'checking_router_status'))
     results = await check_routers_status(router_ips, router_ports)
-    text = "🌐 <b>Статус роутеров:</b>\n\n"
+    text = translate(get_lang(), 'router_status_header') + "\n\n"
     for r in results:
         emoji = "🟢" if r['status'] == 'online' else "🔴"
         text += f"{emoji} <b>{r['ip']}</b>: {r['status']}"
         if r['open_ports']:
-            text += f" (открытые порты: {', '.join(map(str, r['open_ports']))})"
+            text += f" (" + translate(get_lang(), 'open_ports') + f": {', '.join(map(str, r['open_ports']))})"
         text += "\n"
     await message.answer(text, parse_mode='HTML')
 

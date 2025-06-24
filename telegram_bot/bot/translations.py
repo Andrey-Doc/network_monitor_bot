@@ -178,6 +178,10 @@ TRANSLATIONS = {
 Если возникли вопросы — напишите /help или воспользуйтесь кнопкой «Справка» в главном меню.''',
         'scan_main_menu_msg': 'Меню сканирования:',
         'scan_menu_msg': 'Настройки сканирования:',
+        'routers_not_configured': 'Роутеры не настроены.',
+        'checking_router_status': '⏳ Проверяю статус роутеров...',
+        'router_status_header': '🌐 <b>Статус роутеров:</b>',
+        'open_ports': 'открытые порты',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -360,6 +364,10 @@ TRANSLATIONS = {
 Если возникли вопросы — напишите /help oder воспользуйтесь кнопкой «Справка» in главном меню.''',
         'scan_main_menu_msg': 'Меню сканирования:',
         'scan_menu_msg': 'Настройки сканирования:',
+        'routers_not_configured': 'Routers are not configured.',
+        'checking_router_status': '⏳ Checking router status...',
+        'router_status_header': '🌐 <b>Router status:</b>',
+        'open_ports': 'open ports',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -542,6 +550,10 @@ TRANSLATIONS = {
 Если возникли вопросы — напишите /help oder воспользуйтесь кнопкой «Справка» in главном меню.''',
         'scan_main_menu_msg': 'Меню сканирования:',
         'scan_menu_msg': 'Настройки сканирования:',
+        'routers_not_configured': 'Роутеры не настроены.',
+        'checking_router_status': '⏳ Проверяю статус роутеров...',
+        'router_status_header': '🌐 <b>Статус роутеров:</b>',
+        'open_ports': 'открытые порты',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -724,6 +736,10 @@ TRANSLATIONS = {
 Если возникли вопросы — напишите /help oder воспользуйтесь кнопкой «Справка» in главном меню.''',
         'scan_main_menu_msg': 'Меню сканирования:',
         'scan_menu_msg': 'Настройки сканирования:',
+        'routers_not_configured': 'Routers are not configured.',
+        'checking_router_status': '⏳ Checking router status...',
+        'router_status_header': '🌐 <b>Router status:</b>',
+        'open_ports': 'open ports',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -906,6 +922,10 @@ TRANSLATIONS = {
 Если возникли вопросы — напишите /help oder воспользуйтесь кнопкой «Справка» in главном меню.''',
         'scan_main_menu_msg': 'Меню сканирования:',
         'scan_menu_msg': 'Настройки сканирования:',
+        'routers_not_configured': 'Роутеры не настроены.',
+        'checking_router_status': '⏳ Проверяю статус роутеров...',
+        'router_status_header': '🌐 <b>Статус роутеров:</b>',
+        'open_ports': 'открытые порты',
     },
 }
 
