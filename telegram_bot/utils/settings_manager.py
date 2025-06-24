@@ -11,35 +11,15 @@ import shutil
 import importlib.util
 
 class SettingsManager:
-    """Менеджер настроек бота с синхронизацией config.py <-> settings.json"""
-    
-    def __init__(self, config_file: str = "data/settings.json", config_py: str = "bot/config.py"):
+    """Менеджер настроек бота (только settings.json)"""
+    def __init__(self, config_file: str = "data/settings.json"):
         self.config_file = config_file
-        self.config_py = config_py
-        self.config_py_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", config_py))
-        self.config_dict = self._load_config_py()
         self.settings = self._load_settings()
         self._ensure_data_dir()
-        
+
     def _ensure_data_dir(self):
         """Создаёт директорию для данных если её нет"""
         os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
-        
-    def _load_config_py(self) -> dict:
-        """Загружает CONFIG из config.py как словарь"""
-        try:
-            spec = importlib.util.spec_from_file_location("config", self.config_py_path)
-            config_mod = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(config_mod)
-            config = dict(getattr(config_mod, "CONFIG", {}))
-            if not config:
-                logging.warning("[SETTINGS] CONFIG из config.py пустой! Проверьте структуру config.py.")
-            else:
-                logging.info(f"[SETTINGS] CONFIG из config.py: {config}")
-            return config
-        except Exception as e:
-            logging.error(f"[SETTINGS] Ошибка загрузки config.py: {e}")
-            return {}
         
     def _load_settings(self) -> Dict[str, Any]:
         """Загружает настройки из файла или инициализирует из config.py"""
@@ -47,59 +27,23 @@ class SettingsManager:
             try:
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     loaded_settings = json.load(f)
-                # Объединяем с config.py (config.py — источник по умолчанию)
-                merged = self._merge_settings(self.config_dict, loaded_settings)
-                if not merged:
-                    logging.warning("[SETTINGS] settings.json пустой, инициализация из config.py")
-                    self._save_settings(self.config_dict)
-                    return self.config_dict.copy()
-                return merged
+                return loaded_settings
             except Exception as e:
                 logging.error(f"[SETTINGS] Ошибка загрузки settings.json: {e}")
-                return self.config_dict.copy()
-        else:
-            # Если файла нет — инициализируем из config.py
-            if not self.config_dict:
-                logging.warning("[SETTINGS] config.py пустой, settings.json не будет создан!")
                 return {}
-            self._save_settings(self.config_dict)
-            return self.config_dict.copy()
-        
-    def _merge_settings(self, default: Dict, loaded: Dict) -> Dict:
-        """Объединяет настройки по умолчанию с загруженными"""
-        result = default.copy()
-        
-        def merge_dicts(base, update):
-            for key, value in update.items():
-                if key in base and isinstance(base[key], dict) and isinstance(value, dict):
-                    merge_dicts(base[key], value)
-                else:
-                    base[key] = value
-                    
-        merge_dicts(result, loaded)
-        return result
+        else:
+            logging.warning("[SETTINGS] settings.json не найден, инициализация пустыми настройками")
+            self._save_settings({})
+            return {}
         
     def _save_settings(self, settings: Dict[str, Any]):
         """Сохраняет настройки в файл и обновляет config.py"""
         try:
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, indent=2, ensure_ascii=False)
-            self._update_config_py(settings)
-            logging.info("[SETTINGS] Настройки сохранены и config.py обновлён")
+            logging.info("[SETTINGS] Настройки сохранены")
         except Exception as e:
             logging.error(f"[SETTINGS] Ошибка сохранения настроек: {e}")
-            
-    def _update_config_py(self, settings: Dict[str, Any]):
-        """Обновляет CONFIG в config.py на основе settings"""
-        try:
-            lines = ["CONFIG = {\n"]
-            for k, v in settings.items():
-                lines.append(f"    {json.dumps(k)}: {json.dumps(v, ensure_ascii=False)},\n")
-            lines.append("}\n")
-            with open(self.config_py_path, 'w', encoding='utf-8') as f:
-                f.writelines(lines)
-        except Exception as e:
-            logging.error(f"[SETTINGS] Ошибка обновления config.py: {e}")
             
     def get_setting(self, path: str, default: Any = None) -> Any:
         """Получает значение настройки по пути (например, 'monitoring.interval')"""
@@ -247,7 +191,7 @@ class SettingsManager:
         """Импортирует настройки из JSON"""
         try:
             new_settings = json.loads(settings_json)
-            self.settings = self._merge_settings(self.settings, new_settings)
+            self.settings = new_settings
             self._save_settings(self.settings)
             logging.info("[SETTINGS] Настройки импортированы")
             return True
@@ -275,4 +219,8 @@ class SettingsManager:
                     zf.write(stats_file, arcname=os.path.basename(stats_file))
             return backup_path + '.zip'
         except Exception as e:
-            return f"ERROR: {e}" 
+            return f"ERROR: {e}"
+
+    def get_secret(self, key: str):
+        # Заглушка для совместимости, секреты теперь в отдельном файле
+        return None 

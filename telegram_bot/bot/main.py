@@ -27,18 +27,24 @@ import asyncio
 from ..utils.help_system import HelpSystem
 from .translations import translate
 from ..utils.scan_manager import ScanManager
+import json
 
 logging.basicConfig(level=logging.INFO)
 
 UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data'))
-settings_manager = SettingsManager(os.path.join(UPLOAD_DIR, 'settings.json'), config_py="bot/config.py")
+settings_manager = SettingsManager(os.path.join(UPLOAD_DIR, 'settings.json'))
 
-# Получаем основные параметры из settings_manager
-TELEGRAM_BOT_TOKEN = settings_manager.get_setting('TELEGRAM_BOT_TOKEN')
-CHAT_ID = settings_manager.get_setting('CHAT_ID')
-ROUTER_IPS = settings_manager.get_setting('ROUTER_IPS')
-ROUTER_PORTS = settings_manager.get_setting('ROUTER_PORTS')
-SCAN_RESULTS_TTL = settings_manager.get_setting('SCAN_RESULTS_TTL', 3600)
+def load_secrets():
+    secrets_path = os.path.join(UPLOAD_DIR, 'secrets.json')
+    with open(secrets_path, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+secrets = load_secrets()
+TELEGRAM_BOT_TOKEN = secrets.get('TELEGRAM_BOT_TOKEN')
+CHAT_ID = secrets.get('CHAT_ID')
+ROUTER_IPS = secrets.get('ROUTER_IPS', [])
+ROUTER_PORTS = secrets.get('ROUTER_PORTS', [])
+SCAN_RESULTS_TTL = secrets.get('SCAN_RESULTS_TTL', 3600)
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 storage = MemoryStorage()

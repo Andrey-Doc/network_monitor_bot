@@ -12,9 +12,7 @@ def main_menu_keyboard(lang=None):
 
 def settings_menu_keyboard(lang=None):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    row1 = [translate(lang, 'monitoring_menu_btn'), translate(lang, 'scan_settings_btn')]
-    print("settings_menu_keyboard row1:", row1)
-    kb.row(*[KeyboardButton(text) for text in row1])
+    kb.row(KeyboardButton(translate(lang, 'monitoring_menu_btn')), KeyboardButton(translate(lang, 'scan_settings_btn')))
     kb.row(KeyboardButton(translate(lang, 'notification_menu_btn')), KeyboardButton(translate(lang, 'router_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'interface_menu_btn')), KeyboardButton(translate(lang, 'security_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'backup_menu_btn')), KeyboardButton(translate(lang, 'export_menu_btn')))
@@ -102,9 +100,7 @@ def scan_main_menu_keyboard(lang=None):
 # Главное меню настроек
 def settings_main_menu_keyboard(lang=None):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    row1 = [translate(lang, 'monitoring_settings_btn'), translate(lang, 'scan_settings_btn')]
-    print("settings_main_menu_keyboard row1:", row1)
-    kb.row(*[KeyboardButton(text) for text in row1])
+    kb.row(KeyboardButton(translate(lang, 'monitoring_settings_btn')), KeyboardButton(translate(lang, 'scan_settings_btn')))
     kb.row(KeyboardButton(translate(lang, 'notification_settings_btn')), KeyboardButton(translate(lang, 'router_settings_btn')))
     kb.row(KeyboardButton(translate(lang, 'interface_settings_btn')), KeyboardButton(translate(lang, 'security_settings_btn')))
     kb.row(KeyboardButton(translate(lang, 'backup_main_menu_btn')), KeyboardButton(translate(lang, 'export_main_menu_btn')))

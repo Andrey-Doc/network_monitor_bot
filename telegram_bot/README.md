@@ -88,13 +88,30 @@ pip install -r requirements.txt
 ```
 
 ### Конфигурация
-1. Создайте файл `telegram_bot/bot/config.py`:
-```python
-TELEGRAM_BOT_TOKEN = "ваш_токен_бота"
-CHAT_ID = ваш_chat_id
-ROUTER_IPS = ["11.250.0.1", "11.250.0.2", "11.250.0.3", "11.250.0.4", "11.250.0.5"]
-ROUTER_PORTS = [8080, 8022]
-SCAN_RESULTS_TTL = 3600  # время жизни результатов в секундах
+1. Создайте файл `telegram_bot/data/settings.json`:
+```json
+{
+  "routers": {
+    "ips": ["11.250.0.1", "11.250.0.2", "11.250.0.3", "11.250.0.4", "11.250.0.5"],
+    "ports": [8080, 8022, 80, 22]
+  },
+  "scanning": {
+    "default_timeout": 5,
+    "max_concurrent_scans": 3,
+    "results_ttl": 3600
+  },
+  "monitoring": {
+    "auto_start": true,
+    "interval": 300
+  }
+}
+```
+2. Создайте файл `telegram_bot/data/secrets.json`:
+```json
+{
+  "TELEGRAM_BOT_TOKEN": "your-bot-token-here",
+  "CHAT_ID": 123456789
+}
 ```
 
 ### Запуск
