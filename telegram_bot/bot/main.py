@@ -150,8 +150,8 @@ async def handle_status_main_menu(message: Message):
 
 @dp.message_handler(is_menu_button('router_status_main_menu_btn'))
 async def handle_router_status_main_menu(message: Message):
-    router_ips = settings_manager.get_setting('ROUTER_IPS', [])
-    router_ports = settings_manager.get_setting('ROUTER_PORTS', [])
+    router_ips = settings_manager.get_setting('routers.ips', [])
+    router_ports = settings_manager.get_setting('routers.ports', [])
     if not router_ips or not router_ports:
         await message.answer("Роутеры не настроены.")
         return
