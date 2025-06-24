@@ -185,6 +185,7 @@ TRANSLATIONS = {
         'fast_scanning_progress': '{bar} {percent}% ({done}/{total})',
         'scanning_progress': '{bar} {percent}% ({done}/{total})',
         'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
+        'backup_auto_prompt': 'Автоматическое резервное копирование: {value}. Изменить? (да/нет)',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -374,6 +375,7 @@ TRANSLATIONS = {
         'fast_scanning_progress': '{bar} {percent}% ({done}/{total})',
         'scanning_progress': '{bar} {percent}% ({done}/{total})',
         'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
+        'backup_auto_prompt': 'Automatic backup: {value}. Change? (yes/no)',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -563,6 +565,7 @@ TRANSLATIONS = {
         'fast_scanning_progress': '{bar} {percent}% ({done}/{total})',
         'scanning_progress': '{bar} {percent}% ({done}/{total})',
         'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
+        'backup_auto_prompt': 'Автоматическое резервное копирование: {value}. Изменить? (да/нет)',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -752,6 +755,7 @@ TRANSLATIONS = {
         'fast_scanning_progress': '{bar} {percent}% ({done}/{total})',
         'scanning_progress': '{bar} {percent}% ({done}/{total})',
         'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
+        'backup_auto_prompt': 'Automatic backup: {value}. Change? (yes/no)',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -941,6 +945,7 @@ TRANSLATIONS = {
         'fast_scanning_progress': '{bar} {percent}% ({done}/{total})',
         'scanning_progress': '{bar} {percent}% ({done}/{total})',
         'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
+        'backup_auto_prompt': 'Автоматическое резервное копирование: {value}. Изменить? (да/нет)',
     },
 }
 
