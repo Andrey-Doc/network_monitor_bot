@@ -182,6 +182,9 @@ TRANSLATIONS = {
         'checking_router_status': '⏳ Проверяю статус роутеров...',
         'router_status_header': '🌐 <b>Статус роутеров:</b>',
         'open_ports': 'открытые порты',
+        'fast_scanning_progress': '{bar} {percent}% ({done}/{total})',
+        'scanning_progress': '{bar} {percent}% ({done}/{total})',
+        'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -368,6 +371,9 @@ TRANSLATIONS = {
         'checking_router_status': '⏳ Checking router status...',
         'router_status_header': '🌐 <b>Router status:</b>',
         'open_ports': 'open ports',
+        'fast_scanning_progress': '{bar} {percent}% ({done}/{total})',
+        'scanning_progress': '{bar} {percent}% ({done}/{total})',
+        'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -550,10 +556,13 @@ TRANSLATIONS = {
 Если возникли вопросы — напишите /help oder воспользуйтесь кнопкой «Справка» in главном меню.''',
         'scan_main_menu_msg': 'Меню сканирования:',
         'scan_menu_msg': 'Настройки сканирования:',
-        'routers_not_configured': 'Роутеры не настроены.',
-        'checking_router_status': '⏳ Проверяю статус роутеров...',
-        'router_status_header': '🌐 <b>Статус роутеров:</b>',
-        'open_ports': 'открытые порты',
+        'routers_not_configured': 'Routers are not configured.',
+        'checking_router_status': '⏳ Checking router status...',
+        'router_status_header': '🌐 <b>Router status:</b>',
+        'open_ports': 'open ports',
+        'fast_scanning_progress': '{bar} {percent}% ({done}/{total})',
+        'scanning_progress': '{bar} {percent}% ({done}/{total})',
+        'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -740,6 +749,9 @@ TRANSLATIONS = {
         'checking_router_status': '⏳ Checking router status...',
         'router_status_header': '🌐 <b>Router status:</b>',
         'open_ports': 'open ports',
+        'fast_scanning_progress': '{bar} {percent}% ({done}/{total})',
+        'scanning_progress': '{bar} {percent}% ({done}/{total})',
+        'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -926,6 +938,9 @@ TRANSLATIONS = {
         'checking_router_status': '⏳ Проверяю статус роутеров...',
         'router_status_header': '🌐 <b>Статус роутеров:</b>',
         'open_ports': 'открытые порты',
+        'fast_scanning_progress': '{bar} {percent}% ({done}/{total})',
+        'scanning_progress': '{bar} {percent}% ({done}/{total})',
+        'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
     },
 }
 

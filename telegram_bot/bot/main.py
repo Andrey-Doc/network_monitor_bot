@@ -503,7 +503,7 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         percent = int(done / total * 100)
         bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
         await bot.edit_message_text(
-            translate(get_lang(), 'scanning_progress', bar=bar, percent=percent, done=done, total=total),
+            translate(get_lang(), 'miners_scanning_progress', bar=bar, percent=percent, done=done, total=total),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
