@@ -8,16 +8,21 @@ def get_snmp_info(ip, community='public', timeout=2, port=161):
     }
     result = {}
     for key, oid in oids.items():
-        errorIndication, errorStatus, errorIndex, varBinds = next(
-            getCmd(SnmpEngine(),
-                   CommunityData(community, mpModel=0),
-                   UdpTransportTarget((ip, port), timeout=timeout, retries=1),
-                   ContextData(),
-                   ObjectType(ObjectIdentity(oid)))
-        )
-        if errorIndication or errorStatus:
-            result[key] = None
-        else:
-            for varBind in varBinds:
-                result[key] = str(varBind[1])
+        try:
+            errorIndication, errorStatus, errorIndex, varBinds = next(
+                getCmd(SnmpEngine(),
+                       CommunityData(community, mpModel=0),
+                       UdpTransportTarget((ip, port), timeout=timeout, retries=1),
+                       ContextData(),
+                       ObjectType(ObjectIdentity(oid)))
+            )
+            if errorIndication:
+                result[key] = f"SNMP error: {errorIndication}"
+            elif errorStatus:
+                result[key] = f"SNMP error: {errorStatus.prettyPrint()}"
+            else:
+                for varBind in varBinds:
+                    result[key] = str(varBind[1])
+        except Exception as e:
+            result[key] = f"Exception: {e}"
     return result 
