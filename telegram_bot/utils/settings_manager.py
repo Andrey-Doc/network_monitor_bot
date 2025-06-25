@@ -230,8 +230,10 @@ class SettingsManager:
         try:
             with open('data/secrets.json', 'r', encoding='utf-8') as f:
                 secrets = json.load(f)
+            print(f"[DEBUG] admins from secrets.json: {secrets.get('admins', [])}")
             return secrets.get('admins', [])
-        except Exception:
+        except Exception as e:
+            print(f"[DEBUG] error reading admins: {e}")
             return []
 
     def get_user_role(self, user_id: int) -> str:
