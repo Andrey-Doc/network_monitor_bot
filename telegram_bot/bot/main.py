@@ -1,6 +1,6 @@
 import logging
 from aiogram import Bot, Dispatcher, types, executor
-from aiogram.types import Message, ContentType, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import Message, ContentType, ReplyKeyboardMarkup, KeyboardButton, InputFile
 from .keyboards import (
     main_menu_keyboard, settings_main_menu_keyboard, monitoring_menu_keyboard,
     scan_menu_keyboard, notification_menu_keyboard, router_menu_keyboard,
@@ -29,6 +29,7 @@ from .translations import translate
 from ..utils.scan_manager import ScanManager
 import json
 from telegram_bot.utils.snmp_utils import async_get_snmp_full_info, async_get_snmp_info_subprocess
+import io
 
 logging.basicConfig(level=logging.INFO)
 
@@ -1392,14 +1393,34 @@ async def handle_snmp_router_extended_select(message: Message, state: FSMContext
     text += f"\n  sysLocation: {info.get('sysLocation', '-') }"
     text += f"\n  ifNumber: {info.get('ifNumber', '-') }"
     interfaces = info.get('interfaces', [])
-    if interfaces:
-        text += f"\n  <b>Интерфейсы:</b>"
-        for idx, iface in enumerate(interfaces, 1):
-            text += f"\n    {idx}. {iface['descr']} | Статус: {iface['status']} | RX: {iface['in_octets']} | TX: {iface['out_octets']}"
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_menu_btn')))
+    if interfaces:
+        text += f"\n  <b>Интерфейсы (первые 10):</b>"
+        for idx, iface in enumerate(interfaces[:10], 1):
+            text += f"\n    {idx}. {iface['descr']} | Статус: {iface['status']} | RX: {iface['in_octets']} | TX: {iface['out_octets']}"
+        if len(interfaces) > 10:
+            kb.row(KeyboardButton(f'Экспорт интерфейсов {ip}'))
     await message.answer(text, parse_mode='HTML', reply_markup=kb)
     await state.finish()
+
+@dp.message_handler(lambda m: m.text.startswith('Экспорт интерфейсов '))
+async def handle_export_interfaces(message: Message):
+    ip = message.text.replace('Экспорт интерфейсов ', '').strip()
+    snmp_settings = settings_manager.get_setting('snmp_routers', {})
+    community = snmp_settings.get('community', 'public')
+    info = await async_get_snmp_full_info(ip, community)
+    interfaces = info.get('interfaces', [])
+    if not interfaces:
+        await message.answer('Нет данных по интерфейсам.')
+        return
+    # Формируем CSV
+    output = io.StringIO()
+    output.write('№;Описание;Статус;RX;TX\n')
+    for idx, iface in enumerate(interfaces, 1):
+        output.write(f'{idx};{iface["descr"]};{iface["status"]};{iface["in_octets"]};{iface["out_octets"]}\n')
+    output.seek(0)
+    await message.answer_document(InputFile(output, filename=f'interfaces_{ip}.csv'), caption=f'Интерфейсы {ip}')
 
 if __name__ == '__main__':
     executor.start_polling(
