@@ -1345,6 +1345,7 @@ async def handle_snmp_router_community(message: Message):
 @dp.message_handler(state=SnmpRouterSettingsState.waiting_for_community)
 async def process_snmp_router_community(message: Message, state: FSMContext):
     value = message.text.strip()
+    print(f"DEBUG set community: {value}")  # debug print
     settings_manager.set_setting('snmp_routers.community', value)
     await message.answer(translate(get_lang(), 'snmp_router_community_set', value=value))
     await state.finish()
