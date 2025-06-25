@@ -208,6 +208,10 @@ TRANSLATIONS = {
         'snmp_router_extended_btn': 'Расширенный SNMP-запрос',
         'snmp_router_extended_select_prompt': 'Выберите роутер для расширенного запроса:',
         'snmp_router_extended_loading': 'Получаю расширенную информацию...',
+        'no_interfaces_data': 'Нет данных по интерфейсам.',
+        'csv_interfaces_header': '№;Описание;Статус;RX;TX',
+        'csv_interfaces_caption': 'Интерфейсы {ip}',
+        'first_10_interfaces': 'Интерфейсы (первые 10):',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -420,6 +424,10 @@ TRANSLATIONS = {
         'snmp_router_extended_btn': 'Extended SNMP query',
         'snmp_router_extended_select_prompt': 'Select a router for extended query:',
         'snmp_router_extended_loading': 'Getting extended information...',
+        'no_interfaces_data': 'No interface data.',
+        'csv_interfaces_header': 'No;Description;Status;RX;TX',
+        'csv_interfaces_caption': 'Interfaces {ip}',
+        'first_10_interfaces': 'Interfaces (first 10):',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -632,6 +640,10 @@ TRANSLATIONS = {
         'snmp_router_extended_btn': 'Erweiterte SNMP-Abfrage',
         'snmp_router_extended_select_prompt': 'Wählen Sie einen Router für die erweiterte Abfrage:',
         'snmp_router_extended_loading': 'Erweiterte Informationen werden abgerufen...',
+        'no_interfaces_data': 'Keine Schnittstellendaten.',
+        'csv_interfaces_header': 'Nr;Beschreibung;Status;RX;TX',
+        'csv_interfaces_caption': 'Schnittstellen {ip}',
+        'first_10_interfaces': 'Schnittstellen (erste 10):',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -844,6 +856,10 @@ TRANSLATIONS = {
         'snmp_router_extended_btn': 'Uitgebreide SNMP-query',
         'snmp_router_extended_select_prompt': 'Selecteer een router voor uitgebreide query:',
         'snmp_router_extended_loading': 'Uitgebreide informatie ophalen...',
+        'no_interfaces_data': 'Geen interfacegegevens.',
+        'csv_interfaces_header': 'Nr;Beschrijving;Status;RX;TX',
+        'csv_interfaces_caption': 'Interfaces {ip}',
+        'first_10_interfaces': 'Interfaces (eerste 10):',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -1056,6 +1072,10 @@ TRANSLATIONS = {
         'snmp_router_extended_btn': '扩展SNMP查询',
         'snmp_router_extended_select_prompt': '选择要扩展查询的路由器：',
         'snmp_router_extended_loading': '正在获取扩展信息...',
+        'no_interfaces_data': '没有接口数据。',
+        'csv_interfaces_header': '编号;描述;状态;RX;TX',
+        'csv_interfaces_caption': '接口 {ip}',
+        'first_10_interfaces': '接口（前10个）：',
     },
 }
 
