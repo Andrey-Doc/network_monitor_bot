@@ -226,8 +226,11 @@ async def handle_scan_network_main_menu(message: Message, state: FSMContext):
     if not check_user_access(message):
         await send_access_denied(message)
         return
-    
-    await handle_scan_network(message)
+    await message.answer(
+        translate(get_lang(), 'scan_network_prompt'),
+        reply_markup=cancel_keyboard(lang=get_lang())
+    )
+    await ScanDevicesState.waiting_for_network.set()
 
 @dp.message_handler(is_menu_button('scan_miners_main_menu_btn'))
 async def handle_scan_miners_main_menu(message: Message, state: FSMContext):
@@ -235,8 +238,11 @@ async def handle_scan_miners_main_menu(message: Message, state: FSMContext):
     if not check_user_access(message):
         await send_access_denied(message)
         return
-    
-    await handle_scan_miners(message)
+    await message.answer(
+        translate(get_lang(), 'scan_miners_prompt'),
+        reply_markup=cancel_keyboard(lang=get_lang())
+    )
+    await ScanMinersState.waiting_for_network.set()
 
 @dp.message_handler(is_menu_button('fast_scan_main_menu_btn'))
 async def handle_fast_scan_main_menu(message: Message, state: FSMContext):
@@ -244,8 +250,11 @@ async def handle_fast_scan_main_menu(message: Message, state: FSMContext):
     if not check_user_access(message):
         await send_access_denied(message)
         return
-    
-    await handle_fast_scan(message)
+    await message.answer(
+        translate(get_lang(), 'fast_scan_prompt'),
+        reply_markup=cancel_keyboard(lang=get_lang())
+    )
+    await FastScanState.waiting_for_network.set()
 
 @dp.message_handler(is_menu_button('upload_file_main_menu_btn'))
 async def handle_upload_file_main_menu(message: Message):
