@@ -197,6 +197,7 @@ TRANSLATIONS = {
         'security_admin_only_prompt': 'Включить режим "только админ"? (да/нет):',
         'security_token_prompt': 'Пожалуйста, введите новый токен бота:',
         'security_token_error': 'Ошибка: некорректный токен.',
+        'security_log_level_set': 'Уровень логирования установлен: {value}',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -398,6 +399,7 @@ TRANSLATIONS = {
         'security_admin_only_prompt': 'Enable "admin only" mode? (yes/no):',
         'security_token_prompt': 'Please enter the new bot token:',
         'security_token_error': 'Error: invalid token.',
+        'security_log_level_set': 'Log level set to: {value}',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -599,6 +601,7 @@ TRANSLATIONS = {
         'security_admin_only_prompt': 'Nur-Admin-Modus aktivieren? (ja/nein):',
         'security_token_prompt': 'Bitte geben Sie das neue Bot-Token ein:',
         'security_token_error': 'Fehler: Ungültiges Token.',
+        'security_log_level_set': 'Log-Level gesetzt auf: {value}',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -800,6 +803,7 @@ TRANSLATIONS = {
         'security_admin_only_prompt': 'Alleen-beheerder modus inschakelen? (ja/nee):',
         'security_token_prompt': 'Voer het nieuwe bot-token in:',
         'security_token_error': 'Fout: ongeldig token.',
+        'security_log_level_set': 'Logniveau ingesteld op: {value}',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -998,9 +1002,10 @@ TRANSLATIONS = {
         'security_users_prompt': '请输入用户列表（用逗号分隔）：',
         'security_log_level_prompt': '请输入日志级别（例如 INFO、DEBUG、WARNING）：',
         'security_log_level_error': '错误：无效的日志级别。',
-        'security_admin_only_prompt': '启用“仅管理员”模式？（是/否）：',
+        'security_admin_only_prompt': '启用"仅管理员"模式？（是/否）：',
         'security_token_prompt': '请输入新的机器人令牌：',
         'security_token_error': '错误：无效的令牌。',
+        'security_log_level_set': '日志级别已设置为：{value}',
     },
 }
 
