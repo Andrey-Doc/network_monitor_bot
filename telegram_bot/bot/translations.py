@@ -198,6 +198,10 @@ TRANSLATIONS = {
         'security_token_prompt': 'Пожалуйста, введите новый токен бота:',
         'security_token_error': 'Ошибка: некорректный токен.',
         'security_log_level_set': 'Уровень логирования установлен: {value}',
+        'snmp_router_menu_btn': 'SNMP роутеры',
+        'snmp_router_menu_msg': 'Меню SNMP роутеров:',
+        'snmp_router_status_btn': 'Статус SNMP роутеров',
+        'snmp_router_settings_btn': 'Настройки SNMP роутеров',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -400,6 +404,10 @@ TRANSLATIONS = {
         'security_token_prompt': 'Please enter the new bot token:',
         'security_token_error': 'Error: invalid token.',
         'security_log_level_set': 'Log level set to: {value}',
+        'snmp_router_menu_btn': 'SNMP Routers',
+        'snmp_router_menu_msg': 'SNMP Routers Menu:',
+        'snmp_router_status_btn': 'SNMP Routers Status',
+        'snmp_router_settings_btn': 'SNMP Routers Settings',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -602,6 +610,10 @@ TRANSLATIONS = {
         'security_token_prompt': 'Bitte geben Sie das neue Bot-Token ein:',
         'security_token_error': 'Fehler: Ungültiges Token.',
         'security_log_level_set': 'Log-Level gesetzt auf: {value}',
+        'snmp_router_menu_btn': 'SNMP-Router',
+        'snmp_router_menu_msg': 'SNMP-Router-Menü:',
+        'snmp_router_status_btn': 'SNMP-Router-Status',
+        'snmp_router_settings_btn': 'SNMP-Router-Einstellungen',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -804,6 +816,10 @@ TRANSLATIONS = {
         'security_token_prompt': 'Voer het nieuwe bot-token in:',
         'security_token_error': 'Fout: ongeldig token.',
         'security_log_level_set': 'Logniveau ingesteld op: {value}',
+        'snmp_router_menu_btn': 'SNMP-Router',
+        'snmp_router_menu_msg': 'SNMP-Router-Menü:',
+        'snmp_router_status_btn': 'SNMP-Router-Status',
+        'snmp_router_settings_btn': 'SNMP-Router-Einstellungen',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -1006,6 +1022,10 @@ TRANSLATIONS = {
         'security_token_prompt': '请输入新的机器人令牌：',
         'security_token_error': '错误：无效的令牌。',
         'security_log_level_set': '日志级别已设置为：{value}',
+        'snmp_router_menu_btn': 'SNMP路由器',
+        'snmp_router_menu_msg': 'SNMP路由器菜单：',
+        'snmp_router_status_btn': 'SNMP路由器状态',
+        'snmp_router_settings_btn': 'SNMP路由器设置',
     },
 }
 

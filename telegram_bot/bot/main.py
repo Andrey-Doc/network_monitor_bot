@@ -1295,6 +1295,26 @@ async def send_fastscan_file(message: Message, state: FSMContext):
         await message.answer(translate(get_lang(), 'scan_file_not_found'))
     await state.finish()
 
+@dp.message_handler(is_menu_button('snmp_router_menu_btn'))
+async def handle_snmp_router_menu(message: Message):
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_status_btn')))
+    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_settings_btn')))
+    kb.row(KeyboardButton(translate(get_lang(), 'back_to_main_btn')))
+    await message.answer(translate(get_lang(), 'snmp_router_menu_msg'), reply_markup=kb)
+
+@dp.message_handler(is_menu_button('snmp_router_status_btn'))
+async def handle_snmp_router_status(message: Message):
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_menu_btn')))
+    await message.answer('Статус SNMP роутеров: (заглушка)', reply_markup=kb)
+
+@dp.message_handler(is_menu_button('snmp_router_settings_btn'))
+async def handle_snmp_router_settings(message: Message):
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_menu_btn')))
+    await message.answer('Настройки SNMP роутеров: (заглушка)', reply_markup=kb)
+
 if __name__ == '__main__':
     executor.start_polling(
         dp, 
