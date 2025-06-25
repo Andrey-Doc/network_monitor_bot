@@ -11,7 +11,7 @@ def get_snmp_info(ip, community='public', timeout=2, port=161):
         try:
             errorIndication, errorStatus, errorIndex, varBinds = next(
                 getCmd(SnmpEngine(),
-                       CommunityData(community, mpModel=0),
+                       CommunityData(community, mpModel=1),
                        UdpTransportTarget((ip, port), timeout=timeout, retries=1),
                        ContextData(),
                        ObjectType(ObjectIdentity(oid)))
