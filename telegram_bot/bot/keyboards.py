@@ -111,5 +111,5 @@ def settings_main_menu_keyboard(lang=None):
 
 def scan_cancel_or_main_keyboard(lang=None):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row(KeyboardButton(translate(lang, 'back_to_main_btn')), KeyboardButton(translate(lang, 'cancel_btn')))
+    kb.row(KeyboardButton(translate(lang, 'cancel_btn')), KeyboardButton(translate(lang, 'back_to_main_btn')))
     return kb 

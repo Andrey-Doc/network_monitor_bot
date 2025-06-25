@@ -222,37 +222,34 @@ async def handle_settings_main_menu_btn(message: Message, state: FSMContext):
 
 @dp.message_handler(is_menu_button('scan_network_main_menu_btn'))
 async def handle_scan_network_main_menu(message: Message, state: FSMContext):
-    # Проверяем доступ пользователя
     if not check_user_access(message):
         await send_access_denied(message)
         return
     await message.answer(
         translate(get_lang(), 'scan_network_prompt'),
-        reply_markup=cancel_keyboard(lang=get_lang())
+        reply_markup=scan_cancel_or_main_keyboard(lang=get_lang())
     )
     await ScanDevicesState.waiting_for_network.set()
 
 @dp.message_handler(is_menu_button('scan_miners_main_menu_btn'))
 async def handle_scan_miners_main_menu(message: Message, state: FSMContext):
-    # Проверяем доступ пользователя
     if not check_user_access(message):
         await send_access_denied(message)
         return
     await message.answer(
         translate(get_lang(), 'scan_miners_prompt'),
-        reply_markup=cancel_keyboard(lang=get_lang())
+        reply_markup=scan_cancel_or_main_keyboard(lang=get_lang())
     )
     await ScanMinersState.waiting_for_network.set()
 
 @dp.message_handler(is_menu_button('fast_scan_main_menu_btn'))
 async def handle_fast_scan_main_menu(message: Message, state: FSMContext):
-    # Проверяем доступ пользователя
     if not check_user_access(message):
         await send_access_denied(message)
         return
     await message.answer(
         translate(get_lang(), 'fast_scan_prompt'),
-        reply_markup=cancel_keyboard(lang=get_lang())
+        reply_markup=scan_cancel_or_main_keyboard(lang=get_lang())
     )
     await FastScanState.waiting_for_network.set()
 
@@ -325,7 +322,11 @@ async def handle_help_main_menu(message: Message):
 
 @dp.message_handler(is_menu_button('back_to_main_btn'), state=[ScanDevicesState.waiting_for_network, ScanMinersState.waiting_for_network, FastScanState.waiting_for_network])
 async def scan_back_to_main(message: Message, state: FSMContext):
-    await message.answer(translate(get_lang(), 'main_menu'), reply_markup=main_menu_keyboard(lang=get_lang()))
+    await state.finish()
+    await message.answer(
+        translate(get_lang(), 'main_menu'),
+        reply_markup=main_menu_keyboard(lang=get_lang())
+    )
 
 @dp.message_handler(commands=['help'])
 async def handle_help_command(message: Message):
