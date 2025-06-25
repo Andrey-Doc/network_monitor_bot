@@ -1554,6 +1554,14 @@ async def handle_show_role(message: Message):
     else:
         await message.answer(translate(get_lang(), 'role_none'))
 
+@dp.message_handler(is_menu_button('back_to_settings_btn'), state='*')
+async def handle_back_to_settings(message: Message, state: FSMContext):
+    await state.finish()
+    await message.answer(
+        translate(get_lang(), 'settings_menu_msg'),
+        reply_markup=settings_main_menu_keyboard(lang=get_lang())
+    )
+
 if __name__ == '__main__':
     executor.start_polling(
         dp, 
