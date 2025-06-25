@@ -131,6 +131,9 @@ class BackupSettingsState(StatesGroup):
 class SnmpRouterSettingsState(StatesGroup):
     waiting_for_community = State()
 
+class SnmpRouterExtendedState(StatesGroup):
+    waiting_for_router = State()
+
 # --- Universal menu button filter ---
 def is_menu_button(key):
     def inner(m):
@@ -1305,6 +1308,7 @@ async def handle_snmp_router_menu(message: Message):
     kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_status_btn')))
     kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_settings_btn')))
     kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_community_btn')))
+    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_extended_btn')))
     kb.row(KeyboardButton(translate(get_lang(), 'back_to_main_btn')))
     await message.answer(translate(get_lang(), 'snmp_router_menu_msg'), reply_markup=kb)
 
@@ -1357,6 +1361,52 @@ async def process_snmp_router_community(message: Message, state: FSMContext):
     print(f"DEBUG set community: {value}")  # debug print
     settings_manager.set_setting('snmp_routers.community', value)
     await message.answer(translate(get_lang(), 'snmp_router_community_set', value=value))
+    await state.finish()
+
+@dp.message_handler(is_menu_button('snmp_router_extended_btn'))
+async def handle_snmp_router_extended_btn(message: Message, state: FSMContext):
+    snmp_settings = settings_manager.get_setting('snmp_routers', {})
+    ips = snmp_settings.get('ips')
+    if not ips or not isinstance(ips, list) or not ips:
+        ips = settings_manager.get_setting('routers.ips', [])
+    if not ips:
+        await message.answer('Список SNMP роутеров пуст.')
+        return
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    for ip in ips:
+        kb.row(KeyboardButton(ip))
+    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_menu_btn')))
+    await message.answer(translate(get_lang(), 'snmp_router_extended_select_prompt'), reply_markup=kb)
+    await SnmpRouterExtendedState.waiting_for_router.set()
+    await state.update_data(ips=ips)
+
+@dp.message_handler(state=SnmpRouterExtendedState.waiting_for_router)
+async def handle_snmp_router_extended_select(message: Message, state: FSMContext):
+    data = await state.get_data()
+    ips = data.get('ips', [])
+    ip = message.text.strip()
+    if ip not in ips:
+        await message.answer('Выберите роутер из списка.')
+        return
+    snmp_settings = settings_manager.get_setting('snmp_routers', {})
+    community = snmp_settings.get('community', 'public')
+    await message.answer(translate(get_lang(), 'snmp_router_extended_loading'))
+    info = await async_get_snmp_full_info(ip, community)
+    text = f'<b>Расширенный SNMP-запрос для {ip}:</b>'
+    text += f"\n  sysName: {info.get('sysName', '-') }"
+    text += f"\n  sysDescr: {info.get('sysDescr', '-') }"
+    text += f"\n  sysUpTime: {info.get('sysUpTime', '-') }"
+    text += f"\n  sysContact: {info.get('sysContact', '-') }"
+    text += f"\n  sysLocation: {info.get('sysLocation', '-') }"
+    text += f"\n  ifNumber: {info.get('ifNumber', '-') }"
+    interfaces = info.get('interfaces', [])
+    if interfaces:
+        text += f"\n  <b>Интерфейсы:</b>"
+        for idx, iface in enumerate(interfaces, 1):
+            text += f"\n    {idx}. {iface['descr']} | Статус: {iface['status']} | RX: {iface['in_octets']} | TX: {iface['out_octets']}"
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_menu_btn')))
+    await message.answer(text, parse_mode='HTML', reply_markup=kb)
     await state.finish()
 
 if __name__ == '__main__':

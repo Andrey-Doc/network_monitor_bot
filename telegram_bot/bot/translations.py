@@ -205,6 +205,9 @@ TRANSLATIONS = {
         'snmp_router_community_btn': 'Community',
         'snmp_router_community_prompt': 'Текущий community: {value}\nВведите новое значение:',
         'snmp_router_community_set': 'Community установлен: {value}',
+        'snmp_router_extended_btn': 'Расширенный SNMP-запрос',
+        'snmp_router_extended_select_prompt': 'Выберите роутер для расширенного запроса:',
+        'snmp_router_extended_loading': 'Получаю расширенную информацию...',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -414,6 +417,9 @@ TRANSLATIONS = {
         'snmp_router_community_btn': 'Community',
         'snmp_router_community_prompt': 'Current community: {value}\nEnter new value:',
         'snmp_router_community_set': 'Community set to: {value}',
+        'snmp_router_extended_btn': 'Extended SNMP query',
+        'snmp_router_extended_select_prompt': 'Select a router for extended query:',
+        'snmp_router_extended_loading': 'Getting extended information...',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -603,7 +609,7 @@ TRANSLATIONS = {
         'fast_scanning_progress': '{bar} {percent}% ({done}/{total})',
         'scanning_progress': '{bar} {percent}% ({done}/{total})',
         'miners_scanning_progress': '{bar} {percent}% ({done}/{total})',
-        'backup_auto_prompt': 'Автоматическое резервное копирование: {value}. Изменить? (да/нет)',
+        'backup_auto_prompt': 'Automatic backup: {value}. Change? (yes/no)',
         'scan_file_sent': 'Файл с результатами отправлен.',
         'scan_file_not_found': 'Файл с результатами не найден. Попробуйте ответить на сообщение с результатами или повторить запрос.',
         'export_logs_msg': 'Экспорт логов...',
@@ -623,6 +629,9 @@ TRANSLATIONS = {
         'snmp_router_community_btn': 'Community',
         'snmp_router_community_prompt': 'Aktuelles Community: {value}\nNeuen Wert eingeben:',
         'snmp_router_community_set': 'Community gesetzt auf: {value}',
+        'snmp_router_extended_btn': 'Erweiterte SNMP-Abfrage',
+        'snmp_router_extended_select_prompt': 'Wählen Sie einen Router für die erweiterte Abfrage:',
+        'snmp_router_extended_loading': 'Erweiterte Informationen werden abgerufen...',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -832,6 +841,9 @@ TRANSLATIONS = {
         'snmp_router_community_btn': 'Community',
         'snmp_router_community_prompt': 'Current community: {value}\nVoer een nieuwe waarde in:',
         'snmp_router_community_set': 'Community ingesteld op: {value}',
+        'snmp_router_extended_btn': 'Uitgebreide SNMP-query',
+        'snmp_router_extended_select_prompt': 'Selecteer een router voor uitgebreide query:',
+        'snmp_router_extended_loading': 'Uitgebreide informatie ophalen...',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -1041,6 +1053,9 @@ TRANSLATIONS = {
         'snmp_router_community_btn': 'Community',
         'snmp_router_community_prompt': '当前community: {value}\n请输入新值：',
         'snmp_router_community_set': 'Community已设置为：{value}',
+        'snmp_router_extended_btn': '扩展SNMP查询',
+        'snmp_router_extended_select_prompt': '选择要扩展查询的路由器：',
+        'snmp_router_extended_loading': '正在获取扩展信息...',
     },
 }
 
