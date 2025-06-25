@@ -483,8 +483,7 @@ async def handle_router_status(message: Message):
     results = await check_routers_status(ips, ports)
     online_count = sum(1 for r in results if r['status'] == 'online')
     statistics_manager.record_router_check(online_count, len(ips))
-    text = "🌐 *Статус роутеров:*
-\n"
+    text = "🌐 *Статус роутеров:*\n\n"
     for r in results:
         emoji = "🟢" if r['status'] == 'online' else "🔴"
         text += f"{emoji} *{r['ip']}*: {r['status']}\n"
