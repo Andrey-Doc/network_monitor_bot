@@ -1218,24 +1218,6 @@ async def process_security_log_level(message: Message, state: FSMContext):
         await message.answer(translate(get_lang(), 'security_log_level_save_error'), reply_markup=security_menu_keyboard(lang=get_lang()))
     await state.finish()
 
-@dp.message_handler(is_menu_button('security_token_btn'))
-async def handle_security_token(message: Message):
-    await message.answer(translate(get_lang(), 'security_token_prompt'), reply_markup=cancel_keyboard(lang=get_lang()))
-    await SecuritySettingsState.waiting_for_token.set()
-
-@dp.message_handler(state=SecuritySettingsState.waiting_for_token)
-async def process_security_token(message: Message, state: FSMContext):
-    token = message.text.strip()
-    if not token or len(token) < 30:
-        await message.answer(translate(get_lang(), 'security_token_error'), reply_markup=security_menu_keyboard(lang=get_lang()))
-        await state.finish()
-        return
-    if settings_manager.set_setting('TELEGRAM_BOT_TOKEN', token):
-        await message.answer(translate(get_lang(), 'security_token_set'), reply_markup=security_menu_keyboard(lang=get_lang()))
-    else:
-        await message.answer(translate(get_lang(), 'security_token_save_error'), reply_markup=security_menu_keyboard(lang=get_lang()))
-    await state.finish()
-
 @dp.message_handler(is_menu_button('backup_auto_btn'))
 async def handle_backup_auto(message: Message):
     current = settings_manager.get_setting('backup.auto', False)
