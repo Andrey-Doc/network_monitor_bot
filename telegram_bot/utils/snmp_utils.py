@@ -1,4 +1,5 @@
 from pysnmp.hlapi import getCmd, SnmpEngine, CommunityData, UdpTransportTarget, ContextData, ObjectType, ObjectIdentity
+import subprocess
 
 def get_snmp_info(ip, community='public', timeout=2, port=161):
     oids = {
@@ -16,6 +17,7 @@ def get_snmp_info(ip, community='public', timeout=2, port=161):
                        ContextData(),
                        ObjectType(ObjectIdentity(oid)))
             )
+            print(f"DEBUG {ip} {key}: errorIndication={errorIndication}, errorStatus={errorStatus}, varBinds={varBinds}")
             if errorIndication:
                 result[key] = f"SNMP error: {errorIndication}"
             elif errorStatus:
@@ -23,6 +25,25 @@ def get_snmp_info(ip, community='public', timeout=2, port=161):
             else:
                 for varBind in varBinds:
                     result[key] = str(varBind[1])
+        except Exception as e:
+            result[key] = f"Exception: {e}"
+    return result
+
+def get_snmp_info_subprocess(ip, community='public'):
+    oids = {
+        'sysName': '1.3.6.1.2.1.1.5.0',
+        'sysUpTime': '1.3.6.1.2.1.1.3.0',
+        'sysDescr': '1.3.6.1.2.1.1.1.0',
+    }
+    result = {}
+    for key, oid in oids.items():
+        try:
+            out = subprocess.check_output(
+                ['snmpget', '-v', '2c', '-c', community, '-Oqv', ip, oid],
+                stderr=subprocess.STDOUT,
+                timeout=3
+            )
+            result[key] = out.decode().strip()
         except Exception as e:
             result[key] = f"Exception: {e}"
     return result 
