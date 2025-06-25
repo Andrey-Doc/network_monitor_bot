@@ -188,6 +188,9 @@ TRANSLATIONS = {
         'backup_auto_prompt': 'Автоматическое резервное копирование: {value}. Изменить? (да/нет)',
         'scan_file_sent': 'Файл с результатами отправлен.',
         'scan_file_not_found': 'Файл с результатами не найден. Попробуйте ответить на сообщение с результатами или повторить запрос.',
+        'export_logs_msg': 'Экспорт логов...',
+        'export_stats_msg': 'Экспорт статистики...',
+        'backup_import_prompt': 'Пожалуйста, отправьте файл настроек для импорта.',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -380,6 +383,9 @@ TRANSLATIONS = {
         'backup_auto_prompt': 'Automatic backup: {value}. Change? (yes/no)',
         'scan_file_sent': 'Result file sent.',
         'scan_file_not_found': 'Result file not found. Please reply to the result message or try again.',
+        'export_logs_msg': 'Exporting logs...',
+        'export_stats_msg': 'Exporting statistics...',
+        'backup_import_prompt': 'Please send the settings file to import.',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -572,6 +578,9 @@ TRANSLATIONS = {
         'backup_auto_prompt': 'Автоматическое резервное копирование: {value}. Изменить? (да/нет)',
         'scan_file_sent': 'Файл с результатами отправлен.',
         'scan_file_not_found': 'Файл с результатами не найден. Попробуйте ответить на сообщение с результатами или повторить запрос.',
+        'export_logs_msg': 'Экспорт логов...',
+        'export_stats_msg': 'Экспорт статистики...',
+        'backup_import_prompt': 'Пожалуйста, отправьте файл настроек для импорта.',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -764,6 +773,9 @@ TRANSLATIONS = {
         'backup_auto_prompt': 'Automatic backup: {value}. Change? (yes/no)',
         'scan_file_sent': 'Result file sent.',
         'scan_file_not_found': 'Result file not found. Please reply to the result message or try again.',
+        'export_logs_msg': 'Exporting logs...',
+        'export_stats_msg': 'Exporting statistics...',
+        'backup_import_prompt': 'Please send the settings file to import.',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -956,6 +968,9 @@ TRANSLATIONS = {
         'backup_auto_prompt': 'Автоматическое резервное копирование: {value}. Изменить? (да/нет)',
         'scan_file_sent': 'Файл с результатами отправлен.',
         'scan_file_not_found': 'Файл с результатами не найден. Попробуйте ответить на сообщение с результатами или повторить запрос.',
+        'export_logs_msg': 'Экспорт логов...',
+        'export_stats_msg': 'Экспорт статистики...',
+        'backup_import_prompt': 'Пожалуйста, отправьте файл настроек для импорта.',
     },
 }
 
