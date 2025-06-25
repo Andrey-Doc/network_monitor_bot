@@ -121,7 +121,6 @@ class SecuritySettingsState(StatesGroup):
     waiting_for_users = State()
     waiting_for_log_level = State()
     waiting_for_token = State()
-    waiting_for_admin_only = State()
     waiting_for_access_control = State()
 
 class BackupSettingsState(StatesGroup):
@@ -1172,31 +1171,6 @@ async def process_security_users(message: Message, state: FSMContext):
         await message.answer(translate(get_lang(), 'security_users_set', value=', '.join(map(str, users))), reply_markup=security_menu_keyboard(lang=get_lang()))
     else:
         await message.answer(translate(get_lang(), 'security_users_save_error'), reply_markup=security_menu_keyboard(lang=get_lang()))
-    await state.finish()
-
-@dp.message_handler(is_menu_button('security_admin_only_btn'))
-async def handle_security_admin_only(message: Message):
-    current = settings_manager.get_setting('security.admin_only', False)
-    value = 'да' if current else 'нет'
-    await message.answer(translate(get_lang(), 'security_admin_only_prompt', value=value), reply_markup=cancel_keyboard(lang=get_lang()))
-    await SecuritySettingsState.waiting_for_admin_only.set()
-
-@dp.message_handler(state=SecuritySettingsState.waiting_for_admin_only)
-async def process_security_admin_only(message: Message, state: FSMContext):
-    text = message.text.strip().lower()
-    if text in ['да', 'yes', 'y', 'oui', 'ja', '是']:
-        new_value = True
-    elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
-        new_value = False
-    else:
-        await message.answer(translate(get_lang(), 'input_error'), reply_markup=security_menu_keyboard(lang=get_lang()))
-        await state.finish()
-        return
-    if settings_manager.set_setting('security.admin_only', new_value):
-        status = 'только админ' if new_value else 'все пользователи'
-        await message.answer(translate(get_lang(), 'security_admin_only_set', status=status), reply_markup=security_menu_keyboard(lang=get_lang()))
-    else:
-        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=security_menu_keyboard(lang=get_lang()))
     await state.finish()
 
 @dp.message_handler(is_menu_button('security_log_level_btn'))
