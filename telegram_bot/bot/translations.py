@@ -365,33 +365,33 @@ TRANSLATIONS = {
         'upload_file_prompt': 'Please send a CSV file with IP addresses for scanning.',
         'scan_cancel_confirm': 'Вы уверены, что хотите отменить сканирование? Нажмите Отмена ещё раз для подтверждения или Главное меню для возврата.',
         'scan_cancelled': 'Сканирование отменено.',
-        'help_btn': 'Справка',
-        'help_bot_btn': 'Справка по боту',
-        'help_bot_text': '''Это бот для мониторинга и сканирования устройств в сети.
+        'help_btn': 'Help',
+        'help_bot_btn': 'Bot Help',
+        'help_bot_text': '''This is a bot for monitoring and scanning network devices.
 
-Доступные функции:
-- Мониторинг состояния роутеров и устройств.
-- Сканирование сети, поиск майнеров, быстрое сканирование.
-- Импорт/экспорт настроек, резервное копирование.
-- Гибкая система уведомлений.
-- Многоуровневые настройки (мониторинг, сканирование, интерфейс, безопасность и др.).
-- Локализация на нескольких языках.
+Available features:
+- Monitor the status of routers and devices.
+- Network scanning, miner search, fast scanning.
+- Import/export settings, backup and restore.
+- Flexible notification system.
+- Multi-level settings (monitoring, scanning, interface, security, etc.).
+- Localization in multiple languages.
 
-Основные команды:
-/start — главное меню
-/help — справка
-/status — статус бота
-/menu — открыть главное меню
+Main commands:
+/start — main menu
+/help — help
+/status — bot status
+/menu — open main menu
 
-Навигация по меню осуществляется кнопками. Для возврата используйте кнопку «Главное меню» или «Настройки».
+Navigate using the menu buttons. Use "Main Menu" or "Settings" to go back.
 
-Подробнее о каждом разделе:
-- «Сканирование»: запуск сканирования сети, поиск майнеров, загрузка файла с IP.
-- «Настройки»: настройка всех параметров работы бота.
-- «Резервное копирование»: создание и восстановление резервных копий.
-- «Экспорт/Импорт»: экспорт и импорт настроек и статистики.
+More about each section:
+- "Scanning": start network scan, search for miners, upload IP file.
+- "Settings": configure all bot parameters.
+- "Backup": create and restore backups.
+- "Export/Import": export and import settings and statistics.
 
-Если возникли вопросы — напишите /help oder воспользуйтесь кнопкой «Справка» in главном меню.''',
+If you have questions, type /help or use the "Help" button in the main menu.''',
         'scan_main_menu_msg': 'Меню сканирования:',
         'scan_menu_msg': 'Настройки сканирования:',
         'routers_not_configured': 'Routers are not configured.',
