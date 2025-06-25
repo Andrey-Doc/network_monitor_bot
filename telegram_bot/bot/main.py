@@ -1315,6 +1315,7 @@ async def handle_snmp_router_status(message: Message):
     snmp_settings = settings_manager.get_setting('snmp_routers', {})
     ips = snmp_settings.get('ips')
     community = snmp_settings.get('community', 'public')
+    print(f"DEBUG SNMP community: {community}")  # debug print
     if not ips or not isinstance(ips, list) or not ips:
         ips = settings_manager.get_setting('routers.ips', [])
     if not ips:
