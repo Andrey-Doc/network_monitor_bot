@@ -1313,8 +1313,11 @@ async def handle_snmp_router_status(message: Message):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_menu_btn')))
     snmp_settings = settings_manager.get_setting('snmp_routers', {})
-    ips = snmp_settings.get('ips', [])
+    ips = snmp_settings.get('ips')
     community = snmp_settings.get('community', 'public')
+    if not ips or not isinstance(ips, list) or not ips:
+        # Если список SNMP роутеров пуст, используем список из мониторинга
+        ips = settings_manager.get_setting('routers.ips', [])
     if not ips:
         await message.answer('Список SNMP роутеров пуст.', reply_markup=kb)
         return
