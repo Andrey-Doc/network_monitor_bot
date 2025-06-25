@@ -28,7 +28,7 @@ from ..utils.help_system import HelpSystem
 from .translations import translate
 from ..utils.scan_manager import ScanManager
 import json
-from telegram_bot.utils.snmp_utils import get_snmp_info
+from telegram_bot.utils.snmp_utils import get_snmp_info_subprocess
 
 logging.basicConfig(level=logging.INFO)
 
@@ -1316,21 +1316,17 @@ async def handle_snmp_router_status(message: Message):
     ips = snmp_settings.get('ips')
     community = snmp_settings.get('community', 'public')
     if not ips or not isinstance(ips, list) or not ips:
-        # Если список SNMP роутеров пуст, используем список из мониторинга
         ips = settings_manager.get_setting('routers.ips', [])
     if not ips:
         await message.answer('Список SNMP роутеров пуст.', reply_markup=kb)
         return
     text = '<b>Статус SNMP роутеров:</b>\n'
     for ip in ips:
-        info = get_snmp_info(ip, community)
+        info = get_snmp_info_subprocess(ip, community)
         text += f'\n<code>{ip}</code>:'
-        if info['sysName'] or info['sysDescr']:
-            text += f"\n  sysName: {info.get('sysName') or '-'}"
-            text += f"\n  sysDescr: {info.get('sysDescr') or '-'}"
-            text += f"\n  sysUpTime: {info.get('sysUpTime') or '-'}"
-        else:
-            text += '\n  SNMP не отвечает'
+        text += f"\n  sysName: {info.get('sysName', '-')}"
+        text += f"\n  sysDescr: {info.get('sysDescr', '-')}"
+        text += f"\n  sysUpTime: {info.get('sysUpTime', '-')}"
     await message.answer(text, parse_mode='HTML', reply_markup=kb)
 
 @dp.message_handler(is_menu_button('snmp_router_settings_btn'))
