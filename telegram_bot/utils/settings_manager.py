@@ -224,3 +224,22 @@ class SettingsManager:
     def get_secret(self, key: str):
         # Заглушка для совместимости, секреты теперь в отдельном файле
         return None 
+
+    def get_admins(self) -> list:
+        """Возвращает список админов из secrets.json"""
+        try:
+            with open('data/secrets.json', 'r', encoding='utf-8') as f:
+                secrets = json.load(f)
+            return secrets.get('admins', [])
+        except Exception:
+            return []
+
+    def get_user_role(self, user_id: int) -> str:
+        """Возвращает роль пользователя: 'admin', 'operator', 'none'"""
+        admins = self.get_admins()
+        if user_id in admins:
+            return 'admin'
+        operators = self.get_setting('security.operators', [])
+        if user_id in operators:
+            return 'operator'
+        return 'none' 

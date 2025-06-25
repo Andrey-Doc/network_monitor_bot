@@ -1,6 +1,6 @@
 import logging
 from aiogram import Bot, Dispatcher, types, executor
-from aiogram.types import Message, ContentType, ReplyKeyboardMarkup, KeyboardButton, InputFile
+from aiogram.types import Message, ContentType, ReplyKeyboardMarkup, KeyboardButton, InputFile, ReplyKeyboardRemove
 from .keyboards import (
     main_menu_keyboard, settings_main_menu_keyboard, monitoring_menu_keyboard,
     scan_menu_keyboard, notification_menu_keyboard, router_menu_keyboard,
@@ -122,6 +122,7 @@ class SecuritySettingsState(StatesGroup):
     waiting_for_log_level = State()
     waiting_for_token = State()
     waiting_for_admin_only = State()
+    waiting_for_access_control = State()
 
 class BackupSettingsState(StatesGroup):
     waiting_for_interval = State()
@@ -142,11 +143,42 @@ def is_menu_button(key):
         return m.text == translate(lang, key)
     return inner
 
+def get_user_role(message: Message) -> str:
+    """Определяет роль пользователя: admin, operator, none"""
+    user_id = message.from_user.id
+    return settings_manager.get_user_role(user_id)
+
+def check_user_access(message: Message) -> bool:
+    """Проверяет, является ли пользователь оператором или админом"""
+    role = get_user_role(message)
+    return role in ('admin', 'operator')
+
+def check_admin(message: Message) -> bool:
+    """Проверяет, является ли пользователь админом"""
+    return get_user_role(message) == 'admin'
+
+def check_operator_or_admin(message: Message) -> bool:
+    """Проверяет, является ли пользователь оператором или админом"""
+    return get_user_role(message) in ('admin', 'operator')
+
+async def send_access_denied(message: Message):
+    """Отправляет сообщение об отказе в доступе"""
+    await message.answer(
+        translate(get_lang(), 'access_denied'),
+        reply_markup=ReplyKeyboardRemove()
+    )
+
+async def send_admin_only(message: Message):
+    await message.answer(translate(get_lang(), 'admin_only'), reply_markup=ReplyKeyboardRemove())
+
 @dp.message_handler(commands=['start', 'menu'])
 async def send_welcome(message: Message):
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
     statistics_manager.record_command('start')
-    print(f"[INFO] Ваш chat_id: {message.chat.id}")
-    logging.info(f"[INFO] Ваш chat_id: {message.chat.id}")
     await message.answer(
         translate(get_lang(), 'welcome'),
         reply_markup=main_menu_keyboard(lang=get_lang())
@@ -154,60 +186,93 @@ async def send_welcome(message: Message):
 
 @dp.message_handler(is_menu_button('status_main_menu_btn'))
 async def handle_status_main_menu(message: Message):
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
     await handle_status(message)
 
 @dp.message_handler(is_menu_button('router_status_main_menu_btn'))
 async def handle_router_status_main_menu(message: Message):
-    router_ips = settings_manager.get_setting('routers.ips', [])
-    router_ports = settings_manager.get_setting('routers.ports', [])
-    if not router_ips or not router_ports:
-        await message.answer(translate(get_lang(), 'routers_not_configured'))
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
         return
-    await message.answer(translate(get_lang(), 'checking_router_status'))
-    results = await check_routers_status(router_ips, router_ports)
-    text = translate(get_lang(), 'router_status_header') + "\n\n"
-    for r in results:
-        emoji = "🟢" if r['status'] == 'online' else "🔴"
-        text += f"{emoji} <b>{r['ip']}</b>: {r['status']}"
-        if r['open_ports']:
-            text += f" (" + translate(get_lang(), 'open_ports') + f": {', '.join(map(str, r['open_ports']))})"
-        text += "\n"
-    await message.answer(text, parse_mode='HTML')
+    
+    await handle_router_status(message)
 
 @dp.message_handler(is_menu_button('scan_main_menu_btn'))
 async def handle_scan_main_menu(message: Message):
-    await message.answer("MAIN MENU HANDLER")
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
     await message.answer(translate(get_lang(), 'scan_main_menu_msg'), reply_markup=scan_main_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(is_menu_button('settings_main_menu_btn'), state='*')
 async def handle_settings_main_menu_btn(message: Message, state: FSMContext):
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
+    await state.finish()
     await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_main_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(is_menu_button('scan_network_main_menu_btn'))
 async def handle_scan_network_main_menu(message: Message, state: FSMContext):
-    await message.answer(translate(get_lang(), 'scan_network_prompt'), reply_markup=scan_cancel_or_main_keyboard(lang=get_lang()))
-    await ScanDevicesState.waiting_for_network.set()
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
+    await handle_scan_network(message)
 
 @dp.message_handler(is_menu_button('scan_miners_main_menu_btn'))
 async def handle_scan_miners_main_menu(message: Message, state: FSMContext):
-    await message.answer(translate(get_lang(), 'scan_miners_prompt'), reply_markup=scan_cancel_or_main_keyboard(lang=get_lang()))
-    await ScanMinersState.waiting_for_network.set()
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
+    await handle_scan_miners(message)
 
 @dp.message_handler(is_menu_button('fast_scan_main_menu_btn'))
 async def handle_fast_scan_main_menu(message: Message, state: FSMContext):
-    await message.answer(translate(get_lang(), 'fast_scan_prompt'), reply_markup=scan_cancel_or_main_keyboard(lang=get_lang()))
-    await FastScanState.waiting_for_network.set()
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
+    await handle_fast_scan(message)
 
 @dp.message_handler(is_menu_button('upload_file_main_menu_btn'))
 async def handle_upload_file_main_menu(message: Message):
-    await message.answer(translate(get_lang(), 'upload_file_prompt'), reply_markup=cancel_keyboard(lang=get_lang()))
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
+    await handle_upload_file(message)
 
 @dp.message_handler(is_menu_button('backup_main_menu_btn'))
 async def handle_backup_main_menu(message: Message):
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
     await message.answer(translate(get_lang(), 'backup_menu_msg'), reply_markup=backup_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(is_menu_button('export_main_menu_btn'))
 async def handle_export_main_menu(message: Message):
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
     await message.answer(translate(get_lang(), 'export_menu_msg'), reply_markup=export_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(is_menu_button('monitoring_settings_btn'))
@@ -237,7 +302,18 @@ async def handle_security_settings(message: Message):
 
 @dp.message_handler(is_menu_button('help_main_menu_btn'))
 async def handle_help_main_menu(message: Message):
-    await message.answer(translate(get_lang(), 'help_menu_msg'), reply_markup=help_menu_keyboard(lang=get_lang()))
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
+    statistics_manager.record_command('help')
+    help_text = help_system.get_main_help()
+    await message.answer(
+        help_text,
+        parse_mode='Markdown',
+        reply_markup=help_menu_keyboard(lang=get_lang())
+    )
 
 @dp.message_handler(is_menu_button('back_to_main_btn'), state=[ScanDevicesState.waiting_for_network, ScanMinersState.waiting_for_network, FastScanState.waiting_for_network])
 async def scan_back_to_main(message: Message, state: FSMContext):
@@ -245,7 +321,11 @@ async def scan_back_to_main(message: Message, state: FSMContext):
 
 @dp.message_handler(commands=['help'])
 async def handle_help_command(message: Message):
-    """Команда для получения справки"""
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
     statistics_manager.record_command('help')
     help_text = help_system.get_main_help()
     await message.answer(
@@ -256,6 +336,12 @@ async def handle_help_command(message: Message):
 
 @dp.message_handler(commands=['status'])
 async def handle_status(message: Message):
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
+    statistics_manager.record_command('status')
     active_results = scan_manager.get_results_count()
     active_scans = scan_manager.get_active_count()
     total_routers = len(ROUTER_IPS)
@@ -273,13 +359,23 @@ async def handle_status(message: Message):
 
 @dp.message_handler(commands=['stats'])
 async def handle_stats_command(message: Message):
-    """Команда для получения статистики"""
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
+    statistics_manager.record_command('stats')
     report = statistics_manager.generate_report()
     await message.answer(report, parse_mode='Markdown')
 
 @dp.message_handler(commands=['monitor_start'])
 async def handle_monitor_start(message: Message):
-    """Команда для запуска мониторинга"""
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
+    statistics_manager.record_command('monitor_start')
     await background_monitor.start_monitoring()
     await notification_manager.send_notification(
         level=NotificationLevel.SUCCESS,
@@ -291,7 +387,12 @@ async def handle_monitor_start(message: Message):
 
 @dp.message_handler(commands=['monitor_stop'])
 async def handle_monitor_stop(message: Message):
-    """Команда для остановки мониторинга"""
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
+    statistics_manager.record_command('monitor_stop')
     await background_monitor.stop_monitoring()
     await notification_manager.send_notification(
         level=NotificationLevel.INFO,
@@ -612,6 +713,11 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
 
 @dp.message_handler(lambda m: m.text == 'Статистика')
 async def handle_statistics(message: Message):
+    # Проверяем доступ пользователя
+    if not check_user_access(message):
+        await send_access_denied(message)
+        return
+    
     # Информация из /status
     active_results = scan_manager.get_results_count()
     active_scans = scan_manager.get_active_count()
@@ -1039,13 +1145,22 @@ async def process_interface_compact(message: Message, state: FSMContext):
 
 @dp.message_handler(is_menu_button('security_users_btn'))
 async def handle_security_users(message: Message):
-    current = settings_manager.get_setting('security.allowed_users', [])
+    # Только админ может управлять операторами
+    if not check_admin(message):
+        await send_admin_only(message)
+        return
+    current = settings_manager.get_setting('security.operators', [])
     current_str = ', '.join(map(str, current)) if current else 'не задано'
     await message.answer(translate(get_lang(), 'security_users_prompt', value=current_str), reply_markup=cancel_keyboard(lang=get_lang()))
     await SecuritySettingsState.waiting_for_users.set()
 
 @dp.message_handler(state=SecuritySettingsState.waiting_for_users)
 async def process_security_users(message: Message, state: FSMContext):
+    # Только админ может управлять операторами
+    if not check_admin(message):
+        await send_admin_only(message)
+        await state.finish()
+        return
     text = message.text.replace('\n', ',').replace(';', ',')
     users = [u.strip() for u in text.split(',') if u.strip().isdigit()]
     if not users:
@@ -1053,7 +1168,7 @@ async def process_security_users(message: Message, state: FSMContext):
         await state.finish()
         return
     users = [int(u) for u in users]
-    if settings_manager.set_setting('security.allowed_users', users):
+    if settings_manager.set_setting('security.operators', users):
         await message.answer(translate(get_lang(), 'security_users_set', value=', '.join(map(str, users))), reply_markup=security_menu_keyboard(lang=get_lang()))
     else:
         await message.answer(translate(get_lang(), 'security_users_save_error'), reply_markup=security_menu_keyboard(lang=get_lang()))
@@ -1421,6 +1536,41 @@ async def handle_export_interfaces(message: Message):
         output.write(f'{idx};{iface["descr"]};{iface["status"]};{iface["in_octets"]};{iface["out_octets"]}\n')
     output.seek(0)
     await message.answer_document(InputFile(output, filename=f'interfaces_{ip}.csv'), caption=f'Интерфейсы {ip}')
+
+@dp.message_handler(is_menu_button('security_access_control_btn'))
+async def handle_security_access_control(message: Message):
+    current = settings_manager.get_setting('security.access_control_enabled', False)
+    value = 'да' if current else 'нет'
+    await message.answer(translate(get_lang(), 'security_access_control_prompt', value=value), reply_markup=cancel_keyboard(lang=get_lang()))
+    await SecuritySettingsState.waiting_for_access_control.set()
+
+@dp.message_handler(state=SecuritySettingsState.waiting_for_access_control)
+async def process_security_access_control(message: Message, state: FSMContext):
+    text = message.text.strip().lower()
+    if text in ['да', 'yes', 'y', 'oui', 'ja', '是']:
+        new_value = True
+    elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
+        new_value = False
+    else:
+        await message.answer(translate(get_lang(), 'input_error'), reply_markup=security_menu_keyboard(lang=get_lang()))
+        await state.finish()
+        return
+    if settings_manager.set_setting('security.access_control_enabled', new_value):
+        status = translate(get_lang(), 'access_control_enabled') if new_value else translate(get_lang(), 'access_control_disabled')
+        await message.answer(translate(get_lang(), 'security_access_control_set', status=status), reply_markup=security_menu_keyboard(lang=get_lang()))
+    else:
+        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=security_menu_keyboard(lang=get_lang()))
+    await state.finish()
+
+@dp.message_handler(commands=['role'])
+async def handle_show_role(message: Message):
+    role = get_user_role(message)
+    if role == 'admin':
+        await message.answer(translate(get_lang(), 'role_admin'))
+    elif role == 'operator':
+        await message.answer(translate(get_lang(), 'role_operator'))
+    else:
+        await message.answer(translate(get_lang(), 'role_none'))
 
 if __name__ == '__main__':
     executor.start_polling(

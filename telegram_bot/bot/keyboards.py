@@ -60,7 +60,8 @@ def security_menu_keyboard(lang=None):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     kb.row(KeyboardButton(translate(lang, 'security_users_btn')), KeyboardButton(translate(lang, 'security_admin_only_btn')))
     kb.row(KeyboardButton(translate(lang, 'security_log_level_btn')), KeyboardButton(translate(lang, 'security_token_btn')))
-    kb.add(KeyboardButton(translate(lang, 'settings_main_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'security_access_control_btn')))
+    kb.row(KeyboardButton(translate(lang, 'back_to_settings_btn')))
     return kb
 
 def backup_menu_keyboard(lang=None):
