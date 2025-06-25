@@ -478,10 +478,13 @@ async def process_timeout_input(message: Message, state: FSMContext):
 async def handle_router_status(message: Message):
     statistics_manager.record_command('status_routers')
     await message.answer(translate(get_lang(), 'checking_routers'))
-    results = await check_routers_status(ROUTER_IPS, ROUTER_PORTS)
+    ips = settings_manager.get_setting('routers.ips', [])
+    ports = settings_manager.get_setting('routers.ports', [8080, 80, 22])
+    results = await check_routers_status(ips, ports)
     online_count = sum(1 for r in results if r['status'] == 'online')
-    statistics_manager.record_router_check(online_count, len(ROUTER_IPS))
-    text = "🌐 *Статус роутеров:*\n\n"
+    statistics_manager.record_router_check(online_count, len(ips))
+    text = "🌐 *Статус роутеров:*
+\n"
     for r in results:
         emoji = "🟢" if r['status'] == 'online' else "🔴"
         text += f"{emoji} *{r['ip']}*: {r['status']}\n"
