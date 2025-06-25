@@ -28,7 +28,7 @@ from ..utils.help_system import HelpSystem
 from .translations import translate
 from ..utils.scan_manager import ScanManager
 import json
-from telegram_bot.utils.snmp_utils import async_get_snmp_full_info
+from telegram_bot.utils.snmp_utils import async_get_snmp_full_info, async_get_snmp_info_subprocess
 
 logging.basicConfig(level=logging.INFO)
 
@@ -1326,21 +1326,13 @@ async def handle_snmp_router_status(message: Message):
         await message.answer('Список SNMP роутеров пуст.', reply_markup=kb)
         return
     text = '<b>Статус SNMP роутеров:</b>\n'
-    tasks = [async_get_snmp_full_info(ip, community) for ip in ips]
+    tasks = [async_get_snmp_info_subprocess(ip, community) for ip in ips]
     results = await asyncio.gather(*tasks)
     for ip, info in zip(ips, results):
         text += f'\n<code>{ip}</code>:'
         text += f"\n  sysName: {info.get('sysName', '-') }"
         text += f"\n  sysDescr: {info.get('sysDescr', '-') }"
         text += f"\n  sysUpTime: {info.get('sysUpTime', '-') }"
-        text += f"\n  sysContact: {info.get('sysContact', '-') }"
-        text += f"\n  sysLocation: {info.get('sysLocation', '-') }"
-        text += f"\n  ifNumber: {info.get('ifNumber', '-') }"
-        interfaces = info.get('interfaces', [])
-        if interfaces:
-            text += f"\n  <b>Интерфейсы:</b>"
-            for idx, iface in enumerate(interfaces, 1):
-                text += f"\n    {idx}. {iface['descr']} | Статус: {iface['status']} | RX: {iface['in_octets']} | TX: {iface['out_octets']}"
     await message.answer(text, parse_mode='HTML', reply_markup=kb)
 
 @dp.message_handler(is_menu_button('snmp_router_settings_btn'))
