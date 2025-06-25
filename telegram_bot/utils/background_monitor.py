@@ -3,6 +3,7 @@ import logging
 from typing import Dict, List
 from telegram_bot.utils.router_monitor import check_routers_status
 from telegram_bot.utils.settings_manager import SettingsManager
+from telegram_bot.bot.translations import translate
 
 settings_manager = SettingsManager()
 
@@ -86,22 +87,20 @@ class BackgroundMonitor:
             
     async def _send_status_notification(self, changes: List[Dict]):
         """Отправляет уведомление об изменении статуса"""
-        message = "🔄 *Изменение статуса роутеров:*\n\n"
-        
+        # Получаем язык (можно доработать под пользователя)
+        lang = 'ru'  # или получить из настроек
+        message = translate(lang, 'router_status_change_title') + "\n\n"
         for change in changes:
             emoji = "🟢" if change['new_status'] == 'online' else "🔴"
-            message += f"{emoji} *{change['ip']}*: "
-            message += f"{change['old_status']} → {change['new_status']}\n"
-            
+            message += translate(lang, 'router_status_change_line', emoji=emoji, ip=change['ip'], old_status=change['old_status'], new_status=change['new_status']) + "\n"
             if change['new_status'] == 'online' and change['open_ports']:
-                message += f"   📡 Открытые порты: {', '.join(map(str, change['open_ports']))}\n"
+                message += translate(lang, 'router_status_change_ports', ports=', '.join(map(str, change['open_ports']))) + "\n"
             message += "\n"
-        
         try:
             await self.bot.send_message(
                 chat_id=self.chat_id,
                 text=message,
-                parse_mode='Markdown'
+                parse_mode='HTML'
             )
             logging.info(f"[MONITOR] Отправлено уведомление об изменении статуса {len(changes)} роутеров")
         except Exception as e:

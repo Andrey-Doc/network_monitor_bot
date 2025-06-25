@@ -4,6 +4,7 @@ from typing import List, Dict, Optional
 from enum import Enum
 from datetime import datetime
 from telegram_bot.utils.settings_manager import SettingsManager
+from telegram_bot.bot.translations import translate
 
 class NotificationLevel(Enum):
     INFO = "info"
@@ -133,10 +134,10 @@ class NotificationManager:
     # Удобные методы для разных типов уведомлений
     async def router_status_change(self, router_ip: str, old_status: str, new_status: str):
         """Уведомление об изменении статуса роутера"""
+        lang = 'ru'  # TODO: get user language
         level = NotificationLevel.CRITICAL if new_status == 'offline' else NotificationLevel.INFO
-        title = f"Изменение статуса роутера {router_ip}"
-        message = f"Статус изменился с *{old_status}* на *{new_status}*"
-        
+        title = translate(lang, 'notif_router_status_title', router_ip=router_ip)
+        message = translate(lang, 'notif_router_status_msg', old_status=old_status, new_status=new_status)
         await self.send_notification(
             level=level,
             notification_type=NotificationType.ROUTER_STATUS,
@@ -147,9 +148,9 @@ class NotificationManager:
         
     async def scan_completed(self, scan_type: str, devices_found: int, duration: float):
         """Уведомление о завершении сканирования"""
-        title = f"Сканирование {scan_type} завершено"
-        message = f"Найдено устройств: *{devices_found}*\nВремя выполнения: *{duration:.1f}с*"
-        
+        lang = 'ru'
+        title = translate(lang, 'notif_scan_complete_title', scan_type=scan_type)
+        message = translate(lang, 'notif_scan_complete_msg', devices_found=devices_found, duration=f'{duration:.1f}')
         await self.send_notification(
             level=NotificationLevel.SUCCESS,
             notification_type=NotificationType.SCAN_COMPLETE,
@@ -160,9 +161,9 @@ class NotificationManager:
         
     async def scan_error(self, scan_type: str, error_message: str):
         """Уведомление об ошибке сканирования"""
-        title = f"Ошибка сканирования {scan_type}"
-        message = f"Произошла ошибка: *{error_message}*"
-        
+        lang = 'ru'
+        title = translate(lang, 'notif_scan_error_title', scan_type=scan_type)
+        message = translate(lang, 'notif_scan_error_msg', error=error_message)
         await self.send_notification(
             level=NotificationLevel.CRITICAL,
             notification_type=NotificationType.SCAN_ERROR,
@@ -173,15 +174,15 @@ class NotificationManager:
         
     async def daily_report(self, stats: Dict):
         """Ежедневный отчёт"""
-        title = "Ежедневный отчёт мониторинга"
-        message = f"""
-📊 *Статистика за день:*
-• Проверок роутеров: `{stats.get('router_checks', 0)}`
-• Сканирований: `{stats.get('scans', 0)}`
-• Устройств найдено: `{stats.get('devices_found', 0)}`
-• Ошибок: `{stats.get('errors', 0)}`
-        """
-        
+        lang = 'ru'
+        title = translate(lang, 'notif_daily_report_title')
+        message = translate(
+            lang, 'notif_daily_report_msg',
+            router_checks=stats.get('router_checks', 0),
+            scans=stats.get('scans', 0),
+            devices_found=stats.get('devices_found', 0),
+            errors=stats.get('errors', 0)
+        )
         await self.send_notification(
             level=NotificationLevel.INFO,
             notification_type=NotificationType.DAILY_REPORT,
