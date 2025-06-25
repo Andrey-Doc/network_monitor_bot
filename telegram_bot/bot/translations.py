@@ -202,6 +202,9 @@ TRANSLATIONS = {
         'snmp_router_menu_msg': 'Меню SNMP роутеров:',
         'snmp_router_status_btn': 'Статус SNMP роутеров',
         'snmp_router_settings_btn': 'Настройки SNMP роутеров',
+        'snmp_router_community_btn': 'Community',
+        'snmp_router_community_prompt': 'Текущий community: {value}\nВведите новое значение:',
+        'snmp_router_community_set': 'Community установлен: {value}',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -408,6 +411,9 @@ TRANSLATIONS = {
         'snmp_router_menu_msg': 'SNMP Routers Menu:',
         'snmp_router_status_btn': 'SNMP Routers Status',
         'snmp_router_settings_btn': 'SNMP Routers Settings',
+        'snmp_router_community_btn': 'Community',
+        'snmp_router_community_prompt': 'Current community: {value}\nEnter new value:',
+        'snmp_router_community_set': 'Community set to: {value}',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -614,6 +620,9 @@ TRANSLATIONS = {
         'snmp_router_menu_msg': 'SNMP-Router-Menü:',
         'snmp_router_status_btn': 'SNMP-Router-Status',
         'snmp_router_settings_btn': 'SNMP-Router-Einstellungen',
+        'snmp_router_community_btn': 'Community',
+        'snmp_router_community_prompt': 'Aktuelles Community: {value}\nNeuen Wert eingeben:',
+        'snmp_router_community_set': 'Community gesetzt auf: {value}',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -820,6 +829,9 @@ TRANSLATIONS = {
         'snmp_router_menu_msg': 'SNMP-Router-Menü:',
         'snmp_router_status_btn': 'SNMP-Router-Status',
         'snmp_router_settings_btn': 'SNMP-Router-Einstellungen',
+        'snmp_router_community_btn': 'Community',
+        'snmp_router_community_prompt': 'Current community: {value}\nVoer een nieuwe waarde in:',
+        'snmp_router_community_set': 'Community ingesteld op: {value}',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -1026,6 +1038,9 @@ TRANSLATIONS = {
         'snmp_router_menu_msg': 'SNMP路由器菜单：',
         'snmp_router_status_btn': 'SNMP路由器状态',
         'snmp_router_settings_btn': 'SNMP路由器设置',
+        'snmp_router_community_btn': 'Community',
+        'snmp_router_community_prompt': '当前community: {value}\n请输入新值：',
+        'snmp_router_community_set': 'Community已设置为：{value}',
     },
 }
 

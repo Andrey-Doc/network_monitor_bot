@@ -28,6 +28,7 @@ from ..utils.help_system import HelpSystem
 from .translations import translate
 from ..utils.scan_manager import ScanManager
 import json
+from telegram_bot.utils.snmp_utils import get_snmp_info
 
 logging.basicConfig(level=logging.INFO)
 
@@ -126,6 +127,9 @@ class BackupSettingsState(StatesGroup):
     waiting_for_max_count = State()
     waiting_for_import = State()
     waiting_for_auto = State()
+
+class SnmpRouterSettingsState(StatesGroup):
+    waiting_for_community = State()
 
 # --- Universal menu button filter ---
 def is_menu_button(key):
@@ -1300,6 +1304,7 @@ async def handle_snmp_router_menu(message: Message):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_status_btn')))
     kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_settings_btn')))
+    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_community_btn')))
     kb.row(KeyboardButton(translate(get_lang(), 'back_to_main_btn')))
     await message.answer(translate(get_lang(), 'snmp_router_menu_msg'), reply_markup=kb)
 
@@ -1307,13 +1312,42 @@ async def handle_snmp_router_menu(message: Message):
 async def handle_snmp_router_status(message: Message):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_menu_btn')))
-    await message.answer('Статус SNMP роутеров: (заглушка)', reply_markup=kb)
+    snmp_settings = settings_manager.get_setting('snmp_routers', {})
+    ips = snmp_settings.get('ips', [])
+    community = snmp_settings.get('community', 'public')
+    if not ips:
+        await message.answer('Список SNMP роутеров пуст.', reply_markup=kb)
+        return
+    text = '<b>Статус SNMP роутеров:</b>\n'
+    for ip in ips:
+        info = get_snmp_info(ip, community)
+        text += f'\n<code>{ip}</code>:'
+        if info['sysName'] or info['sysDescr']:
+            text += f"\n  sysName: {info.get('sysName') or '-'}"
+            text += f"\n  sysDescr: {info.get('sysDescr') or '-'}"
+            text += f"\n  sysUpTime: {info.get('sysUpTime') or '-'}"
+        else:
+            text += '\n  SNMP не отвечает'
+    await message.answer(text, parse_mode='HTML', reply_markup=kb)
 
 @dp.message_handler(is_menu_button('snmp_router_settings_btn'))
 async def handle_snmp_router_settings(message: Message):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_menu_btn')))
     await message.answer('Настройки SNMP роутеров: (заглушка)', reply_markup=kb)
+
+@dp.message_handler(is_menu_button('snmp_router_community_btn'))
+async def handle_snmp_router_community(message: Message):
+    current = settings_manager.get_setting('snmp_routers.community', 'public')
+    await message.answer(translate(get_lang(), 'snmp_router_community_prompt', value=current))
+    await SnmpRouterSettingsState.waiting_for_community.set()
+
+@dp.message_handler(state=SnmpRouterSettingsState.waiting_for_community)
+async def process_snmp_router_community(message: Message, state: FSMContext):
+    value = message.text.strip()
+    settings_manager.set_setting('snmp_routers.community', value)
+    await message.answer(translate(get_lang(), 'snmp_router_community_set', value=value))
+    await state.finish()
 
 if __name__ == '__main__':
     executor.start_polling(
