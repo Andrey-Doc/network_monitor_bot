@@ -1,4 +1,4 @@
-from pysnmp.hlapi import *
+from pysnmp.hlapi import getCmd, SnmpEngine, CommunityData, UdpTransportTarget, ContextData, ObjectType, ObjectIdentity
 
 def get_snmp_info(ip, community='public', timeout=2, port=161):
     oids = {
