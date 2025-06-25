@@ -191,6 +191,7 @@ TRANSLATIONS = {
         'export_logs_msg': 'Экспорт логов...',
         'export_stats_msg': 'Экспорт статистики...',
         'backup_import_prompt': 'Пожалуйста, отправьте файл настроек для импорта.',
+        'security_users_prompt': 'Введите список пользователей (через запятую):',
     },
     'en': {
         'welcome': 'Hello! I am a monitoring and scanning bot.\n\nChoose an action:',
@@ -386,6 +387,7 @@ TRANSLATIONS = {
         'export_logs_msg': 'Exporting logs...',
         'export_stats_msg': 'Exporting statistics...',
         'backup_import_prompt': 'Please send the settings file to import.',
+        'security_users_prompt': 'Enter the list of users (comma separated):',
     },
     'de': {
         'welcome': 'Hallo! Ich bin ein Bot für Überwachung und Scannen.\n\nWählen Sie eine Aktion:',
@@ -581,6 +583,7 @@ TRANSLATIONS = {
         'export_logs_msg': 'Экспорт логов...',
         'export_stats_msg': 'Экспорт статистики...',
         'backup_import_prompt': 'Пожалуйста, отправьте файл настроек для импорта.',
+        'security_users_prompt': 'Geben Sie die Liste der Benutzer ein (durch Kommas getrennt):',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
@@ -776,6 +779,7 @@ TRANSLATIONS = {
         'export_logs_msg': 'Exporting logs...',
         'export_stats_msg': 'Exporting statistics...',
         'backup_import_prompt': 'Please send the settings file to import.',
+        'security_users_prompt': 'Voer de lijst met gebruikers in (gescheiden door komma\'s):',
     },
     'zh': {
         'welcome': '你好！我是一个监控和扫描机器人。\n\n请选择操作：',
@@ -971,6 +975,7 @@ TRANSLATIONS = {
         'export_logs_msg': 'Экспорт логов...',
         'export_stats_msg': 'Экспорт статистики...',
         'backup_import_prompt': 'Пожалуйста, отправьте файл настроек для импорта.',
+        'security_users_prompt': '请输入用户列表（用逗号分隔）：',
     },
 }
 
