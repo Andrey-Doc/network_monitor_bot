@@ -548,7 +548,6 @@ async def process_devices_network_input(message: Message, state: FSMContext):
             'type': 'devices',
             'timestamp': time.time()
         })
-        await state.update_data(devices=devices)
         await ScanDevicesState.waiting_for_file_request.set()
     except Exception as e:
         await bot.edit_message_text(
@@ -649,7 +648,6 @@ async def process_miners_network_input(message: Message, state: FSMContext):
             'type': 'miners',
             'timestamp': time.time()
         })
-        await state.update_data(miners=miners)
         await ScanMinersState.waiting_for_file_request.set()
     except Exception as e:
         await bot.edit_message_text(
@@ -711,7 +709,6 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
             'type': 'fast_scan',
             'timestamp': time.time()
         })
-        await state.update_data(devices=devices)
         await FastScanState.waiting_for_file_request.set()
     except Exception as e:
         await bot.edit_message_text(
