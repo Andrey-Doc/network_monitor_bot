@@ -1424,12 +1424,19 @@ async def handle_snmp_router_settings(message: Message):
 
 @dp.message_handler(is_menu_button('snmp_router_community_btn'))
 async def handle_snmp_router_community(message: Message):
+    if not check_admin(message):
+        await message.answer(translate(get_lang(), 'admin_only'))
+        return
     current = settings_manager.get_setting('snmp_routers.community', 'public')
     await message.answer(translate(get_lang(), 'snmp_router_community_prompt', value=current))
     await SnmpRouterSettingsState.waiting_for_community.set()
 
 @dp.message_handler(state=SnmpRouterSettingsState.waiting_for_community)
 async def process_snmp_router_community(message: Message, state: FSMContext):
+    if not check_admin(message):
+        await message.answer(translate(get_lang(), 'admin_only'))
+        await state.finish()
+        return
     value = message.text.strip()
     print(f"DEBUG set community: {value}")  # debug print
     settings_manager.set_setting('snmp_routers.community', value)
