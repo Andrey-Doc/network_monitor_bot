@@ -96,4 +96,34 @@ async def scan_miner(ip: str) -> Optional[Dict]:
 async def scan_miners_from_list(ip_list: List[str]) -> List[Dict]:
     tasks = [scan_miner(ip) for ip in ip_list]
     results = await asyncio.gather(*tasks)
-    return [r for r in results if r] 
+    return [r for r in results if r]
+
+async def get_asic_status(ip, port=4028, timeout=3):
+    try:
+        reader, writer = await asyncio.wait_for(asyncio.open_connection(ip, port), timeout=timeout)
+        writer.write(b'{"command": "summary"}\n')
+        await writer.drain()
+        data = await asyncio.wait_for(reader.read(4096), timeout=timeout)
+        writer.close()
+        await writer.wait_closed()
+        text = data.decode(errors='ignore')
+        start = text.find('{')
+        end = text.rfind('}')
+        if start != -1 and end != -1:
+            text = text[start:end+1]
+        info = json.loads(text)
+        hashrate = None
+        uptime = None
+        if 'SUMMARY' in info:
+            s = info['SUMMARY'][0]
+            hashrate = s.get('MHS av') or s.get('GHS av') or s.get('hashrate')
+            uptime = s.get('Elapsed') or s.get('Uptime')
+        return {
+            'ip': ip,
+            'status': 'online',
+            'hashrate': hashrate,
+            'uptime': uptime,
+            'is_hashing': hashrate and float(hashrate) > 0
+        }
+    except Exception:
+        return {'ip': ip, 'status': 'offline', 'hashrate': None, 'uptime': None, 'is_hashing': False} 

@@ -1585,6 +1585,24 @@ async def process_asic_ips(message: Message, state: FSMContext):
         await message.answer(translate(get_lang(), 'asic_ips_save_error'), reply_markup=main_menu_keyboard(lang=get_lang()))
     await state.finish()
 
+@dp.message_handler(is_menu_button('asic_status_main_menu_btn'))
+async def handle_asic_status_main_menu(message: Message):
+    ips = settings_manager.get_setting('asic_miners.ips', [])
+    if not ips:
+        await message.answer(translate(get_lang(), 'asic_list_empty'))
+        return
+    tasks = [get_asic_status(ip) for ip in ips]
+    results = await asyncio.gather(*tasks)
+    text = "🛠️ <b>Статус асик-майнеров:</b>\n"
+    for r in results:
+        if r['status'] == 'online':
+            status = "✅ Хеширует" if r['is_hashing'] else "⚠️ Не хеширует"
+            uptime = r.get('uptime', '-')
+            text += f"\n{r['ip']}: онлайн, хешрейт: {r['hashrate']} | аптайм: {uptime} | {status}"
+        else:
+            text += f"\n{r['ip']}: ❌ оффлайн"
+    await message.answer(text, parse_mode='HTML', reply_markup=main_menu_keyboard(lang=get_lang()))
+
 if __name__ == '__main__':
     executor.start_polling(
         dp, 

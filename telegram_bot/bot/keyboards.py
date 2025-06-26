@@ -7,6 +7,7 @@ def main_menu_keyboard(lang=None):
     kb.row(KeyboardButton(translate(lang, 'router_status_main_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'snmp_router_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'scan_main_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'asic_status_main_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'settings_main_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'help_btn')))
     return kb
