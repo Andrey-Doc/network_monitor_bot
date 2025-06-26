@@ -9,7 +9,7 @@ from .keyboards import (
     scan_main_menu_keyboard, scan_cancel_or_main_keyboard
 )
 from ..utils.router_monitor import check_routers_status
-from ..utils.miner_scan import scan_network_for_miners, scan_miners_from_list
+from ..utils.miner_scan import scan_network_for_miners, scan_miners_from_list, get_asic_status
 from ..utils.background_monitor import BackgroundMonitor
 from ..utils.notifications import NotificationManager, NotificationLevel, NotificationType
 from ..utils.statistics import StatisticsManager
