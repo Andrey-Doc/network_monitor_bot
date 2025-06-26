@@ -1,6 +1,7 @@
 import asyncio
 import socket
 import json
+import logging
 from typing import List, Dict, Optional
 import ipaddress
 from telegram_bot.utils.settings_manager import SettingsManager
@@ -70,28 +71,45 @@ async def scan_network_for_miners(network: str, on_progress=None) -> List[Dict]:
     results = []
     total = len(hosts)
     for idx, ip in enumerate(hosts, 1):
+        logging.info(f"[SCAN_MINERS] Проверяю {ip} ({idx}/{total})")
         res = await scan_miner(ip)
         if res:
+            logging.info(f"[SCAN_MINERS] Найден майнер: {ip}")
             results.append(res)
         if on_progress and (idx % max(1, total // 20) == 0 or idx == total):
             await on_progress(idx, total)
         await asyncio.sleep(0)
     return results
 
-async def scan_miner(ip: str) -> Optional[Dict]:
-    if await check_port(ip, MINER_PORT):
-        info = await get_miner_info(ip)
-        result = {'ip': ip, 'type': 'miner'}
-        if info:
-            result['status'] = info.get('status', 'online')
-            result['hashrate'] = info.get('hashrate')
-            result['uptime'] = info.get('uptime')
-        else:
-            result['status'] = 'online'
-            result['hashrate'] = None
-            result['uptime'] = None
-        return result
-    return None
+async def scan_miner(ip: str, port: int = 4028, timeout: float = 1.5) -> Optional[Dict]:
+    try:
+        reader, writer = await asyncio.wait_for(asyncio.open_connection(ip, port), timeout=timeout)
+        writer.write(b'{"command": "summary"}\n')
+        await writer.drain()
+        data = await asyncio.wait_for(reader.read(4096), timeout=timeout)
+        writer.close()
+        await writer.wait_closed()
+        text = data.decode(errors='ignore')
+        start = text.find('{')
+        end = text.rfind('}')
+        if start != -1 and end != -1:
+            text = text[start:end+1]
+        info = json.loads(text)
+        hashrate = None
+        uptime = None
+        if 'SUMMARY' in info:
+            s = info['SUMMARY'][0]
+            hashrate = s.get('MHS av') or s.get('GHS av') or s.get('hashrate')
+            uptime = s.get('Elapsed')
+        return {
+            'ip': ip,
+            'hashrate': hashrate,
+            'uptime': uptime,
+            'type': 'miner',
+        }
+    except Exception as e:
+        logging.debug(f"[SCAN_MINERS] {ip}: не майнер или не отвечает ({e})")
+        return None
 
 async def scan_miners_from_list(ip_list: List[str]) -> List[Dict]:
     tasks = [scan_miner(ip) for ip in ip_list]
