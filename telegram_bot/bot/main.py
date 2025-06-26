@@ -135,6 +135,9 @@ class SnmpRouterSettingsState(StatesGroup):
 class SnmpRouterExtendedState(StatesGroup):
     waiting_for_router = State()
 
+class AsicSettingsState(StatesGroup):
+    waiting_for_ips = State()
+
 # --- Universal menu button filter ---
 def is_menu_button(key):
     def inner(m):
@@ -1551,6 +1554,36 @@ async def handle_back_to_settings(message: Message, state: FSMContext):
         translate(get_lang(), 'settings_menu_msg'),
         reply_markup=settings_main_menu_keyboard(lang=get_lang())
     )
+
+@dp.message_handler(is_menu_button('asic_ips_btn'))
+async def handle_asic_ips(message: Message):
+    if not check_admin(message):
+        await message.answer(translate(get_lang(), 'admin_only'))
+        return
+    current = settings_manager.get_setting('asic_miners.ips', [])
+    await message.answer(
+        translate(get_lang(), 'asic_ips_prompt', value=', '.join(current)),
+        reply_markup=cancel_keyboard(lang=get_lang())
+    )
+    await AsicSettingsState.waiting_for_ips.set()
+
+@dp.message_handler(state=AsicSettingsState.waiting_for_ips)
+async def process_asic_ips(message: Message, state: FSMContext):
+    if not check_admin(message):
+        await message.answer(translate(get_lang(), 'admin_only'))
+        await state.finish()
+        return
+    text = message.text.replace('\n', ',').replace(';', ',')
+    ips = [ip.strip() for ip in text.split(',') if ip.strip()]
+    if not all(validate_ip(ip) for ip in ips):
+        await message.answer(translate(get_lang(), 'asic_ips_error'), reply_markup=main_menu_keyboard(lang=get_lang()))
+        await state.finish()
+        return
+    if settings_manager.set_setting('asic_miners.ips', ips):
+        await message.answer(translate(get_lang(), 'asic_ips_set', value=', '.join(ips)), reply_markup=main_menu_keyboard(lang=get_lang()))
+    else:
+        await message.answer(translate(get_lang(), 'asic_ips_save_error'), reply_markup=main_menu_keyboard(lang=get_lang()))
+    await state.finish()
 
 if __name__ == '__main__':
     executor.start_polling(

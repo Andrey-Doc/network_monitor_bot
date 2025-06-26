@@ -102,14 +102,21 @@ def scan_main_menu_keyboard(lang=None):
 # Главное меню настроек
 def settings_main_menu_keyboard(lang=None):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row(KeyboardButton(translate(lang, 'monitoring_settings_btn')), KeyboardButton(translate(lang, 'scan_settings_btn')))
-    kb.row(KeyboardButton(translate(lang, 'notification_settings_btn')), KeyboardButton(translate(lang, 'router_settings_btn')))
-    kb.row(KeyboardButton(translate(lang, 'interface_settings_btn')), KeyboardButton(translate(lang, 'security_settings_btn')))
-    kb.row(KeyboardButton(translate(lang, 'backup_main_menu_btn')), KeyboardButton(translate(lang, 'export_main_menu_btn')))
-    kb.row(KeyboardButton(translate(lang, 'back_to_main_btn')))
+    kb.row(KeyboardButton(translate(lang, 'monitoring_menu_btn')), KeyboardButton(translate(lang, 'scan_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'notification_menu_btn')), KeyboardButton(translate(lang, 'router_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'asic_ips_btn')), KeyboardButton(translate(lang, 'interface_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'security_menu_btn')), KeyboardButton(translate(lang, 'backup_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'export_menu_btn')), KeyboardButton(translate(lang, 'help_menu_btn')))
+    kb.add(KeyboardButton(translate(lang, 'back_to_main_btn')))
     return kb
 
 def scan_cancel_or_main_keyboard(lang=None):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     kb.row(KeyboardButton(translate(lang, 'cancel_btn')), KeyboardButton(translate(lang, 'back_to_main_btn')))
+    return kb
+
+def asic_menu_keyboard(lang=None):
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.row(KeyboardButton(translate(lang, 'asic_ips_btn')))
+    kb.add(KeyboardButton(translate(lang, 'settings_main_menu_btn')))
     return kb 
