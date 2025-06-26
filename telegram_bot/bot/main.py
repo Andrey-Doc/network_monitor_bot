@@ -503,13 +503,16 @@ async def handle_scan_network(message: Message):
 
 @dp.message_handler(state=ScanDevicesState.waiting_for_network)
 async def process_devices_network_input(message: Message, state: FSMContext):
+    import logging
     cleanup_old_results()
     scan_manager.start_scan()
     network = message.text.strip()
     start_time = time.time()
+    logging.info(f"[SCAN_NETWORK] Пользователь {message.from_user.id} ввёл сеть: {network}")
     try:
         net = ipaddress.IPv4Network(network, strict=False)
     except Exception as e:
+        logging.error(f"[SCAN_NETWORK] Некорректная сеть: {network}, ошибка: {e}")
         await message.answer(translate(get_lang(), 'network_format_error'), reply_markup=main_menu_keyboard(lang=get_lang()))
         scan_manager.finish_scan()
         await state.finish()
@@ -524,8 +527,10 @@ async def process_devices_network_input(message: Message, state: FSMContext):
             message_id=progress_msg.message_id
         )
     try:
+        logging.info(f"[SCAN_NETWORK] Запуск scan_network_devices для {network}")
         devices = await scan_network_devices(network, on_progress=on_progress)
         duration = time.time() - start_time
+        logging.info(f"[SCAN_NETWORK] Завершено scan_network_devices для {network}, найдено устройств: {len(devices)} за {duration:.1f}с")
         await bot.edit_message_text(
             translate(get_lang(), 'scan_completed', count=len(devices)),
             chat_id=progress_msg.chat.id,
@@ -553,11 +558,13 @@ async def process_devices_network_input(message: Message, state: FSMContext):
         })
         await ScanDevicesState.waiting_for_file_request.set()
     except Exception as e:
+        logging.exception(f"[SCAN_NETWORK] Ошибка при сканировании {network}: {e}")
         await bot.edit_message_text(
             translate(get_lang(), 'scan_error', e=e),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
+        await message.answer(f"[SCAN_NETWORK] Произошла ошибка: {e}", reply_markup=main_menu_keyboard(lang=get_lang()))
         scan_manager.finish_scan()
         await state.finish()
 
@@ -610,12 +617,15 @@ async def handle_scan_miners(message: Message):
 
 @dp.message_handler(state=ScanMinersState.waiting_for_network)
 async def process_miners_network_input(message: Message, state: FSMContext):
+    import logging
     cleanup_old_results()
     scan_manager.start_scan()
     network = message.text.strip()
+    logging.info(f"[SCAN_MINERS] Пользователь {message.from_user.id} ввёл сеть: {network}")
     try:
         net = ipaddress.IPv4Network(network, strict=False)
-    except Exception:
+    except Exception as e:
+        logging.error(f"[SCAN_MINERS] Некорректная сеть: {network}, ошибка: {e}")
         await message.answer(translate(get_lang(), 'network_format_error'), reply_markup=main_menu_keyboard(lang=get_lang()))
         scan_manager.finish_scan()
         await state.finish()
@@ -630,7 +640,9 @@ async def process_miners_network_input(message: Message, state: FSMContext):
             message_id=progress_msg.message_id
         )
     try:
+        logging.info(f"[SCAN_MINERS] Запуск scan_network_for_miners для {network}")
         miners = await scan_network_for_miners(network, on_progress=on_progress)
+        logging.info(f"[SCAN_MINERS] Завершено scan_network_for_miners для {network}, найдено майнеров: {len(miners)}")
         await bot.edit_message_text(
             translate(get_lang(), 'scan_completed', count=len(miners)),
             chat_id=progress_msg.chat.id,
@@ -653,11 +665,13 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         })
         await ScanMinersState.waiting_for_file_request.set()
     except Exception as e:
+        logging.exception(f"[SCAN_MINERS] Ошибка при сканировании {network}: {e}")
         await bot.edit_message_text(
             translate(get_lang(), 'scan_error', e=e),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
+        await message.answer(f"[SCAN_MINERS] Произошла ошибка: {e}", reply_markup=main_menu_keyboard(lang=get_lang()))
         scan_manager.finish_scan()
         await state.finish()
 
