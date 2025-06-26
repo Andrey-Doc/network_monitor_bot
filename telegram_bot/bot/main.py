@@ -668,12 +668,15 @@ async def handle_fast_scan(message: Message):
 
 @dp.message_handler(state=FastScanState.waiting_for_network)
 async def process_fast_scan_network_input(message: Message, state: FSMContext):
+    import logging
     cleanup_old_results()
     scan_manager.start_scan()
     network = message.text.strip()
+    logging.info(f"[FAST_SCAN] Пользователь {message.from_user.id} ввёл сеть: {network}")
     try:
         net = ipaddress.IPv4Network(network, strict=False)
-    except Exception:
+    except Exception as e:
+        logging.error(f"[FAST_SCAN] Некорректная сеть: {network}, ошибка: {e}")
         await message.answer(translate(get_lang(), 'network_format_error'), reply_markup=main_menu_keyboard(lang=get_lang()))
         scan_manager.finish_scan()
         await state.finish()
@@ -688,7 +691,9 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
             message_id=progress_msg.message_id
         )
     try:
+        logging.info(f"[FAST_SCAN] Запуск fast_scan_network для {network}")
         devices = await fast_scan_network(network, on_progress=on_progress)
+        logging.info(f"[FAST_SCAN] Завершено fast_scan_network для {network}, найдено устройств: {len(devices)}")
         await bot.edit_message_text(
             translate(get_lang(), 'fast_scan_completed', count=len(devices)),
             chat_id=progress_msg.chat.id,
@@ -714,11 +719,13 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
         })
         await FastScanState.waiting_for_file_request.set()
     except Exception as e:
+        logging.exception(f"[FAST_SCAN] Ошибка при сканировании {network}: {e}")
         await bot.edit_message_text(
             translate(get_lang(), 'fast_scan_error', e=e),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
+        await message.answer(f"[FAST_SCAN] Произошла ошибка: {e}", reply_markup=main_menu_keyboard(lang=get_lang()))
         scan_manager.finish_scan()
         await state.finish()
 
