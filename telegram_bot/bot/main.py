@@ -1659,6 +1659,8 @@ async def resend_scan_result_file(message: Message):
         file_path = scan_manager.get_scan_result_file(scan_type, network, ext='json')
     logging.info(f"[REPLY] Ищу файл: {file_path}")
     if file_path:
+        import os
+        logging.info(f"[REPLY] Проверяю наличие файла: {os.path.abspath(file_path)}, exists={os.path.exists(file_path)}")
         await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=main_menu_keyboard(lang=get_lang()))
     else:
         await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
