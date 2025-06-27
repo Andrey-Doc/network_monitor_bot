@@ -1848,7 +1848,7 @@ async def handle_get_ips_callback(call: CallbackQuery):
 
 @dp.message_handler(commands=['scanfiles'])
 async def handle_scanfiles(message: Message):
-    scan_dir = os.path.join(os.path.dirname(__file__), '../data/scan_results')
+    scan_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data/scan_results'))
     try:
         files = os.listdir(scan_dir)
         if not files:
@@ -1865,7 +1865,7 @@ async def handle_scanips(message: Message):
         await message.answer('Укажите имя файла после команды, например: /scanips fast_scan_10_4_6_10_27.csv')
         return
     filename = args.strip()
-    scan_dir = os.path.join(os.path.dirname(__file__), '../data/scan_results')
+    scan_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data/scan_results'))
     file_path = os.path.join(scan_dir, filename)
     if not os.path.exists(file_path):
         await message.answer('Файл не найден.')
