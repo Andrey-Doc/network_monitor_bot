@@ -1615,6 +1615,7 @@ async def handle_scan_menu_btn(message: Message):
     await message.answer(translate(get_lang(), 'scan_menu_msg'), reply_markup=scan_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(lambda m: m.reply_to_message is not None)
+@dp.message_handler(lambda m: m.reply_to_message is not None)
 async def resend_scan_result_file(message: Message):
     # Если reply на файл, не обрабатываем здесь (пусть сработает обработчик IP-адресов)
     if getattr(message.reply_to_message, 'document', None):
@@ -1631,28 +1632,24 @@ async def resend_scan_result_file(message: Message):
     else:
         text = message.reply_to_message.text or ''
         logging.info(f"[REPLY] Результат не найден в памяти. Пробую извлечь из текста: {text}")
-        # Обычное сканирование
-        m = re.search(r'Найдено устройств: \d+\n?([\d\.]+/\d+)?', text)
-        if m:
-            scan_type = 'scan'
-            # Пробуем найти сеть в тексте (например, 10.4.6.0/24)
+        # Fast scan
+        if 'Быстрое сканирование' in text or 'fast scan' in text.lower():
+            scan_type = 'fast_scan'
             net_match = re.search(r'(\d+\.\d+\.\d+\.\d+/\d+)', text)
             if net_match:
                 network = net_match.group(1)
         # Поиск майнеров
-        if not scan_type:
-            if 'Найдено майнеров' in text:
-                scan_type = 'miners'
-                net_match = re.search(r'(\d+\.\d+\.\d+\.\d+/\d+)', text)
-                if net_match:
-                    network = net_match.group(1)
-        # Fast scan
-        if not scan_type:
-            if 'Быстрое сканирование' in text or 'fast scan' in text.lower():
-                scan_type = 'fast_scan'
-                net_match = re.search(r'(\d+\.\d+\.\d+\.\d+/\d+)', text)
-                if net_match:
-                    network = net_match.group(1)
+        elif 'Найдено майнеров' in text:
+            scan_type = 'miners'
+            net_match = re.search(r'(\d+\.\d+\.\d+\.\d+/\d+)', text)
+            if net_match:
+                network = net_match.group(1)
+        # Обычное сканирование
+        elif re.search(r'Найдено устройств: \d+', text):
+            scan_type = 'scan'
+            net_match = re.search(r'(\d+\.\d+\.\d+\.\d+/\d+)', text)
+            if net_match:
+                network = net_match.group(1)
         logging.info(f"[REPLY] Извлечено из текста: network={network}, scan_type={scan_type}")
     if not network or not scan_type:
         await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
@@ -1665,7 +1662,7 @@ async def resend_scan_result_file(message: Message):
         await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=main_menu_keyboard(lang=get_lang()))
     else:
         await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
-
+        
 @dp.message_handler(lambda m: m.reply_to_message and hasattr(m.reply_to_message, 'document') and m.reply_to_message.document)
 async def send_ip_list_from_scan_file(message: Message):
     await message.answer('DEBUG: обработчик файла вызван')
