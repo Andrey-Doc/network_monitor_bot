@@ -669,9 +669,9 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         for m in miners:
             text += f"{m['ip']}: miner (hashrate: {m.get('hashrate')}, uptime: {m.get('uptime')})\n"
         text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
-        scan_manager.save_scan_result('scan', network, {'miners': miners, 'type': 'miners', 'timestamp': time.time()})
+        scan_manager.save_scan_result('miners', network, {'miners': miners, 'type': 'miners', 'timestamp': time.time()})
         if len(text) > 4000:
-            file_path = scan_manager.get_scan_result_file('scan', network, ext='csv')
+            file_path = scan_manager.get_scan_result_file('miners', network, ext='csv')
             if file_path:
                 await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=main_menu_keyboard(lang=get_lang()))
             else:
@@ -748,9 +748,9 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
             else:
                 text += f"{d['ip']}: {d.get('type', 'unknown')} (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
         text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
-        scan_manager.save_scan_result('scan', network, {'fast_scan': devices, 'type': 'fast_scan', 'timestamp': time.time()})
+        scan_manager.save_scan_result('fast_scan', network, {'devices': devices, 'type': 'fast_scan', 'timestamp': time.time()})
         if len(text) > 4000:
-            file_path = scan_manager.get_scan_result_file('scan', network, ext='csv')
+            file_path = scan_manager.get_scan_result_file('fast_scan', network, ext='csv')
             if file_path:
                 await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=main_menu_keyboard(lang=get_lang()))
             else:
