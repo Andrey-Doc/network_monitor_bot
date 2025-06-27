@@ -559,6 +559,7 @@ async def process_devices_network_input(message: Message, state: FSMContext):
                 kb = InlineKeyboardMarkup()
                 kb.add(InlineKeyboardButton('Получить IP-адреса', callback_data=f'get_ips:{os.path.basename(file_path)}'))
                 await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'))
+                await message.answer('DEBUG: сейчас будет отправлена кнопка')
                 await message.answer('Вы можете получить IP-адреса из файла:', reply_markup=kb)
             else:
                 await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
@@ -680,6 +681,7 @@ async def process_miners_network_input(message: Message, state: FSMContext):
                 kb = InlineKeyboardMarkup()
                 kb.add(InlineKeyboardButton('Получить IP-адреса', callback_data=f'get_ips:{os.path.basename(file_path)}'))
                 await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'))
+                await message.answer('DEBUG: сейчас будет отправлена кнопка')
                 await message.answer('Вы можете получить IP-адреса из файла:', reply_markup=kb)
             else:
                 await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
@@ -762,6 +764,7 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
                 kb = InlineKeyboardMarkup()
                 kb.add(InlineKeyboardButton('Получить IP-адреса', callback_data=f'get_ips:{os.path.basename(file_path)}'))
                 await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'))
+                await message.answer('DEBUG: сейчас будет отправлена кнопка')
                 await message.answer('Вы можете получить IP-адреса из файла:', reply_markup=kb)
             else:
                 await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
