@@ -1749,6 +1749,18 @@ async def send_ip_list_from_scan_file(message: Message):
     except Exception as e:
         await message.answer(f'Ошибка при обработке файла: {e}', reply_markup=main_menu_keyboard(lang=get_lang()))
 
+@dp.message_handler(lambda m: m.reply_to_message is not None)
+async def debug_reply(message: Message):
+    info = []
+    info.append(f"DEBUG: reply handler called")
+    if hasattr(message.reply_to_message, 'document'):
+        info.append(f"has document: {bool(message.reply_to_message.document)}")
+        if message.reply_to_message.document:
+            info.append(f"file_name: {message.reply_to_message.document.file_name}")
+    else:
+        info.append("no document attr")
+    await message.answer(' | '.join(info))
+
 if __name__ == '__main__':
     executor.start_polling(
         dp, 
