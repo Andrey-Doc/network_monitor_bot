@@ -1665,6 +1665,9 @@ async def handle_scan_menu_btn(message: Message):
 
 @dp.message_handler(lambda m: m.reply_to_message is not None)
 async def resend_scan_result_file(message: Message):
+    # Если reply на файл, не обрабатываем здесь (пусть сработает обработчик IP-адресов)
+    if getattr(message.reply_to_message, 'document', None):
+        return
     result = scan_manager.get_results().get(message.reply_to_message.message_id)
     network = None
     scan_type = None
