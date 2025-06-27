@@ -1846,6 +1846,57 @@ async def handle_get_ips_callback(call: CallbackQuery):
         await call.message.answer(f'Ошибка при обработке файла: {e}', reply_markup=main_menu_keyboard(lang=get_lang()))
     await call.answer()
 
+@dp.message_handler(commands=['scanfiles'])
+async def handle_scanfiles(message: Message):
+    scan_dir = os.path.join(os.path.dirname(__file__), '../data/scan_results')
+    try:
+        files = os.listdir(scan_dir)
+        if not files:
+            await message.answer('Нет файлов результатов сканирования.')
+            return
+        await message.answer('Файлы результатов сканирования:\n' + '\n'.join(files))
+    except Exception as e:
+        await message.answer(f'Ошибка при получении списка файлов: {e}')
+
+@dp.message_handler(commands=['scanips'])
+async def handle_scanips(message: Message):
+    args = message.get_args()
+    if not args:
+        await message.answer('Укажите имя файла после команды, например: /scanips fast_scan_10_4_6_10_27.csv')
+        return
+    filename = args.strip()
+    scan_dir = os.path.join(os.path.dirname(__file__), '../data/scan_results')
+    file_path = os.path.join(scan_dir, filename)
+    if not os.path.exists(file_path):
+        await message.answer('Файл не найден.')
+        return
+    ips = set()
+    try:
+        if filename.endswith('.csv'):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    ip = row.get('ip') or row.get('IP')
+                    if ip:
+                        ips.add(ip.strip())
+        elif filename.endswith('.json'):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                items = data.get('devices') or data.get('miners') or []
+                for d in items:
+                    ip = d.get('ip') or d.get('IP')
+                    if ip:
+                        ips.add(ip.strip())
+        else:
+            await message.answer('Формат файла не поддерживается.')
+            return
+        if ips:
+            await message.answer(','.join(sorted(ips)))
+        else:
+            await message.answer('IP-адреса не найдены в файле.')
+    except Exception as e:
+        await message.answer(f'Ошибка при чтении файла: {e}')
+
 if __name__ == '__main__':
     executor.start_polling(
         dp, 
