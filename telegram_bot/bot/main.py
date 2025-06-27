@@ -545,7 +545,7 @@ async def process_devices_network_input(message: Message, state: FSMContext):
             scan_manager.finish_scan()
             await state.finish()
             return
-        text = f"Найдено устройств: {len(devices)}\n"
+        text = f"Найдено устройств: {len(devices)}\nСеть: {network}\n"
         for d in devices:
             if d.get('type') == 'miner':
                 text += f"{d['ip']}: miner (hashrate: {d.get('hashrate')}, uptime: {d.get('uptime')})\n"
@@ -676,7 +676,7 @@ async def process_miners_network_input(message: Message, state: FSMContext):
             scan_manager.finish_scan()
             await state.finish()
             return
-        text = "Найдено майнеров: {}\n".format(len(miners))
+        text = f"Найдено майнеров: {len(miners)}\nСеть: {network}\n"
         for m in miners:
             text += f"{m['ip']}: miner (hashrate: {m.get('hashrate')}, uptime: {m.get('uptime')})\n"
         text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
@@ -762,7 +762,7 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
             scan_manager.finish_scan()
             await state.finish()
             return
-        text = f"Найдено устройств: {len(devices)}\n"
+        text = f"Найдено устройств: {len(devices)}\nСеть: {network}\n"
         for d in devices:
             if d.get('type') == 'miner':
                 text += f"{d['ip']}: miner (hashrate: {d.get('hashrate')}, uptime: {d.get('uptime')})\n"
@@ -788,7 +788,6 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
                 return
         else:
             result_msg = await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang()))
-        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
         return
     except Exception as e:
         logging.exception(f"[FAST_SCAN] Ошибка при сканировании {network}: {e}")
