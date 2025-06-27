@@ -789,7 +789,17 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
         else:
             result_msg = await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang()))
         await message.answer(translate(get_lang(), 'settings_error'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
- 
+        return
+    except Exception as e:
+        logging.exception(f"[FAST_SCAN] Ошибка при сканировании {network}: {e}")
+        await bot.edit_message_text(
+            translate(get_lang(), 'scan_error', e=e),
+            chat_id=progress_msg.chat.id,
+            message_id=progress_msg.message_id
+        )
+        await message.answer(f"[FAST_SCAN] Произошла ошибка: {e}", reply_markup=main_menu_keyboard(lang=get_lang()))
+        scan_manager.finish_scan()
+        await state.finish()
 
 @dp.message_handler(is_menu_button('monitoring_notify_change_btn'))
 async def handle_monitoring_notify_change(message: Message):
