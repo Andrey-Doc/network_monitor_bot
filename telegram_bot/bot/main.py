@@ -1715,41 +1715,39 @@ async def resend_scan_result_file(message: Message):
     else:
         await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(content_types=ContentType.ANY)
+@dp.message_handler(lambda m: m.reply_to_message and hasattr(m.reply_to_message, 'document') and m.reply_to_message.document)
 async def send_ip_list_from_scan_file(message: Message):
-    if message.reply_to_message and getattr(message.reply_to_message, 'document', None):
-        file = message.reply_to_message.document
-        await message.answer(f'Обработчик reply на файл вызван. Файл: {file.file_name}, MIME: {file.mime_type}')
-        file_name = file.file_name
-        try:
-            file_obj = await file.download()
-            file_obj.seek(0)
-            ips = set()
-            if file_name.endswith('.csv'):
-                import csv
-                reader = csv.DictReader(file_obj.read().decode('utf-8').splitlines())
-                for row in reader:
-                    ip = row.get('ip') or row.get('IP')
-                    if ip:
-                        ips.add(ip.strip())
-            elif file_name.endswith('.json'):
-                import json
-                data = json.load(file_obj)
-                items = data.get('devices') or data.get('miners') or []
-                for d in items:
-                    ip = d.get('ip') or d.get('IP')
-                    if ip:
-                        ips.add(ip.strip())
-            else:
-                await message.answer('Формат файла не поддерживается.', reply_markup=main_menu_keyboard(lang=get_lang()))
-                return
-            if ips:
-                await message.answer(','.join(sorted(ips)), reply_markup=main_menu_keyboard(lang=get_lang()))
-            else:
-                await message.answer('IP-адреса не найдены в файле.', reply_markup=main_menu_keyboard(lang=get_lang()))
-        except Exception as e:
-            await message.answer(f'Ошибка при обработке файла: {e}', reply_markup=main_menu_keyboard(lang=get_lang()))
-    # else: не реагируем на другие сообщения
+    await message.answer('DEBUG: обработчик файла вызван')
+    file = message.reply_to_message.document
+    file_name = file.file_name
+    try:
+        file_obj = await file.download()
+        file_obj.seek(0)
+        ips = set()
+        if file_name.endswith('.csv'):
+            import csv
+            reader = csv.DictReader(file_obj.read().decode('utf-8').splitlines())
+            for row in reader:
+                ip = row.get('ip') or row.get('IP')
+                if ip:
+                    ips.add(ip.strip())
+        elif file_name.endswith('.json'):
+            import json
+            data = json.load(file_obj)
+            items = data.get('devices') or data.get('miners') or []
+            for d in items:
+                ip = d.get('ip') or d.get('IP')
+                if ip:
+                    ips.add(ip.strip())
+        else:
+            await message.answer('Формат файла не поддерживается.', reply_markup=main_menu_keyboard(lang=get_lang()))
+            return
+        if ips:
+            await message.answer(','.join(sorted(ips)), reply_markup=main_menu_keyboard(lang=get_lang()))
+        else:
+            await message.answer('IP-адреса не найдены в файле.', reply_markup=main_menu_keyboard(lang=get_lang()))
+    except Exception as e:
+        await message.answer(f'Ошибка при обработке файла: {e}', reply_markup=main_menu_keyboard(lang=get_lang()))
 
 if __name__ == '__main__':
     executor.start_polling(
