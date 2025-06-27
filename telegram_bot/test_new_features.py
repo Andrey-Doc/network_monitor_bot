@@ -6,6 +6,7 @@
 import asyncio
 import sys
 import os
+import pytest
 
 # Добавляем корневую директорию проекта в путь
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -13,6 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utils.statistics import StatisticsManager
 from utils.notifications import NotificationManager, NotificationLevel, NotificationType
 
+@pytest.mark.asyncio
 async def test_statistics():
     """Тестирование системы статистики"""
     print("🧪 Тестирование системы статистики...")
@@ -35,6 +37,7 @@ async def test_statistics():
     print("📄 CSV данные:")
     print(csv_data[:200] + "..." if len(csv_data) > 200 else csv_data)
 
+@pytest.mark.asyncio
 async def test_notifications():
     """Тестирование системы уведомлений"""
     print("\n🔔 Тестирование системы уведомлений...")

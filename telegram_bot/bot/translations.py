@@ -170,6 +170,8 @@ TRANSLATIONS = {
 /help — справка
 /status — статус бота
 /menu — открыть главное меню
+/scanfiles — список файлов результатов сканирования (с кнопками)
+/scanips <файл> — получить IP-адреса из выбранного файла
 
 Навигация по меню осуществляется кнопками. Для возврата используйте кнопку «Главное меню» или «Настройки».
 
@@ -420,6 +422,8 @@ Main commands:
 /help — help
 /status — bot status
 /menu — open main menu
+/scanfiles — list scan result files (with buttons)
+/scanips <file> — get IP addresses from the selected file
 
 Navigate using the menu buttons. Use "Main Menu" or "Settings" to go back.
 
@@ -670,6 +674,8 @@ If you have questions, type /help or use the "Help" button in the main menu.''',
 /help — справка
 /status — статус бота
 /menu — открыть главное меню
+/scanfiles — список файлов результатов сканирования (с кнопками)
+/scanips <файл> — получить IP-адреса из выбранного файла
 
 Навигация по меню осуществляется кнопками. Для возврата используйте кнопку «Главное меню» или «Настройки».
 
@@ -920,6 +926,8 @@ If you have questions, type /help or use the "Help" button in the main menu.''',
 /help — справка
 /status — статус бота
 /menu — открыть главное меню
+/scanfiles — список файлов результатов сканирования (с кнопками)
+/scanips <файл> — получить IP-адреса из выбранного файла
 
 Навигация по меню осуществляется кнопками. Для возврата используйте кнопку «Главное меню» или «Настройки».
 
@@ -1170,6 +1178,8 @@ If you have questions, type /help or use the "Help" button in the main menu.''',
 /help — справка
 /status — статус бота
 /menu — открыть главное меню
+/scanfiles — список файлов результатов сканирования (с кнопками)
+/scanips <файл> — получить IP-адреса из выбранного файла
 
 Навигация по меню осуществляется кнопками. Для возврата используйте кнопку «Главное меню» или «Настройки».
 

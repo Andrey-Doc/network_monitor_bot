@@ -19,7 +19,9 @@ class SettingsManager:
 
     def _ensure_data_dir(self):
         """Создаёт директорию для данных если её нет"""
-        os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+        dir_name = os.path.dirname(self.config_file)
+        if dir_name:
+            os.makedirs(dir_name, exist_ok=True)
         
     def _load_settings(self) -> Dict[str, Any]:
         """Загружает настройки из файла или инициализирует из config.py"""

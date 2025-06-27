@@ -7,7 +7,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from bot.utils.settings_manager import SettingsManager
+from utils.settings_manager import SettingsManager
 
 def test_security_system():
     """Тестирует систему безопасности"""
