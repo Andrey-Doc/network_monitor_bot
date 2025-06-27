@@ -1663,17 +1663,16 @@ async def handle_scan_menu_btn(message: Message):
 
 @dp.message_handler(lambda m: m.reply_to_message is not None and scan_manager.get_results().get(m.reply_to_message.message_id))
 async def resend_scan_result_file(message: Message):
-    # Получаем данные результата по message_id
     result = scan_manager.get_results().get(message.reply_to_message.message_id)
     if not result:
         await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
         return
     network = result.get('network')
-    scan_type = result.get('type')
+    scan_type = scan_manager.get_scan_type_for_result(result)
     if not network or not scan_type:
         await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
         return
-    file_path = scan_manager.get_scan_result_file('scan', network, ext='csv')
+    file_path = scan_manager.get_scan_result_file(scan_type, network, ext='csv')
     if file_path:
         await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=main_menu_keyboard(lang=get_lang()))
     else:

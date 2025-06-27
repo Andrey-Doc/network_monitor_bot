@@ -64,15 +64,7 @@ class ScanManager:
     def add_result(self, msg_id, data):
         with self._lock:
             self._results[msg_id] = {**data, 'timestamp': time.time()}
-            # Сохраняем в JSON
-            json_path = os.path.join(self._results_dir, f'result_{msg_id}.json')
-            with open(json_path, 'w', encoding='utf-8') as f:
-                json.dump(self._results[msg_id], f, ensure_ascii=False, indent=2)
-            # Сохраняем в CSV (если есть devices или miners)
-            if 'devices' in data:
-                self._save_devices_csv(msg_id, data['devices'])
-            elif 'miners' in data:
-                self._save_miners_csv(msg_id, data['miners'])
+            # Не сохраняем result_{msg_id}.* файлы больше!
 
     def _save_devices_csv(self, msg_id, devices):
         csv_path = os.path.join(self._results_dir, f'result_{msg_id}.csv')
@@ -139,4 +131,14 @@ class ScanManager:
         if os.path.exists(path):
             with open(path, 'r', encoding='utf-8') as f:
                 return json.load(f)
+        return None
+
+    def get_scan_type_for_result(self, result):
+        t = result.get('type')
+        if t == 'devices':
+            return 'scan'
+        elif t == 'miners':
+            return 'miners'
+        elif t == 'fast_scan':
+            return 'fast_scan'
         return None 
