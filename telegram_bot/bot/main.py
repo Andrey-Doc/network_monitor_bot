@@ -30,6 +30,7 @@ from ..utils.scan_manager import ScanManager
 import json
 from telegram_bot.utils.snmp_utils import async_get_snmp_full_info, async_get_snmp_info_subprocess
 import io
+import re
 
 logging.basicConfig(level=logging.INFO)
 
@@ -1661,20 +1662,50 @@ async def handle_asic_status_main_menu(message: Message):
 async def handle_scan_menu_btn(message: Message):
     await message.answer(translate(get_lang(), 'scan_menu_msg'), reply_markup=scan_menu_keyboard(lang=get_lang()))
 
-@dp.message_handler(lambda m: m.reply_to_message is not None and scan_manager.get_results().get(m.reply_to_message.message_id))
+@dp.message_handler(lambda m: m.reply_to_message is not None)
 async def resend_scan_result_file(message: Message):
     result = scan_manager.get_results().get(message.reply_to_message.message_id)
-    if not result:
-        await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
-        return
-    network = result.get('network')
-    scan_type = scan_manager.get_scan_type_for_result(result)
+    network = None
+    scan_type = None
+    # 1. Если есть результат в памяти — используем его
+    if result:
+        network = result.get('network')
+        scan_type = scan_manager.get_scan_type_for_result(result)
+        logging.info(f"[REPLY] Найден результат в памяти: network={network}, scan_type={scan_type}")
+    # 2. Если нет — пробуем извлечь из текста сообщения
+    else:
+        text = message.reply_to_message.text or ''
+        logging.info(f"[REPLY] Результат не найден в памяти. Пробую извлечь из текста: {text}")
+        # Обычное сканирование
+        m = re.search(r'Найдено устройств: \d+\n?([\d\.]+/\d+)?', text)
+        if m:
+            scan_type = 'scan'
+            # Пробуем найти сеть в тексте (например, 10.4.6.0/24)
+            net_match = re.search(r'(\d+\.\d+\.\d+\.\d+/\d+)', text)
+            if net_match:
+                network = net_match.group(1)
+        # Поиск майнеров
+        if not scan_type:
+            if 'Найдено майнеров' in text:
+                scan_type = 'miners'
+                net_match = re.search(r'(\d+\.\d+\.\d+\.\d+/\d+)', text)
+                if net_match:
+                    network = net_match.group(1)
+        # Fast scan
+        if not scan_type:
+            if 'Быстрое сканирование' in text or 'fast scan' in text.lower():
+                scan_type = 'fast_scan'
+                net_match = re.search(r'(\d+\.\d+\.\d+\.\d+/\d+)', text)
+                if net_match:
+                    network = net_match.group(1)
+        logging.info(f"[REPLY] Извлечено из текста: network={network}, scan_type={scan_type}")
     if not network or not scan_type:
         await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
         return
     file_path = scan_manager.get_scan_result_file(scan_type, network, ext='csv')
     if not file_path:
         file_path = scan_manager.get_scan_result_file(scan_type, network, ext='json')
+    logging.info(f"[REPLY] Ищу файл: {file_path}")
     if file_path:
         await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=main_menu_keyboard(lang=get_lang()))
     else:
