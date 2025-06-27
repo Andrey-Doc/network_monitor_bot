@@ -556,11 +556,7 @@ async def process_devices_network_input(message: Message, state: FSMContext):
         if len(text) > 4000:
             file_path = scan_manager.get_scan_result_file('scan', network, ext='csv')
             if file_path:
-                kb = InlineKeyboardMarkup()
-                kb.add(InlineKeyboardButton('Получить IP-адреса', callback_data=f'get_ips:{os.path.basename(file_path)}'))
                 await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'))
-                await message.answer('DEBUG: сейчас будет отправлена кнопка')
-                await message.answer('Вы можете получить IP-адреса из файла:', reply_markup=kb)
             else:
                 await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
         else:
@@ -678,11 +674,7 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         if len(text) > 4000:
             file_path = scan_manager.get_scan_result_file('miners', network, ext='csv')
             if file_path:
-                kb = InlineKeyboardMarkup()
-                kb.add(InlineKeyboardButton('Получить IP-адреса', callback_data=f'get_ips:{os.path.basename(file_path)}'))
                 await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'))
-                await message.answer('DEBUG: сейчас будет отправлена кнопка')
-                await message.answer('Вы можете получить IP-адреса из файла:', reply_markup=kb)
             else:
                 await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
         else:
@@ -761,11 +753,7 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
         if len(text) > 4000:
             file_path = scan_manager.get_scan_result_file('fast_scan', network, ext='csv')
             if file_path:
-                kb = InlineKeyboardMarkup()
-                kb.add(InlineKeyboardButton('Получить IP-адреса', callback_data=f'get_ips:{os.path.basename(file_path)}'))
                 await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'))
-                await message.answer('DEBUG: сейчас будет отправлена кнопка')
-                await message.answer('Вы можете получить IP-адреса из файла:', reply_markup=kb)
             else:
                 await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
         else:
@@ -1852,14 +1840,14 @@ async def handle_scanfiles(message: Message):
     try:
         files = os.listdir(scan_dir)
         if not files:
-            await message.answer('Нет файлов результатов сканирования.')
+            await message.answer(translate(get_lang(), 'no_scan_files'))
             return
         kb = InlineKeyboardMarkup()
         for fname in files:
             kb.add(InlineKeyboardButton(fname, callback_data=f'scanips:{fname}'))
-        await message.answer('Файлы результатов сканирования:', reply_markup=kb)
+        await message.answer(translate(get_lang(), 'scan_files_list'), reply_markup=kb)
     except Exception as e:
-        await message.answer(f'Ошибка при получении списка файлов: {e}')
+        await message.answer(translate(get_lang(), 'scan_files_error', e=e))
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('scanips:'))
 async def handle_scanips_callback(call: CallbackQuery):
@@ -1867,7 +1855,7 @@ async def handle_scanips_callback(call: CallbackQuery):
     scan_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data/scan_results'))
     file_path = os.path.join(scan_dir, filename)
     if not os.path.exists(file_path):
-        await call.message.answer('Файл не найден.')
+        await call.message.answer(translate(get_lang(), 'scan_file_not_found'))
         await call.answer()
         return
     ips = set()
@@ -1888,53 +1876,15 @@ async def handle_scanips_callback(call: CallbackQuery):
                     if ip:
                         ips.add(ip.strip())
         else:
-            await call.message.answer('Формат файла не поддерживается.')
+            await call.message.answer(translate(get_lang(), 'scan_file_format_error'))
             await call.answer()
             return
         if ips:
             await call.message.answer(','.join(sorted(ips)))
         else:
-            await call.message.answer('IP-адреса не найдены в файле.')
+            await call.message.answer(translate(get_lang(), 'scan_file_no_ips'))
     except Exception as e:
-        await call.message.answer(f'Ошибка при чтении файла: {e}')
-    await call.answer()
-
-@dp.callback_query_handler(lambda c: c.data and c.data.startswith('scanips:'))
-async def handle_scanips_callback(call: CallbackQuery):
-    filename = call.data.split(':', 1)[1]
-    scan_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data/scan_results'))
-    file_path = os.path.join(scan_dir, filename)
-    if not os.path.exists(file_path):
-        await call.message.answer('Файл не найден.')
-        await call.answer()
-        return
-    ips = set()
-    try:
-        if filename.endswith('.csv'):
-            with open(file_path, 'r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    ip = row.get('ip') or row.get('IP')
-                    if ip:
-                        ips.add(ip.strip())
-        elif filename.endswith('.json'):
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                items = data.get('devices') or data.get('miners') or []
-                for d in items:
-                    ip = d.get('ip') or d.get('IP')
-                    if ip:
-                        ips.add(ip.strip())
-        else:
-            await call.message.answer('Формат файла не поддерживается.')
-            await call.answer()
-            return
-        if ips:
-            await call.message.answer(','.join(sorted(ips)))
-        else:
-            await call.message.answer('IP-адреса не найдены в файле.')
-    except Exception as e:
-        await call.message.answer(f'Ошибка при чтении файла: {e}')
+        await call.message.answer(translate(get_lang(), 'scan_file_read_error', e=e))
     await call.answer()
 
 if __name__ == '__main__':

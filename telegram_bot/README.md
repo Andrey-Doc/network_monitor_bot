@@ -304,4 +304,17 @@ MIT License
 
 ## 🤝 Support
 
-For help, use the `/help` command in the bot or create an issue in the project repository. 
+For help, use the `/help` command in the bot or create an issue in the project repository.
+
+## Новые команды для работы с результатами сканирования
+
+- `/scanfiles` — выводит список файлов результатов сканирования (кликабельные кнопки для выбора файла)
+- `/scanips <filename>` — выводит IP-адреса из выбранного файла (csv или json) через запятую
+
+**Пример использования:**
+```
+/scanfiles
+/scanips fast_scan_10_4_6_10_27.csv
+```
+
+> Логика кнопки "Получить IP-адреса" при отправке файла результатов сканирования удалена. Теперь для получения IP используйте команды выше. 
