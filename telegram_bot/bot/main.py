@@ -1,6 +1,6 @@
 import logging
 from aiogram import Bot, Dispatcher, types, executor
-from aiogram.types import Message, ContentType, ReplyKeyboardMarkup, KeyboardButton, InputFile, ReplyKeyboardRemove
+from aiogram.types import Message, ContentType, ReplyKeyboardMarkup, KeyboardButton, InputFile, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from .keyboards import (
     main_menu_keyboard, settings_main_menu_keyboard, monitoring_menu_keyboard,
     scan_menu_keyboard, notification_menu_keyboard, router_menu_keyboard,
@@ -556,7 +556,9 @@ async def process_devices_network_input(message: Message, state: FSMContext):
         if len(text) > 4000:
             file_path = scan_manager.get_scan_result_file('scan', network, ext='csv')
             if file_path:
-                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=main_menu_keyboard(lang=get_lang()))
+                kb = InlineKeyboardMarkup()
+                kb.add(InlineKeyboardButton('Получить IP-адреса', callback_data=f'get_ips:{os.path.basename(file_path)}'))
+                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=kb)
             else:
                 await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
         else:
@@ -674,7 +676,9 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         if len(text) > 4000:
             file_path = scan_manager.get_scan_result_file('miners', network, ext='csv')
             if file_path:
-                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=main_menu_keyboard(lang=get_lang()))
+                kb = InlineKeyboardMarkup()
+                kb.add(InlineKeyboardButton('Получить IP-адреса', callback_data=f'get_ips:{os.path.basename(file_path)}'))
+                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=kb)
             else:
                 await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
         else:
@@ -753,7 +757,9 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
         if len(text) > 4000:
             file_path = scan_manager.get_scan_result_file('fast_scan', network, ext='csv')
             if file_path:
-                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=main_menu_keyboard(lang=get_lang()))
+                kb = InlineKeyboardMarkup()
+                kb.add(InlineKeyboardButton('Получить IP-адреса', callback_data=f'get_ips:{os.path.basename(file_path)}'))
+                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=kb)
             else:
                 await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
         else:
@@ -1796,6 +1802,43 @@ async def get_ips_from_scan_file(message: Message):
             await message.answer(f'Ошибка при обработке файла: {e}', reply_markup=main_menu_keyboard(lang=get_lang()))
     else:
         await message.answer('Сделайте /get_ips в reply на файл с результатами сканирования.', reply_markup=main_menu_keyboard(lang=get_lang()))
+
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('get_ips:'))
+async def handle_get_ips_callback(call: CallbackQuery):
+    file_name = call.data.split(':', 1)[1]
+    file_path = os.path.join('telegram_bot/data/scan_results', file_name)
+    if not os.path.exists(file_path):
+        await call.message.answer('Файл не найден.', reply_markup=main_menu_keyboard(lang=get_lang()))
+        return
+    ips = set()
+    try:
+        if file_name.endswith('.csv'):
+            import csv
+            with open(file_path, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    ip = row.get('ip') or row.get('IP')
+                    if ip:
+                        ips.add(ip.strip())
+        elif file_name.endswith('.json'):
+            import json
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                items = data.get('devices') or data.get('miners') or []
+                for d in items:
+                    ip = d.get('ip') or d.get('IP')
+                    if ip:
+                        ips.add(ip.strip())
+        else:
+            await call.message.answer('Формат файла не поддерживается.', reply_markup=main_menu_keyboard(lang=get_lang()))
+            return
+        if ips:
+            await call.message.answer(','.join(sorted(ips)), reply_markup=main_menu_keyboard(lang=get_lang()))
+        else:
+            await call.message.answer('IP-адреса не найдены в файле.', reply_markup=main_menu_keyboard(lang=get_lang()))
+    except Exception as e:
+        await call.message.answer(f'Ошибка при обработке файла: {e}', reply_markup=main_menu_keyboard(lang=get_lang()))
+    await call.answer()
 
 if __name__ == '__main__':
     executor.start_polling(
