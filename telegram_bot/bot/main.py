@@ -181,11 +181,11 @@ async def send_welcome(message: Message):
     if not check_user_access(message):
         await send_access_denied(message)
         return
-    
     statistics_manager.record_command('start')
+    role = get_user_role(message)
     await message.answer(
         translate(get_lang(), 'welcome'),
-        reply_markup=main_menu_keyboard(lang=get_lang())
+        reply_markup=main_menu_keyboard(lang=get_lang(), role=role)
     )
 
 @dp.message_handler(is_menu_button('status_main_menu_btn'))
