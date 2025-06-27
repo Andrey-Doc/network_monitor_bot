@@ -789,7 +789,7 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
         else:
             result_msg = await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang()))
         await message.answer(translate(get_lang(), 'settings_error'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
-    await state.finish()
+ 
 
 @dp.message_handler(is_menu_button('monitoring_notify_change_btn'))
 async def handle_monitoring_notify_change(message: Message):
