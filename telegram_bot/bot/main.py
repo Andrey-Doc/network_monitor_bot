@@ -1624,6 +1624,10 @@ async def handle_asic_status_main_menu(message: Message):
             text += f"\n{r['ip']}: ❌ оффлайн"
     await message.answer(text, parse_mode='HTML', reply_markup=main_menu_keyboard(lang=get_lang()))
 
+@dp.message_handler(is_menu_button('scan_menu_btn'))
+async def handle_scan_menu_btn(message: Message):
+    await message.answer(translate(get_lang(), 'scan_menu_msg'), reply_markup=scan_menu_keyboard(lang=get_lang()))
+
 if __name__ == '__main__':
     executor.start_polling(
         dp, 
