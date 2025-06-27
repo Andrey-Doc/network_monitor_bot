@@ -79,17 +79,21 @@ The bot includes a powerful settings system allowing you to change all parameter
 ## 📋 Commands
 
 ### Main Commands
-- `/start` or `/menu` – Main menu
-- `/status` – Status of active scans
-- `/stats` – Usage statistics
-- `/help` – Command help
+- `/start` or `/menu` – Open the main menu of the bot.
+- `/help` – Show help and usage instructions.
+- `/status` – Show the current status of the bot (active scans, monitoring, routers, etc.).
+- `/stats` – Show usage and scan statistics.
+- `/role` – Show your current role (admin, operator, user) in the system.
 
 ### Monitoring Commands
-- `/monitor_start` – Start background monitoring
-- `/monitor_stop` – Stop monitoring
+- `/monitor_start` – Start background router monitoring.
+- `/monitor_stop` – Stop background monitoring.
 
 ### Export Commands
-- `/export_stats` – Export statistics as CSV
+- `/export_stats` – Export statistics as CSV (if enabled).
+
+### Menu Navigation
+Most features (scanning, settings, notifications, backup, etc.) are available via the bot's menu buttons. Use `/start` or `/menu` to open the main menu and navigate using the provided buttons.
 
 ## ⚙️ Setup
 

@@ -550,13 +550,24 @@ async def process_devices_network_input(message: Message, state: FSMContext):
             else:
                 text += f"{d['ip']}: (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
         text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
-        result_msg = await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang()))
-        scan_manager.add_result(result_msg.message_id, {
-            'devices': devices,
-            'type': 'devices',
-            'timestamp': time.time()
-        })
-        await ScanDevicesState.waiting_for_file_request.set()
+        scan_manager.save_scan_result('scan', network, {'devices': devices, 'type': 'devices', 'timestamp': time.time()})
+        if len(text) > 4000:
+            file_path = scan_manager.get_scan_result_file('scan', network, ext='csv')
+            if file_path:
+                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=main_menu_keyboard(lang=get_lang()))
+            else:
+                await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
+        else:
+            result_msg = await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang()))
+            scan_manager.add_result(result_msg.message_id, {
+                'devices': devices,
+                'type': 'devices',
+                'timestamp': time.time(),
+                'network': network
+            })
+            await ScanDevicesState.waiting_for_file_request.set()
+        scan_manager.finish_scan()
+        await state.finish()
     except Exception as e:
         logging.exception(f"[SCAN_NETWORK] Ошибка при сканировании {network}: {e}")
         await bot.edit_message_text(
@@ -657,13 +668,24 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         for m in miners:
             text += f"{m['ip']}: miner (hashrate: {m.get('hashrate')}, uptime: {m.get('uptime')})\n"
         text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
-        result_msg = await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang()))
-        scan_manager.add_result(result_msg.message_id, {
-            'miners': miners,
-            'type': 'miners',
-            'timestamp': time.time()
-        })
-        await ScanMinersState.waiting_for_file_request.set()
+        scan_manager.save_scan_result('scan', network, {'miners': miners, 'type': 'miners', 'timestamp': time.time()})
+        if len(text) > 4000:
+            file_path = scan_manager.get_scan_result_file('scan', network, ext='csv')
+            if file_path:
+                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=main_menu_keyboard(lang=get_lang()))
+            else:
+                await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
+        else:
+            result_msg = await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang()))
+            scan_manager.add_result(result_msg.message_id, {
+                'miners': miners,
+                'type': 'miners',
+                'timestamp': time.time(),
+                'network': network
+            })
+            await ScanMinersState.waiting_for_file_request.set()
+        scan_manager.finish_scan()
+        await state.finish()
     except Exception as e:
         logging.exception(f"[SCAN_MINERS] Ошибка при сканировании {network}: {e}")
         await bot.edit_message_text(
@@ -725,13 +747,24 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
             else:
                 text += f"{d['ip']}: {d.get('type', 'unknown')} (открытые порты: {', '.join(map(str, d['open_ports']))})\n"
         text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
-        result_msg = await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang()))
-        scan_manager.add_result(result_msg.message_id, {
-            'devices': devices,
-            'type': 'fast_scan',
-            'timestamp': time.time()
-        })
-        await FastScanState.waiting_for_file_request.set()
+        scan_manager.save_scan_result('scan', network, {'fast_scan': devices, 'type': 'fast_scan', 'timestamp': time.time()})
+        if len(text) > 4000:
+            file_path = scan_manager.get_scan_result_file('scan', network, ext='csv')
+            if file_path:
+                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=main_menu_keyboard(lang=get_lang()))
+            else:
+                await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
+        else:
+            result_msg = await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang()))
+            scan_manager.add_result(result_msg.message_id, {
+                'fast_scan': devices,
+                'type': 'fast_scan',
+                'timestamp': time.time(),
+                'network': network
+            })
+            await FastScanState.waiting_for_file_request.set()
+        scan_manager.finish_scan()
+        await state.finish()
     except Exception as e:
         logging.exception(f"[FAST_SCAN] Ошибка при сканировании {network}: {e}")
         await bot.edit_message_text(
@@ -951,7 +984,7 @@ async def handle_router_ports(message: Message):
     await ScanSettingsState.waiting_for_router_ports.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_router_ports)
-async def process_router_ports(message: Message, state: FSMContext):
+async def process_router_ports_settings(message: Message, state: FSMContext):
     ports = parse_ports(message.text)
     if not ports:
         await message.answer(translate(get_lang(), 'scan_router_ports_error'), reply_markup=scan_menu_keyboard(lang=get_lang()))
@@ -1627,6 +1660,24 @@ async def handle_asic_status_main_menu(message: Message):
 @dp.message_handler(is_menu_button('scan_menu_btn'))
 async def handle_scan_menu_btn(message: Message):
     await message.answer(translate(get_lang(), 'scan_menu_msg'), reply_markup=scan_menu_keyboard(lang=get_lang()))
+
+@dp.message_handler(lambda m: m.reply_to_message is not None and scan_manager.get_results().get(m.reply_to_message.message_id))
+async def resend_scan_result_file(message: Message):
+    # Получаем данные результата по message_id
+    result = scan_manager.get_results().get(message.reply_to_message.message_id)
+    if not result:
+        await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
+        return
+    network = result.get('network')
+    scan_type = result.get('type')
+    if not network or not scan_type:
+        await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
+        return
+    file_path = scan_manager.get_scan_result_file('scan', network, ext='csv')
+    if file_path:
+        await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=main_menu_keyboard(lang=get_lang()))
+    else:
+        await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
 
 if __name__ == '__main__':
     executor.start_polling(

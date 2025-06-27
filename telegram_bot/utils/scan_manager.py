@@ -3,6 +3,7 @@ import time
 import threading
 import csv
 import json
+import re
 
 class ScanManager:
     def __init__(self, ttl=3600, results_dir=None):
@@ -12,6 +13,45 @@ class ScanManager:
         self._lock = threading.Lock()
         self._results_dir = results_dir or os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data/scan_results'))
         os.makedirs(self._results_dir, exist_ok=True)
+
+    def _network_to_filename(self, scan_type, network):
+        # network: '10.1.0.0/21' -> '10.1.0.0_21'
+        net = network.replace('/', '_').replace('.', '_')
+        return f'{scan_type}_{net}'
+
+    def save_scan_result(self, scan_type, network, data, as_csv=True):
+        """Сохраняет результат сканирования, удаляя предыдущий для этой сети и типа."""
+        self.cleanup_old_scan_results_for_network(scan_type, network)
+        base = self._network_to_filename(scan_type, network)
+        json_path = os.path.join(self._results_dir, f'{base}.json')
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        if as_csv:
+            items = data.get('devices') or data.get('miners')
+            if items:
+                csv_path = os.path.join(self._results_dir, f'{base}.csv')
+                keys = set()
+                for d in items:
+                    keys.update(d.keys())
+                keys = list(keys)
+                with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.DictWriter(f, fieldnames=keys)
+                    writer.writeheader()
+                    for d in items:
+                        writer.writerow(d)
+
+    def get_scan_result_file(self, scan_type, network, ext='csv'):
+        base = self._network_to_filename(scan_type, network)
+        path = os.path.join(self._results_dir, f'{base}.{ext}')
+        return path if os.path.exists(path) else None
+
+    def cleanup_old_scan_results_for_network(self, scan_type, network):
+        """Удаляет старые результаты для этой сети и типа сканирования."""
+        base = self._network_to_filename(scan_type, network)
+        for ext in ('.json', '.csv'):
+            path = os.path.join(self._results_dir, f'{base}{ext}')
+            if os.path.exists(path):
+                os.remove(path)
 
     def start_scan(self):
         with self._lock:
