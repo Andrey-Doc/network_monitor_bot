@@ -1673,6 +1673,8 @@ async def resend_scan_result_file(message: Message):
         await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
         return
     file_path = scan_manager.get_scan_result_file(scan_type, network, ext='csv')
+    if not file_path:
+        file_path = scan_manager.get_scan_result_file(scan_type, network, ext='json')
     if file_path:
         await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'), reply_markup=main_menu_keyboard(lang=get_lang()))
     else:
