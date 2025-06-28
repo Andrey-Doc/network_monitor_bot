@@ -1,6 +1,99 @@
-# Telegram Bot for Monitoring and Scanning
+# Telegram Monitoring & Scanning Bot
 
-A Telegram bot for monitoring routers, scanning networks, and searching for miners, with advanced configuration and SNMP support.
+A powerful Telegram bot for monitoring hosts, scanning networks, router and miner status, and flexible notifications. Supports multi-language, role-based access (admin/operator), persistent scan results, and user-friendly interface.
+
+---
+
+## 🚀 Quick Start: Installation and Setup
+
+### 1. Clone the repository
+```bash
+git clone <repository-URL>
+cd telegram_bot
+```
+
+### 2. Install dependencies
+It is recommended to use a virtual environment:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 3. Configure secrets and parameters
+Create the file `telegram_bot/data/secrets.json` with the following content:
+```json
+{
+  "TELEGRAM_BOT_TOKEN": "<your_bot_token>",
+  "CHAT_ID": <your_chat_id>,
+  "admins": [<your_chat_id>],
+  "ROUTER_IPS": ["192.168.1.1"],
+  "ROUTER_PORTS": [8080, 8022],
+  "SCAN_RESULTS_TTL": 3600
+}
+```
+- `TELEGRAM_BOT_TOKEN` — your Telegram bot token (get it from @BotFather)
+- `CHAT_ID` — your Telegram user ID (find it via @userinfobot)
+- `admins` — list of admin user IDs
+
+### 4. Run the bot
+```bash
+python3 telegram_bot/run_bot.py
+```
+
+### 5. User management
+- By default, only admins can change settings.
+- Operators can be added via the settings menu ("Security" section).
+- Operators can only view status and scan results.
+
+### 6. Main commands
+- `/start` — main menu
+- `/help` — help
+- `/status` — bot status
+- `/scanfiles` — list of scan result files
+- `/scanips <file>` — get IP addresses from a file
+- `/role` — show your role
+
+### 7. Settings
+- All parameters (intervals, IPs, ports, language, etc.) can be changed via the settings menu in Telegram.
+- You must be an admin to change settings.
+
+---
+
+## Features
+- Host and router monitoring (with interval and notification settings)
+- Network scanning, miner detection, fast scan
+- Persistent scan results (CSV/JSON), accessible after restart
+- File-based and inline button IP extraction
+- Multilanguage support (RU/EN/DE/NL/ZH)
+- Role-based access: admin/operator
+- Flexible notification system (critical, info, daily reports)
+- Settings backup and restore
+- SNMP router support (quick and extended status)
+- Statistics and scan history
+- Robust error handling and user feedback
+
+---
+
+## Roadmap
+- [ ] Web interface for management
+- [ ] Integration with monitoring systems (Zabbix, Nagios)
+- [x] SNMP support
+- [x] Extended analytics
+- [x] Multilanguage support
+- [ ] API for external systems
+- [ ] Database integration
+- [ ] Plugin system
+
+---
+
+## License
+MIT License
+
+---
+
+## Support
+For help, use the `/help` command in the bot or create an issue in the project repository.
 
 ## 🚀 Features
 
@@ -318,3 +411,119 @@ For help, use the `/help` command in the bot or create an issue in the project r
 ```
 
 > Логика кнопки "Получить IP-адреса" при отправке файла результатов сканирования удалена. Теперь для получения IP используйте команды выше. 
+
+# 🚀 Быстрый старт: установка и настройка Telegram-бота
+
+## 1. Клонирование репозитория
+```bash
+git clone <URL-репозитория>
+cd telegram_bot
+```
+
+## 2. Установка зависимостей
+Рекомендуется использовать виртуальное окружение:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+## 3. Настройка секретов и параметров
+Создайте файл `telegram_bot/data/secrets.json` со следующим содержимым:
+```json
+{
+  "TELEGRAM_BOT_TOKEN": "<ваш_токен_бота>",
+  "CHAT_ID": <ваш_chat_id>,
+  "admins": [<ваш_chat_id>],
+  "ROUTER_IPS": ["192.168.1.1"],
+  "ROUTER_PORTS": [8080, 8022],
+  "SCAN_RESULTS_TTL": 3600
+}
+```
+- `TELEGRAM_BOT_TOKEN` — токен вашего Telegram-бота (получить у @BotFather)
+- `CHAT_ID` — ваш Telegram user ID (можно узнать через @userinfobot)
+- `admins` — список ID админов
+
+## 4. Запуск бота
+```bash
+python3 telegram_bot/run_bot.py
+```
+
+## 5. Настройка пользователей
+- По умолчанию только админы могут изменять настройки.
+- Операторов можно добавить через меню настроек (раздел "Безопасность").
+- Операторы могут только просматривать статус и результаты.
+
+## 6. Основные команды
+- `/start` — главное меню
+- `/help` — справка
+- `/status` — статус бота
+- `/scanfiles` — список файлов результатов сканирования
+- `/scanips <файл>` — получить IP-адреса из файла
+- `/role` — узнать свою роль
+
+## 7. Настройка параметров
+- Все параметры (интервалы, IP, порты, язык и др.) можно изменить через меню настроек в Telegram.
+- Для изменения настроек требуется быть админом.
+
+---
+
+**Если возникли вопросы — используйте /help в боте или создайте issue в репозитории.** 
+
+# 🚀 Quick Start: Installation and Setup (English)
+
+## 1. Clone the repository
+```bash
+git clone <repository-URL>
+cd telegram_bot
+```
+
+## 2. Install dependencies
+It is recommended to use a virtual environment:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+## 3. Configure secrets and parameters
+Create the file `telegram_bot/data/secrets.json` with the following content:
+```json
+{
+  "TELEGRAM_BOT_TOKEN": "<your_bot_token>",
+  "CHAT_ID": <your_chat_id>,
+  "admins": [<your_chat_id>],
+  "ROUTER_IPS": ["192.168.1.1"],
+  "ROUTER_PORTS": [8080, 8022],
+  "SCAN_RESULTS_TTL": 3600
+}
+```
+- `TELEGRAM_BOT_TOKEN` — your Telegram bot token (get it from @BotFather)
+- `CHAT_ID` — your Telegram user ID (find it via @userinfobot)
+- `admins` — list of admin user IDs
+
+## 4. Run the bot
+```bash
+python3 telegram_bot/run_bot.py
+```
+
+## 5. User management
+- By default, only admins can change settings.
+- Operators can be added via the settings menu ("Security" section).
+- Operators can only view status and scan results.
+
+## 6. Main commands
+- `/start` — main menu
+- `/help` — help
+- `/status` — bot status
+- `/scanfiles` — list of scan result files
+- `/scanips <file>` — get IP addresses from a file
+- `/role` — show your role
+
+## 7. Settings
+- All parameters (intervals, IPs, ports, language, etc.) can be changed via the settings menu in Telegram.
+- You must be an admin to change settings.
+
+---
+
+**If you have any questions, use /help in the bot or create an issue in the repository.** 
