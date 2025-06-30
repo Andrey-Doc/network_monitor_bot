@@ -109,12 +109,12 @@ async def scan_miner(ip: str, port: int = 4028, timeout: float = 1.5) -> Optiona
         }
     except Exception as e:
         logging.debug(f"[SCAN_MINERS] {ip}: не майнер или не отвечает ({e})")
-        return None
+    return None
 
 async def scan_miners_from_list(ip_list: List[str]) -> List[Dict]:
     tasks = [scan_miner(ip) for ip in ip_list]
     results = await asyncio.gather(*tasks)
-    return [r for r in results if r]
+    return [r for r in results if r] 
 
 async def get_asic_status(ip, port=4028, timeout=3):
     try:
