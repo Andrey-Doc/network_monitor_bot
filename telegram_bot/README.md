@@ -28,7 +28,7 @@ Create the file `telegram_bot/data/secrets.json` with the following content:
   "CHAT_ID": <your_chat_id>,
   "admins": [<your_chat_id>],
   "ROUTER_IPS": ["192.168.1.1"],
-  "ROUTER_PORTS": [8080, 8022],
+  "ROUTER_PORTS": [80, 22],
   "SCAN_RESULTS_TTL": 3600
 }
 ```
@@ -317,7 +317,7 @@ python test_help_system.py
 python test_new_features.py
 ```
 
-## 📁 Project Structure
+## 📁 Project Structure a
 
 ```
 telegram_bot/
