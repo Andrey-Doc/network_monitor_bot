@@ -1134,7 +1134,7 @@ async def process_interface_language(message: Message, state: FSMContext):
         return
     user_id = str(message.from_user.id)
     settings_manager.set_setting(f'user_languages.{user_id}', lang)
-    await message.answer(translate(lang, 'interface_language_set', value=lang), reply_markup=interface_menu_keyboard(lang=lang, role=get_user_role(message)))
+    await message.answer(translate(lang, 'interface_language_set', value=lang), reply_markup=main_menu_keyboard(lang=lang, role=get_user_role(message)))
     await state.finish()
 
 @dp.message_handler(is_menu_button('interface_progress_btn'))
