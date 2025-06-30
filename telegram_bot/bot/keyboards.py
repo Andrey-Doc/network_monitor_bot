@@ -109,13 +109,15 @@ def scan_main_menu_keyboard(lang=None):
 # Главное меню настроек
 def settings_main_menu_keyboard(lang=None, role=None):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row(KeyboardButton(translate(lang, 'monitoring_menu_btn')), KeyboardButton(translate(lang, 'scan_menu_btn')))
-    kb.row(KeyboardButton(translate(lang, 'notification_menu_btn')), KeyboardButton(translate(lang, 'router_menu_btn')))
-    # Кнопка "Интерфейс" доступна операторам и админам
-    if role in ('admin', 'operator'):
+    if role == 'admin':
+        kb.row(KeyboardButton(translate(lang, 'monitoring_menu_btn')), KeyboardButton(translate(lang, 'scan_menu_btn')))
+        kb.row(KeyboardButton(translate(lang, 'notification_menu_btn')), KeyboardButton(translate(lang, 'router_menu_btn')))
         kb.row(KeyboardButton(translate(lang, 'interface_menu_btn')))
-    kb.row(KeyboardButton(translate(lang, 'security_menu_btn')), KeyboardButton(translate(lang, 'backup_menu_btn')))
-    kb.row(KeyboardButton(translate(lang, 'export_menu_btn')), KeyboardButton(translate(lang, 'help_menu_btn')))
+        kb.row(KeyboardButton(translate(lang, 'security_menu_btn')), KeyboardButton(translate(lang, 'backup_menu_btn')))
+        kb.row(KeyboardButton(translate(lang, 'export_menu_btn')), KeyboardButton(translate(lang, 'help_menu_btn')))
+    elif role == 'operator':
+        kb.row(KeyboardButton(translate(lang, 'interface_menu_btn')))
+        kb.row(KeyboardButton(translate(lang, 'help_menu_btn')))
     kb.add(KeyboardButton(translate(lang, 'back_to_main_btn')))
     return kb
 
