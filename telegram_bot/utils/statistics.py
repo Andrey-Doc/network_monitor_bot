@@ -127,7 +127,7 @@ class StatisticsManager:
         if total_routers == 0:
             uptime_percentage = 0
         else:
-            uptime_percentage = (routers_online / total_routers) * 100
+        uptime_percentage = (routers_online / total_routers) * 100
         self.stats['monitoring']['uptime_percentage'] = uptime_percentage
         
         self._record_daily_stat('router_checks', {
