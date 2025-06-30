@@ -8,8 +8,8 @@ def main_menu_keyboard(lang=None, role=None):
     kb.row(KeyboardButton(translate(lang, 'snmp_router_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'scan_main_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'asic_status_main_menu_btn')))
-    # Кнопка "Настройки" только для админов
-    if role == 'admin':
+    # Кнопка "Настройки" для операторов и админов
+    if role in ('admin', 'operator'):
         kb.row(KeyboardButton(translate(lang, 'settings_main_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'help_btn')))
     return kb
