@@ -146,7 +146,7 @@ class AsicSettingsState(StatesGroup):
 # --- Universal menu button filter ---
 def is_menu_button(key):
     def inner(m):
-        lang = settings_manager.get_setting('interface.language', 'ru')
+        lang = get_lang(m)
         return m.text == translate(lang, key)
     return inner
 
@@ -186,9 +186,10 @@ async def send_welcome(message: Message):
         return
     statistics_manager.record_command('start')
     role = get_user_role(message)
+    lang = get_lang(message)
     await message.answer(
-        translate(get_lang(), 'welcome'),
-        reply_markup=main_menu_keyboard(lang=get_lang(), role=role)
+        translate(lang, 'welcome'),
+        reply_markup=main_menu_keyboard(lang=lang, role=role)
     )
 
 @dp.message_handler(is_menu_button('status_main_menu_btn'))
@@ -224,9 +225,9 @@ async def handle_settings_main_menu_btn(message: Message, state: FSMContext):
     if not check_user_access(message):
         await send_access_denied(message)
         return
-    
     await state.finish()
-    await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_main_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'settings_menu_msg'), reply_markup=settings_main_menu_keyboard(lang=lang, role=get_user_role(message)))
 
 @dp.message_handler(is_menu_button('scan_network_main_menu_btn'))
 async def handle_scan_network_main_menu(message: Message, state: FSMContext):
@@ -307,7 +308,8 @@ async def handle_router_settings(message: Message):
 
 @dp.message_handler(is_menu_button('interface_settings_btn'))
 async def handle_interface_settings(message: Message):
-    await message.answer(translate(get_lang(), 'interface_menu_msg'), reply_markup=interface_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'interface_menu_msg'), reply_markup=interface_menu_keyboard(lang=lang, role=get_user_role(message)))
 
 @dp.message_handler(is_menu_button('security_settings_btn'))
 async def handle_security_settings(message: Message):
@@ -1121,8 +1123,8 @@ def validate_ip(ip):
 
 @dp.message_handler(is_menu_button('interface_language_btn'))
 async def handle_interface_language(message: Message):
-    current = settings_manager.get_setting('interface.language', 'ru')
-    await message.answer(translate(get_lang(), 'interface_language_prompt', value=current), reply_markup=cancel_keyboard(lang=get_lang()))
+    current = get_lang(message)
+    await message.answer(translate(current, 'interface_language_prompt', value=current), reply_markup=cancel_keyboard(lang=current))
     await InterfaceSettingsState.waiting_for_language.set()
 
 @dp.message_handler(state=InterfaceSettingsState.waiting_for_language)
