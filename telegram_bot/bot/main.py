@@ -216,8 +216,8 @@ async def handle_scan_main_menu(message: Message):
     if not check_user_access(message):
         await send_access_denied(message)
         return
-    
-    await message.answer(translate(get_lang(), 'scan_main_menu_msg'), reply_markup=scan_main_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'scan_main_menu_msg'), reply_markup=scan_main_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('settings_main_menu_btn'), state='*')
 async def handle_settings_main_menu_btn(message: Message, state: FSMContext):
@@ -286,25 +286,29 @@ async def handle_export_main_menu(message: Message):
     if not check_user_access(message):
         await send_access_denied(message)
         return
-    
-    await message.answer(translate(get_lang(), 'export_menu_msg'), reply_markup=export_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'export_menu_msg'), reply_markup=export_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('monitoring_settings_btn'))
 async def handle_monitoring_settings(message: Message):
-    await message.answer(translate(get_lang(), 'monitoring_menu_msg'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'monitoring_menu_msg'), reply_markup=monitoring_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('scan_settings_btn'))
 async def handle_scan_settings(message: Message):
+    lang = get_lang(message)
     await message.answer("SETTINGS HANDLER")
-    await message.answer(translate(get_lang(), 'scan_menu_msg'), reply_markup=scan_menu_keyboard(lang=get_lang()))
+    await message.answer(translate(lang, 'scan_menu_msg'), reply_markup=scan_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('notification_settings_btn'))
 async def handle_notification_settings(message: Message):
-    await message.answer(translate(get_lang(), 'notification_menu_msg'), reply_markup=notification_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'notification_menu_msg'), reply_markup=notification_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('router_settings_btn'))
 async def handle_router_settings(message: Message):
-    await message.answer(translate(get_lang(), 'router_menu_msg'), reply_markup=router_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'router_menu_msg'), reply_markup=router_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('interface_settings_btn'))
 async def handle_interface_settings(message: Message):
@@ -359,21 +363,19 @@ async def handle_status(message: Message):
     if not check_user_access(message):
         await send_access_denied(message)
         return
-    
     statistics_manager.record_command('status')
+    lang = get_lang(message)
     active_results = scan_manager.get_results_count()
     active_scans = scan_manager.get_active_count()
     total_routers = len(ROUTER_IPS)
-    monitor_status = "🟢 Активен" if background_monitor.is_running else "🔴 Остановлен"
-    status_text = f"""
-🤖 *Статус бота:*
-📊 Активных результатов сканирования: `{active_results}`
-🔄 Сканирований в процессе: `{active_scans}`
-🌐 Роутеров в мониторинге: `{total_routers}`
-📡 Мониторинг: {monitor_status}
-⏰ TTL результатов: `{scan_manager._ttl}` сек
-🟢 Бот работает: ✅
-    """
+    monitor_status = translate(lang, 'monitor_status_active') if background_monitor.is_running else translate(lang, 'monitor_status_inactive')
+    status_text = translate(lang, 'bot_status',
+        active_results=active_results,
+        active_scans=active_scans,
+        total_routers=total_routers,
+        monitor_status=monitor_status,
+        ttl=scan_manager._ttl
+    )
     await message.answer(status_text, parse_mode='Markdown')
 
 @dp.message_handler(commands=['stats'])
@@ -1767,6 +1769,7 @@ async def debug_reply(message: Message):
 
 @dp.message_handler(commands=['get_ips'])
 async def get_ips_from_scan_file(message: Message):
+    lang = get_lang(message)
     if message.reply_to_message and hasattr(message.reply_to_message, 'document') and message.reply_to_message.document:
         file = message.reply_to_message.document
         file_name = file.file_name
@@ -1790,16 +1793,16 @@ async def get_ips_from_scan_file(message: Message):
                     if ip:
                         ips.add(ip.strip())
             else:
-                await message.answer('Формат файла не поддерживается.', reply_markup=main_menu_keyboard(lang=get_lang()))
+                await message.answer(translate(lang, 'scan_file_format_error'), reply_markup=main_menu_keyboard(lang=lang))
                 return
             if ips:
-                await message.answer(','.join(sorted(ips)), reply_markup=main_menu_keyboard(lang=get_lang()))
+                await message.answer(','.join(sorted(ips)), reply_markup=main_menu_keyboard(lang=lang))
             else:
-                await message.answer('IP-адреса не найдены в файле.', reply_markup=main_menu_keyboard(lang=get_lang()))
+                await message.answer(translate(lang, 'scan_file_no_ips'), reply_markup=main_menu_keyboard(lang=lang))
         except Exception as e:
-            await message.answer(f'Ошибка при обработке файла: {e}', reply_markup=main_menu_keyboard(lang=get_lang()))
+            await message.answer(translate(lang, 'scan_file_read_error', e=e), reply_markup=main_menu_keyboard(lang=lang))
     else:
-        await message.answer('Сделайте /get_ips в reply на файл с результатами сканирования.', reply_markup=main_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(lang, 'get_ips_reply_hint'), reply_markup=main_menu_keyboard(lang=lang))
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('get_ips:'))
 async def handle_get_ips_callback(call: CallbackQuery):
