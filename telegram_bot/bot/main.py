@@ -226,7 +226,7 @@ async def handle_settings_main_menu_btn(message: Message, state: FSMContext):
         return
     
     await state.finish()
-    await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_main_menu_keyboard(lang=get_lang()))
+    await message.answer(translate(get_lang(), 'settings_menu_msg'), reply_markup=settings_main_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
 
 @dp.message_handler(is_menu_button('scan_network_main_menu_btn'))
 async def handle_scan_network_main_menu(message: Message, state: FSMContext):
@@ -307,7 +307,7 @@ async def handle_router_settings(message: Message):
 
 @dp.message_handler(is_menu_button('interface_settings_btn'))
 async def handle_interface_settings(message: Message):
-    await message.answer(translate(get_lang(), 'interface_menu_msg'), reply_markup=interface_menu_keyboard(lang=get_lang()))
+    await message.answer(translate(get_lang(), 'interface_menu_msg'), reply_markup=interface_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
 
 @dp.message_handler(is_menu_button('security_settings_btn'))
 async def handle_security_settings(message: Message):
@@ -1129,12 +1129,12 @@ async def handle_interface_language(message: Message):
 async def process_interface_language(message: Message, state: FSMContext):
     lang = message.text.strip().lower()
     if lang not in ['ru', 'en', 'de', 'nl', 'zh']:
-        await message.answer(translate(get_lang(message), 'input_error'), reply_markup=interface_menu_keyboard(lang=get_lang(message)))
+        await message.answer(translate(get_lang(message), 'input_error'), reply_markup=interface_menu_keyboard(lang=get_lang(message), role=get_user_role(message)))
         await state.finish()
         return
     user_id = str(message.from_user.id)
     settings_manager.set_setting(f'user_languages.{user_id}', lang)
-    await message.answer(translate(lang, 'interface_language_set', value=lang), reply_markup=interface_menu_keyboard(lang=lang))
+    await message.answer(translate(lang, 'interface_language_set', value=lang), reply_markup=interface_menu_keyboard(lang=lang, role=get_user_role(message)))
     await state.finish()
 
 @dp.message_handler(is_menu_button('interface_progress_btn'))
@@ -1152,14 +1152,14 @@ async def process_interface_progress(message: Message, state: FSMContext):
     elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
         new_value = False
     else:
-        await message.answer(translate(get_lang(), 'input_error'), reply_markup=interface_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'input_error'), reply_markup=interface_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
         await state.finish()
         return
     if settings_manager.set_setting('interface.show_progress', new_value):
         status = 'включён' if new_value else 'выключен'
-        await message.answer(translate(get_lang(), 'interface_progress_set', status=status), reply_markup=interface_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'interface_progress_set', status=status), reply_markup=interface_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
     else:
-        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=interface_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=interface_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
     await state.finish()
 
 @dp.message_handler(is_menu_button('interface_time_btn'))
@@ -1177,14 +1177,14 @@ async def process_interface_time(message: Message, state: FSMContext):
     elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
         new_value = False
     else:
-        await message.answer(translate(get_lang(), 'input_error'), reply_markup=interface_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'input_error'), reply_markup=interface_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
         await state.finish()
         return
     if settings_manager.set_setting('interface.show_time', new_value):
         status = 'включён' if new_value else 'выключен'
-        await message.answer(translate(get_lang(), 'interface_time_set', status=status), reply_markup=interface_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'interface_time_set', status=status), reply_markup=interface_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
     else:
-        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=interface_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=interface_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
     await state.finish()
 
 @dp.message_handler(is_menu_button('interface_compact_btn'))
@@ -1202,14 +1202,14 @@ async def process_interface_compact(message: Message, state: FSMContext):
     elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
         new_value = False
     else:
-        await message.answer(translate(get_lang(), 'input_error'), reply_markup=interface_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'input_error'), reply_markup=interface_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
         await state.finish()
         return
     if settings_manager.set_setting('interface.compact_mode', new_value):
         status = 'включён' if new_value else 'выключен'
-        await message.answer(translate(get_lang(), 'interface_compact_set', status=status), reply_markup=interface_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'interface_compact_set', status=status), reply_markup=interface_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
     else:
-        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=interface_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=interface_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
     await state.finish()
 
 @dp.message_handler(is_menu_button('security_users_btn'))
@@ -1371,20 +1371,20 @@ async def handle_settings_summary(message: Message):
         online_routers=online_routers,
         offline_routers=offline_routers
     )
-    await message.answer(summary, parse_mode='Markdown', reply_markup=settings_main_menu_keyboard(lang=get_lang()))
+    await message.answer(summary, parse_mode='Markdown', reply_markup=settings_main_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
 
 @dp.message_handler(is_menu_button('settings_reset'))
 async def handle_settings_reset(message: Message):
     ok = settings_manager.reset_to_defaults()
     if ok:
-        await message.answer(translate(get_lang(), 'settings_reset'), reply_markup=settings_main_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'settings_reset'), reply_markup=settings_main_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
     else:
-        await message.answer(translate(get_lang(), 'settings_reset_error'), reply_markup=settings_main_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(), 'settings_reset_error'), reply_markup=settings_main_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
 
 @dp.message_handler(is_menu_button('cancel'), state='*')
 async def cancel_any_state(message: Message, state: FSMContext):
     await state.finish()
-    await message.answer('Действие отменено.', reply_markup=settings_main_menu_keyboard(lang=get_lang()))
+    await message.answer('Действие отменено.', reply_markup=settings_main_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
 
 @dp.message_handler(is_menu_button('back_to_main_btn'), state='*')
 async def handle_back_to_main_any(message: Message, state: FSMContext):
@@ -1610,7 +1610,7 @@ async def handle_back_to_settings(message: Message, state: FSMContext):
     await state.finish()
     await message.answer(
         translate(get_lang(), 'settings_menu_msg'),
-        reply_markup=settings_main_menu_keyboard(lang=get_lang())
+        reply_markup=settings_main_menu_keyboard(lang=get_lang(), role=get_user_role(message))
     )
 
 @dp.message_handler(is_menu_button('asic_ips_btn'))

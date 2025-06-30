@@ -52,10 +52,14 @@ def router_menu_keyboard(lang=None):
     kb.add(KeyboardButton(translate(lang, 'settings_main_menu_btn')))
     return kb
 
-def interface_menu_keyboard(lang=None):
+def interface_menu_keyboard(lang=None, role=None):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row(KeyboardButton(translate(lang, 'interface_language_btn')), KeyboardButton(translate(lang, 'interface_progress_btn')))
-    kb.row(KeyboardButton(translate(lang, 'interface_time_btn')), KeyboardButton(translate(lang, 'interface_compact_btn')))
+    # Кнопка "Язык интерфейса" доступна всем, остальные — только админам
+    kb.row(KeyboardButton(translate(lang, 'interface_language_btn')))
+    if role == 'admin':
+        kb.row(KeyboardButton(translate(lang, 'interface_progress_btn')),
+               KeyboardButton(translate(lang, 'interface_time_btn')))
+        kb.row(KeyboardButton(translate(lang, 'interface_compact_btn')))
     kb.add(KeyboardButton(translate(lang, 'settings_main_menu_btn')))
     return kb
 
@@ -103,11 +107,13 @@ def scan_main_menu_keyboard(lang=None):
     return kb
 
 # Главное меню настроек
-def settings_main_menu_keyboard(lang=None):
+def settings_main_menu_keyboard(lang=None, role=None):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     kb.row(KeyboardButton(translate(lang, 'monitoring_menu_btn')), KeyboardButton(translate(lang, 'scan_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'notification_menu_btn')), KeyboardButton(translate(lang, 'router_menu_btn')))
-    kb.row(KeyboardButton(translate(lang, 'asic_ips_btn')), KeyboardButton(translate(lang, 'interface_menu_btn')))
+    # Кнопка "Интерфейс" доступна операторам и админам
+    if role in ('admin', 'operator'):
+        kb.row(KeyboardButton(translate(lang, 'interface_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'security_menu_btn')), KeyboardButton(translate(lang, 'backup_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'export_menu_btn')), KeyboardButton(translate(lang, 'help_menu_btn')))
     kb.add(KeyboardButton(translate(lang, 'back_to_main_btn')))
