@@ -68,8 +68,11 @@ SCAN_RESULTS_TTL = settings_manager.get_setting('scanning.results_ttl') or SCAN_
 # DEFAULT_TIMEOUT: сначала из настроек, потом дефолт
 DEFAULT_TIMEOUT = settings_manager.get_setting('scanning.default_timeout') or 5
 
-def get_lang():
-    return settings_manager.get_setting('interface.language', 'ru')
+def get_lang(message=None):
+    if message is not None:
+        user_id = str(message.from_user.id)
+        return settings_manager.get_setting(f'user_languages.{user_id}', 'en')
+    return settings_manager.get_setting('interface.language', 'en')
 
 def cleanup_old_results():
     """Очищает старые результаты сканирования"""
@@ -1125,14 +1128,13 @@ async def handle_interface_language(message: Message):
 @dp.message_handler(state=InterfaceSettingsState.waiting_for_language)
 async def process_interface_language(message: Message, state: FSMContext):
     lang = message.text.strip().lower()
-    if lang not in ['ru', 'en']:
-        await message.answer(translate(get_lang(), 'interface_language_error'), reply_markup=interface_menu_keyboard(lang=get_lang()))
+    if lang not in ['ru', 'en', 'de', 'nl', 'zh']:
+        await message.answer(translate(get_lang(message), 'input_error'), reply_markup=interface_menu_keyboard(lang=get_lang(message)))
         await state.finish()
         return
-    if settings_manager.set_setting('interface.language', lang):
-        await message.answer(translate(get_lang(), 'interface_language_set', value=lang), reply_markup=interface_menu_keyboard(lang=get_lang()))
-    else:
-        await message.answer(translate(get_lang(), 'interface_language_save_error'), reply_markup=interface_menu_keyboard(lang=get_lang()))
+    user_id = str(message.from_user.id)
+    settings_manager.set_setting(f'user_languages.{user_id}', lang)
+    await message.answer(translate(lang, 'interface_language_set', value=lang), reply_markup=interface_menu_keyboard(lang=lang))
     await state.finish()
 
 @dp.message_handler(is_menu_button('interface_progress_btn'))
