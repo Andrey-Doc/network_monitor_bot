@@ -103,7 +103,8 @@ class BackgroundMonitor:
         message = translate(lang, 'router_status_change_title') + "\n\n"
         for change in changes:
             emoji = "🟢" if change['new_status'] == 'online' else "🔴"
-            message += translate(lang, 'router_status_change_line', emoji=emoji, ip=change['ip'], old_status=change['old_status'], new_status=change['new_status']) + "\n"
+            old_status = change['old_status'] if change['old_status'] is not None else 'unknown'
+            message += translate(lang, 'router_status_change_line', emoji=emoji, ip=change['ip'], old_status=old_status, new_status=change['new_status']) + "\n"
             if change['new_status'] == 'online' and change['open_ports']:
                 message += translate(lang, 'router_status_change_ports', ports=', '.join(map(str, change['open_ports']))) + "\n"
             message += "\n"
