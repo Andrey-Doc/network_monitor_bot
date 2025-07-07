@@ -1399,11 +1399,14 @@ async def send_devices_file(message: Message, state: FSMContext):
         return
     msg_id = message.reply_to_message.message_id
     file_path = scan_manager.get_result_file(msg_id, ext='csv')
+    lang = get_lang(message)
     if file_path and os.path.exists(file_path):
+        kb = InlineKeyboardMarkup()
+        kb.add(InlineKeyboardButton(text=translate(lang, 'get_ip_list_btn'), callback_data=f'get_ips_file:{file_path}'))
         with open(file_path, 'rb') as f:
-            await message.answer_document(f, caption=translate(get_lang(message), 'scan_file_sent'))
+            await message.answer_document(f, caption=translate(lang, 'scan_file_sent'), reply_markup=kb)
     else:
-        await message.answer(translate(get_lang(message), 'scan_file_not_found'))
+        await message.answer(translate(lang, 'scan_file_not_found'))
     await state.finish()
 
 @dp.message_handler(lambda m: m.text.lower() == 'файл', state=ScanMinersState.waiting_for_file_request)
@@ -1416,8 +1419,10 @@ async def send_miners_file(message: Message, state: FSMContext):
     file_path = scan_manager.get_result_file(msg_id, ext='csv')
     lang = get_lang(message)
     if file_path and os.path.exists(file_path):
+        kb = InlineKeyboardMarkup()
+        kb.add(InlineKeyboardButton(text=translate(lang, 'get_ip_list_btn'), callback_data=f'get_ips_file:{file_path}'))
         with open(file_path, 'rb') as f:
-            await message.answer_document(f, caption=translate(lang, 'scan_file_sent'))
+            await message.answer_document(f, caption=translate(lang, 'scan_file_sent'), reply_markup=kb)
     else:
         await message.answer(translate(lang, 'scan_file_not_found'))
     await state.finish()
@@ -1432,8 +1437,10 @@ async def send_fastscan_file(message: Message, state: FSMContext):
     file_path = scan_manager.get_result_file(msg_id, ext='csv')
     lang = get_lang(message)
     if file_path and os.path.exists(file_path):
+        kb = InlineKeyboardMarkup()
+        kb.add(InlineKeyboardButton(text=translate(lang, 'get_ip_list_btn'), callback_data=f'get_ips_file:{file_path}'))
         with open(file_path, 'rb') as f:
-            await message.answer_document(f, caption=translate(lang, 'scan_file_sent'))
+            await message.answer_document(f, caption=translate(lang, 'scan_file_sent'), reply_markup=kb)
     else:
         await message.answer(translate(lang, 'scan_file_not_found'))
     await state.finish()
