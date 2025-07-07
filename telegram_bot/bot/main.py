@@ -59,7 +59,7 @@ scan_manager = ScanManager(ttl=settings_manager.get_setting('scanning.results_tt
 
 # Инициализация новых модулей
 background_monitor = BackgroundMonitor(bot, CHAT_ID)
-notification_manager = NotificationManager(bot)
+notification_manager = NotificationManager(bot, CHAT_ID)
 statistics_manager = StatisticsManager(UPLOAD_DIR)
 help_system = HelpSystem()
 
