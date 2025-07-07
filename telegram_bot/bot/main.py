@@ -487,7 +487,9 @@ async def process_timeout_input(message: Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text == 'Статус роутеров')
 async def handle_router_status(message: Message):
     statistics_manager.record_command('status_routers')
-    await message.answer(translate(get_lang(), 'checking_routers'))
+    lang = get_lang(message)
+    role = get_user_role(message)
+    await message.answer(translate(lang, 'checking_routers'))
     ips = settings_manager.get_setting('routers.ips', [])
     ports = settings_manager.get_setting('routers.ports', [8080, 80, 22])
     results = await check_routers_status(ips, ports)
@@ -500,7 +502,7 @@ async def handle_router_status(message: Message):
         if r['open_ports']:
             text += f"   📡 Порт(ы): {', '.join(map(str, r['open_ports']))}\n"
         text += "\n"
-    await message.answer(text, parse_mode='Markdown', reply_markup=main_menu_keyboard(lang=get_lang()))
+    await message.answer(text, parse_mode='Markdown', reply_markup=main_menu_keyboard(lang=lang, role=role))
 
 @dp.message_handler(lambda m: m.text == 'Сканировать сеть')
 async def handle_scan_network(message: Message):
