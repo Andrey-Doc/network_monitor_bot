@@ -292,7 +292,8 @@ async def handle_export_main_menu(message: Message):
 
 @dp.message_handler(is_menu_button('monitoring_settings_btn'))
 async def handle_monitoring_settings(message: Message):
-    await message.answer(translate(get_lang(), 'monitoring_menu_msg'), reply_markup=monitoring_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'monitoring_menu_msg'), reply_markup=monitoring_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('scan_settings_btn'))
 async def handle_scan_settings(message: Message):
@@ -312,7 +313,8 @@ async def handle_router_settings(message: Message):
 @dp.message_handler(is_menu_button('interface_settings_btn'))
 async def handle_interface_settings(message: Message):
     lang = get_lang(message)
-    await message.answer(translate(lang, 'interface_menu_msg'), reply_markup=interface_menu_keyboard(lang=lang, role=get_user_role(message)))
+    role = get_user_role(message)
+    await message.answer(translate(lang, 'interface_menu_msg'), reply_markup=interface_menu_keyboard(lang=lang, role=role))
 
 @dp.message_handler(is_menu_button('security_settings_btn'))
 async def handle_security_settings(message: Message):
@@ -1369,7 +1371,6 @@ async def handle_export_logs_btn(message: Message):
 
 @dp.message_handler(is_menu_button('settings_summary'))
 async def handle_settings_summary(message: Message):
-    # Получаем статус роутеров
     router_status = await background_monitor.get_current_status()
     online_routers = sum(1 for s in router_status.values() if s == 'online')
     offline_routers = sum(1 for s in router_status.values() if s != 'online')
@@ -1380,7 +1381,9 @@ async def handle_settings_summary(message: Message):
         online_routers=online_routers,
         offline_routers=offline_routers
     )
-    await message.answer(summary, parse_mode='Markdown', reply_markup=settings_main_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
+    lang = get_lang(message)
+    role = get_user_role(message)
+    await message.answer(summary, parse_mode='Markdown', reply_markup=settings_main_menu_keyboard(lang=lang, role=role))
 
 @dp.message_handler(is_menu_button('settings_reset'))
 async def handle_settings_reset(message: Message):
