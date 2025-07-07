@@ -33,6 +33,7 @@ from telegram_bot.utils.snmp_utils import async_get_snmp_full_info, async_get_sn
 import io
 import re
 import csv
+import glob
 
 logging.basicConfig(level=logging.INFO)
 
@@ -678,7 +679,8 @@ async def process_miners_network_input(message: Message, state: FSMContext):
             scan_manager.finish_scan()
             await state.finish()
             return
-        text = "Найдено майнеров: {}\n".format(len(miners))
+        text = f"Сканирование сети: {network}\n"
+        text += "Найдено майнеров: {}\n".format(len(miners))
         for m in miners:
             text += f"{m['ip']}: miner (hashrate: {m.get('hashrate')}, uptime: {m.get('uptime')})\n"
         text += "\nЕсли хотите получить файл с результатами, напишите 'файл' в ответ или reply на это сообщение."
@@ -756,7 +758,8 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
             scan_manager.finish_scan()
             await state.finish()
             return
-        text = f"Найдено устройств: {len(devices)}\n"
+        text = f"Сканирование сети: {network}\n"
+        text += "Найдено устройств: {}\n".format(len(devices))
         for d in devices:
             if d.get('type') == 'miner':
                 text += f"{d['ip']}: miner (hashrate: {d.get('hashrate')}, uptime: {d.get('uptime')})\n"
@@ -1572,33 +1575,35 @@ async def resend_scan_result_file(message: Message):
     else:
         text = message.reply_to_message.text or ''
         logging.info(f"[REPLY] Результат не найден в памяти. Пробую извлечь из текста: {text}")
-        m = re.search(r'Найдено устройств: \d+\n?([\d\.]+/\d+)?', text)
-        if m:
-            scan_type = 'scan'
+        # Ищем строку с сетью
+        net_match = re.search(r'Сканирование сети: ([\d\.]+/\d+)', text)
+        if net_match:
+            network = net_match.group(1)
+        if not network:
             net_match = re.search(r'(\d+\.\d+\.\d+\.\d+/\d+)', text)
             if net_match:
                 network = net_match.group(1)
-        if not scan_type:
-            if 'Найдено майнеров' in text:
-                scan_type = 'miners'
-                net_match = re.search(r'(\d+\.\d+\.\d+\.\d+/\d+)', text)
-                if net_match:
-                    network = net_match.group(1)
-        if not scan_type:
-            if 'Быстрое сканирование' in text or 'fast scan' in text.lower():
-                scan_type = 'fast_scan'
-                net_match = re.search(r'(\d+\.\d+\.\d+\.\d+/\d+)', text)
-                if net_match:
-                    network = net_match.group(1)
+        if 'Найдено майнеров' in text:
+            scan_type = 'miners'
+        elif 'Найдено устройств' in text:
+            scan_type = 'scan'
+        elif 'Быстрое сканирование' in text or 'fast scan' in text.lower():
+            scan_type = 'fast_scan'
         logging.info(f"[REPLY] Извлечено из текста: network={network}, scan_type={scan_type}")
-    if not network or not scan_type:
-        await message.answer(translate(lang, 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=lang))
-        return
-    file_path = scan_manager.get_scan_result_file(scan_type, network, ext='csv')
-    if not file_path:
-        file_path = scan_manager.get_scan_result_file(scan_type, network, ext='json')
-    logging.info(f"[REPLY] Ищу файл: {file_path}")
-    if file_path:
+    file_path = None
+    if network and scan_type:
+        file_path = scan_manager.get_scan_result_file(scan_type, network, ext='csv')
+        if not file_path:
+            file_path = scan_manager.get_scan_result_file(scan_type, network, ext='json')
+    # Резервный поиск, если не удалось найти файл
+    if not file_path and scan_type == 'miners':
+        import glob
+        scan_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data/scan_results'))
+        files = glob.glob(os.path.join(scan_dir, 'miners_*.csv'))
+        if files:
+            file_path = max(files, key=os.path.getctime)
+            await message.answer(translate(lang, 'scan_file_not_found_try_last'), reply_markup=main_menu_keyboard(lang=lang))
+    if file_path and os.path.exists(file_path):
         await message.answer_document(open(file_path, 'rb'), caption=translate(lang, 'scan_file_sent'), reply_markup=main_menu_keyboard(lang=lang))
     else:
         await message.answer(translate(lang, 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=lang))
