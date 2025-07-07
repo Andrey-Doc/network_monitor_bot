@@ -6,7 +6,8 @@ from .keyboards import (
     scan_menu_keyboard, notification_menu_keyboard, router_menu_keyboard,
     interface_menu_keyboard, security_menu_keyboard, backup_menu_keyboard,
     export_menu_keyboard, help_menu_keyboard, cancel_keyboard,
-    scan_main_menu_keyboard, scan_cancel_or_main_keyboard
+    scan_main_menu_keyboard, scan_cancel_or_main_keyboard,
+    asic_ips_cancel_keyboard
 )
 from ..utils.router_monitor import check_routers_status
 from ..utils.miner_scan import scan_network_for_miners, scan_miners_from_list, get_asic_status
@@ -1794,6 +1795,50 @@ async def handle_asic_status_main_menu(message: Message):
             text = f"{ip}: ошибка — {e}"
         results.append(text)
     await message.answer('\n'.join(results), reply_markup=main_menu_keyboard(lang=lang, role=role))
+
+@dp.message_handler(is_menu_button('asic_ips_btn'))
+async def handle_asic_ips_btn(message: Message, state: FSMContext):
+    if get_user_role(message) != 'admin':
+        await send_access_denied(message)
+        return
+    lang = get_lang(message)
+    asic_ips = settings_manager.get_setting('miners.ips', [])
+    value = ', '.join(asic_ips) if asic_ips else '-'
+    await message.answer(
+        translate(lang, 'asic_ips_prompt', value=value),
+        reply_markup=asic_ips_cancel_keyboard(lang=lang)
+    )
+    await AsicSettingsState.waiting_for_ips.set()
+
+@dp.message_handler(lambda m: m.text == translate(get_lang(m), 'cancel_btn'), state=AsicSettingsState.waiting_for_ips)
+async def cancel_asic_ips_input(message: Message, state: FSMContext):
+    lang = get_lang(message)
+    role = get_user_role(message)
+    await state.finish()
+    await message.answer(translate(lang, 'settings_menu_msg'), reply_markup=settings_main_menu_keyboard(lang=lang, role=role))
+
+@dp.message_handler(state=AsicSettingsState.waiting_for_ips)
+async def process_asic_ips_input(message: Message, state: FSMContext):
+    if get_user_role(message) != 'admin':
+        await send_access_denied(message)
+        await state.finish()
+        return
+    lang = get_lang(message)
+    text = message.text.strip()
+    # Разделяем по запятой, убираем пробелы
+    ip_list = [ip.strip() for ip in text.split(',') if ip.strip()]
+    # Проверяем корректность IP
+    import ipaddress
+    try:
+        for ip in ip_list:
+            ipaddress.IPv4Address(ip)
+    except Exception:
+        await message.answer(translate(lang, 'asic_ips_error'), reply_markup=settings_main_menu_keyboard(lang=lang, role=get_user_role(message)))
+        await state.finish()
+        return
+    settings_manager.set_setting('miners.ips', ip_list)
+    await message.answer(translate(lang, 'asic_ips_set', value=', '.join(ip_list)), reply_markup=settings_main_menu_keyboard(lang=lang, role=get_user_role(message)))
+    await state.finish()
 
 if __name__ == '__main__':
     executor.start_polling(
