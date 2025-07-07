@@ -1761,6 +1761,40 @@ async def handle_scanips_callback(call: CallbackQuery):
         await call.message.answer(translate(get_lang(call.message), 'scan_file_read_error', e=e))
     await call.answer()
 
+@dp.message_handler(commands=['role'])
+async def handle_role_command(message: Message):
+    lang = get_lang(message)
+    role = get_user_role(message)
+    if role == 'admin':
+        text = translate(lang, 'role_admin')
+    elif role == 'operator':
+        text = translate(lang, 'role_operator')
+    else:
+        text = translate(lang, 'role_none')
+    await message.answer(text, reply_markup=main_menu_keyboard(lang=lang, role=role))
+
+@dp.message_handler(is_menu_button('asic_status_main_menu_btn'))
+async def handle_asic_status_main_menu(message: Message):
+    lang = get_lang(message)
+    role = get_user_role(message)
+    asic_ips = settings_manager.get_setting('miners.ips', [])
+    if not asic_ips:
+        await message.answer(translate(lang, 'asic_list_empty'), reply_markup=main_menu_keyboard(lang=lang, role=role))
+        return
+    await message.answer(translate(lang, 'checking_routers'), reply_markup=main_menu_keyboard(lang=lang, role=role))
+    results = []
+    for ip in asic_ips:
+        try:
+            status = await get_asic_status(ip)
+            if status:
+                text = f"{ip}: {status.get('STATUS', [{}])[0].get('Msg', '-')}, hashrate: {status.get('SUMMARY', [{}])[0].get('GHS 5s', '-')} GH/s"
+            else:
+                text = f"{ip}: нет ответа"
+        except Exception as e:
+            text = f"{ip}: ошибка — {e}"
+        results.append(text)
+    await message.answer('\n'.join(results), reply_markup=main_menu_keyboard(lang=lang, role=role))
+
 if __name__ == '__main__':
     executor.start_polling(
         dp, 
