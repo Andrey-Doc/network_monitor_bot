@@ -566,7 +566,9 @@ async def process_devices_network_input(message: Message, state: FSMContext):
         if len(text) > 4000:
             file_path = scan_manager.get_scan_result_file('scan', network, ext='csv')
             if file_path:
-                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(message), 'scan_file_sent'))
+                kb = InlineKeyboardMarkup()
+                kb.add(InlineKeyboardButton(text=translate(get_lang(message), 'get_ip_list_btn'), callback_data=f'get_ips_file:{file_path}'))
+                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(message), 'scan_file_sent'), reply_markup=kb)
             else:
                 await message.answer(translate(get_lang(message), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
         else:
@@ -684,7 +686,9 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         if len(text) > 4000:
             file_path = scan_manager.get_scan_result_file('miners', network, ext='csv')
             if file_path:
-                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(message), 'scan_file_sent'))
+                kb = InlineKeyboardMarkup()
+                kb.add(InlineKeyboardButton(text=translate(get_lang(message), 'get_ip_list_btn'), callback_data=f'get_ips_file:{file_path}'))
+                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(message), 'scan_file_sent'), reply_markup=kb)
             else:
                 await message.answer(translate(get_lang(message), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
         else:
@@ -763,7 +767,9 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
         if len(text) > 4000:
             file_path = scan_manager.get_scan_result_file('fast_scan', network, ext='csv')
             if file_path:
-                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(message), 'scan_file_sent'))
+                kb = InlineKeyboardMarkup()
+                kb.add(InlineKeyboardButton(text=translate(get_lang(message), 'get_ip_list_btn'), callback_data=f'get_ips_file:{file_path}'))
+                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(message), 'scan_file_sent'), reply_markup=kb)
             else:
                 await message.answer(translate(get_lang(message), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
         else:
@@ -1839,6 +1845,45 @@ async def process_asic_ips_input(message: Message, state: FSMContext):
     settings_manager.set_setting('miners.ips', ip_list)
     await message.answer(translate(lang, 'asic_ips_set', value=', '.join(ip_list)), reply_markup=settings_main_menu_keyboard(lang=lang, role=get_user_role(message)))
     await state.finish()
+
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('get_ips_file:'))
+async def handle_get_ips_file_callback(call: CallbackQuery):
+    lang = get_lang(call.message)
+    file_path = call.data.split(':', 1)[1]
+    if not os.path.exists(file_path):
+        await call.message.answer(translate(lang, 'file_not_found'))
+        await call.answer()
+        return
+    ips = set()
+    try:
+        if file_path.endswith('.csv'):
+            import csv
+            with open(file_path, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    ip = row.get('ip') or row.get('IP')
+                    if ip:
+                        ips.add(ip.strip())
+        elif file_path.endswith('.json'):
+            import json
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                items = data.get('devices') or data.get('miners') or []
+                for d in items:
+                    ip = d.get('ip') or d.get('IP')
+                    if ip:
+                        ips.add(ip.strip())
+        else:
+            await call.message.answer(translate(lang, 'file_format_error'))
+            await call.answer()
+            return
+        if ips:
+            await call.message.answer(','.join(sorted(ips)))
+        else:
+            await call.message.answer(translate(lang, 'no_ips_found'))
+    except Exception as e:
+        await call.message.answer(translate(lang, 'file_processing_error', e=e))
+    await call.answer()
 
 if __name__ == '__main__':
     executor.start_polling(
