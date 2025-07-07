@@ -171,12 +171,12 @@ def check_operator_or_admin(message: Message) -> bool:
 async def send_access_denied(message: Message):
     """Отправляет сообщение об отказе в доступе"""
     await message.answer(
-        translate(get_lang(), 'access_denied'),
+        translate(get_lang(message), 'access_denied'),
         reply_markup=ReplyKeyboardRemove()
     )
 
 async def send_admin_only(message: Message):
-    await message.answer(translate(get_lang(), 'admin_only'), reply_markup=ReplyKeyboardRemove())
+    await message.answer(translate(get_lang(message), 'admin_only'), reply_markup=ReplyKeyboardRemove())
 
 @dp.message_handler(commands=['start', 'menu'])
 async def send_welcome(message: Message):
@@ -258,8 +258,8 @@ async def handle_fast_scan_main_menu(message: Message, state: FSMContext):
         await send_access_denied(message)
         return
     await message.answer(
-        translate(get_lang(), 'fast_scan_prompt'),
-        reply_markup=scan_cancel_or_main_keyboard(lang=get_lang())
+        translate(get_lang(message), 'fast_scan_prompt'),
+        reply_markup=scan_cancel_or_main_keyboard(lang=get_lang(message))
     )
     await FastScanState.waiting_for_network.set()
 
@@ -352,7 +352,7 @@ async def handle_help_command(message: Message):
     await message.answer(
         help_text,
         parse_mode='Markdown',
-        reply_markup=help_menu_keyboard(lang=get_lang())
+        reply_markup=help_menu_keyboard(lang=get_lang(message))
     )
 
 @dp.message_handler(commands=['status'])
@@ -404,7 +404,7 @@ async def handle_monitor_start(message: Message):
         title="Мониторинг запущен",
         message="Фоновый мониторинг роутеров успешно запущен"
     )
-    await message.answer(translate(get_lang(), 'monitor_start_success'))
+    await message.answer(translate(get_lang(message), 'monitor_start_success'))
 
 @dp.message_handler(commands=['monitor_stop'])
 async def handle_monitor_stop(message: Message):
@@ -421,7 +421,7 @@ async def handle_monitor_stop(message: Message):
         title="Мониторинг остановлен",
         message="Фоновый мониторинг роутеров остановлен"
     )
-    await message.answer(translate(get_lang(), 'monitor_stop_success'))
+    await message.answer(translate(get_lang(message), 'monitor_stop_success'))
 
 async def send_notify_to_owner(text: str):
     await bot.send_message(CHAT_ID, text)
@@ -476,14 +476,14 @@ async def process_timeout_input(message: Message, state: FSMContext):
     try:
         timeout = int(message.text.strip())
         if timeout < 1 or timeout > 60:
-            await message.answer(translate(get_lang(), 'timeout_error'))
+            await message.answer(translate(get_lang(message), 'timeout_error'))
             return
         if settings_manager.set_setting('scanning.default_timeout', timeout):
-            await message.answer(translate(get_lang(), 'timeout_set', timeout=timeout))
+            await message.answer(translate(get_lang(message), 'timeout_set', timeout=timeout))
         else:
-            await message.answer(translate(get_lang(), 'timeout_save_error'))
+            await message.answer(translate(get_lang(message), 'timeout_save_error'))
     except Exception:
-        await message.answer(translate(get_lang(), 'timeout_input_error'))
+        await message.answer(translate(get_lang(message), 'timeout_input_error'))
     await state.finish()
 
 @dp.message_handler(lambda m: m.text == 'Статус роутеров')
@@ -509,7 +509,7 @@ async def handle_router_status(message: Message):
 @dp.message_handler(lambda m: m.text == 'Сканировать сеть')
 async def handle_scan_network(message: Message):
     statistics_manager.record_command('scan_network')
-    await message.answer(translate(get_lang(), 'scan_network_prompt'), reply_markup=scan_menu_keyboard(lang=get_lang()))
+    await message.answer(translate(get_lang(message), 'scan_network_prompt'), reply_markup=scan_menu_keyboard(lang=get_lang(message)))
     await ScanDevicesState.waiting_for_network.set()
 
 @dp.message_handler(state=ScanDevicesState.waiting_for_network)
@@ -524,16 +524,16 @@ async def process_devices_network_input(message: Message, state: FSMContext):
         net = ipaddress.IPv4Network(network, strict=False)
     except Exception as e:
         logging.error(f"[SCAN_NETWORK] Некорректная сеть: {network}, ошибка: {e}")
-        await message.answer(translate(get_lang(), 'network_format_error'), reply_markup=main_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(message), 'network_format_error'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
         scan_manager.finish_scan()
         await state.finish()
         return
-    progress_msg = await message.answer(translate(get_lang(), 'scanning_network', network=network))
+    progress_msg = await message.answer(translate(get_lang(message), 'scanning_network', network=network))
     async def on_progress(done, total):
         percent = int(done / total * 100)
         bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
         await bot.edit_message_text(
-            translate(get_lang(), 'scanning_progress', bar=bar, percent=percent, done=done, total=total),
+            translate(get_lang(message), 'scanning_progress', bar=bar, percent=percent, done=done, total=total),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
@@ -543,14 +543,14 @@ async def process_devices_network_input(message: Message, state: FSMContext):
         duration = time.time() - start_time
         logging.info(f"[SCAN_NETWORK] Завершено scan_network_devices для {network}, найдено устройств: {len(devices)} за {duration:.1f}с")
         await bot.edit_message_text(
-            translate(get_lang(), 'scan_completed', count=len(devices)),
+            translate(get_lang(message), 'scan_completed', count=len(devices)),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
         statistics_manager.record_scan('network', len(devices), net.num_addresses, duration)
         await notification_manager.scan_completed('сети', len(devices), duration)
         if not devices:
-            await message.answer(translate(get_lang(), 'no_devices_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
+            await message.answer(translate(get_lang(message), 'no_devices_found'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
             scan_manager.finish_scan()
             await state.finish()
             return
@@ -565,11 +565,11 @@ async def process_devices_network_input(message: Message, state: FSMContext):
         if len(text) > 4000:
             file_path = scan_manager.get_scan_result_file('scan', network, ext='csv')
             if file_path:
-                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'))
+                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(message), 'scan_file_sent'))
             else:
-                await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
+                await message.answer(translate(get_lang(message), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
         else:
-            result_msg = await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang()))
+            result_msg = await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang(message)))
             scan_manager.add_result(result_msg.message_id, {
                 'devices': devices,
                 'type': 'devices',
@@ -582,51 +582,51 @@ async def process_devices_network_input(message: Message, state: FSMContext):
     except Exception as e:
         logging.exception(f"[SCAN_NETWORK] Ошибка при сканировании {network}: {e}")
         await bot.edit_message_text(
-            translate(get_lang(), 'scan_error', e=e),
+            translate(get_lang(message), 'scan_error', e=e),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
-        await message.answer(f"[SCAN_NETWORK] Произошла ошибка: {e}", reply_markup=main_menu_keyboard(lang=get_lang()))
+        await message.answer(f"[SCAN_NETWORK] Произошла ошибка: {e}", reply_markup=main_menu_keyboard(lang=get_lang(message)))
         scan_manager.finish_scan()
         await state.finish()
 
 @dp.message_handler(lambda m: m.text == 'Загрузить файл для сканирования')
 async def handle_upload_file(message: Message):
     statistics_manager.record_command('upload_file')
-    await message.answer(translate(get_lang(), 'upload_file_prompt'), reply_markup=main_menu_keyboard(lang=get_lang()))
+    await message.answer(translate(get_lang(message), 'upload_file_prompt'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
 
 @dp.message_handler(content_types=ContentType.DOCUMENT)
 async def process_csv_file(message: Message):
     file = message.document
     if not file.file_name.lower().endswith('.csv'):
-        await message.answer(translate(get_lang(), 'csv_format_error'), reply_markup=main_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(message), 'csv_format_error'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
         return
     file_path = os.path.join(BASE_DIR, file.file_name)
     await message.document.download(destination_file=file_path)
     try:
         df = pd.read_csv(file_path)
         if 'ip' not in df.columns:
-            await message.answer(translate(get_lang(), 'ip_column_error'), reply_markup=main_menu_keyboard(lang=get_lang()))
+            await message.answer(translate(get_lang(message), 'ip_column_error'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
             return
         ip_list = df['ip'].dropna().astype(str).tolist()
         await message.answer(
-            translate(get_lang(), 'scanning_ips', count=len(ip_list)),
-            reply_markup=main_menu_keyboard(lang=get_lang())
+            translate(get_lang(message), 'scanning_ips', count=len(ip_list)),
+            reply_markup=main_menu_keyboard(lang=get_lang(message))
         )
         start_time = time.time()
         miners = await scan_miners_from_list(ip_list)
         duration = time.time() - start_time
         statistics_manager.record_scan('file_upload', len(miners), len(ip_list), duration)
         if not miners:
-            await message.answer(translate(get_lang(), 'no_miners_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
+            await message.answer(translate(get_lang(message), 'no_miners_found'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
         else:
             text = "Результаты сканирования:\n"
             for m in miners:
                 text += f"{m['ip']}: status={m['status']}, hashrate={m['hashrate']}, uptime={m['uptime']}\n"
-            await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang()))
+            await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang(message)))
     except Exception as e:
         statistics_manager.record_error('file_processing', str(e))
-        await message.answer(translate(get_lang(), 'file_processing_error', e=e), reply_markup=main_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(message), 'file_processing_error', e=e), reply_markup=main_menu_keyboard(lang=get_lang(message)))
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -634,7 +634,7 @@ async def process_csv_file(message: Message):
 @dp.message_handler(lambda m: m.text == 'Сканировать майнеры')
 async def handle_scan_miners(message: Message):
     statistics_manager.record_command('scan_miners')
-    await message.answer(translate(get_lang(), 'scan_miners_prompt'), reply_markup=scan_menu_keyboard(lang=get_lang()))
+    await message.answer(translate(get_lang(message), 'scan_miners_prompt'), reply_markup=scan_menu_keyboard(lang=get_lang(message)))
     await ScanMinersState.waiting_for_network.set()
 
 @dp.message_handler(state=ScanMinersState.waiting_for_network)
@@ -648,16 +648,16 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         net = ipaddress.IPv4Network(network, strict=False)
     except Exception as e:
         logging.error(f"[SCAN_MINERS] Некорректная сеть: {network}, ошибка: {e}")
-        await message.answer(translate(get_lang(), 'network_format_error'), reply_markup=main_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(message), 'network_format_error'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
         scan_manager.finish_scan()
         await state.finish()
         return
-    progress_msg = await message.answer(translate(get_lang(), 'scanning_miners', network=network))
+    progress_msg = await message.answer(translate(get_lang(message), 'scanning_miners', network=network))
     async def on_progress(done, total):
         percent = int(done / total * 100)
         bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
         await bot.edit_message_text(
-            translate(get_lang(), 'miners_scanning_progress', bar=bar, percent=percent, done=done, total=total),
+            translate(get_lang(message), 'miners_scanning_progress', bar=bar, percent=percent, done=done, total=total),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
@@ -666,12 +666,12 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         miners = await scan_network_for_miners(network, on_progress=on_progress)
         logging.info(f"[SCAN_MINERS] Завершено scan_network_for_miners для {network}, найдено майнеров: {len(miners)}")
         await bot.edit_message_text(
-            translate(get_lang(), 'scan_completed', count=len(miners)),
+            translate(get_lang(message), 'scan_completed', count=len(miners)),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
         if not miners:
-            await message.answer(translate(get_lang(), 'no_miners_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
+            await message.answer(translate(get_lang(message), 'no_miners_found'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
             scan_manager.finish_scan()
             await state.finish()
             return
@@ -683,11 +683,11 @@ async def process_miners_network_input(message: Message, state: FSMContext):
         if len(text) > 4000:
             file_path = scan_manager.get_scan_result_file('miners', network, ext='csv')
             if file_path:
-                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'))
+                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(message), 'scan_file_sent'))
             else:
-                await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
+                await message.answer(translate(get_lang(message), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
         else:
-            result_msg = await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang()))
+            result_msg = await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang(message)))
             scan_manager.add_result(result_msg.message_id, {
                 'miners': miners,
                 'type': 'miners',
@@ -700,17 +700,17 @@ async def process_miners_network_input(message: Message, state: FSMContext):
     except Exception as e:
         logging.exception(f"[SCAN_MINERS] Ошибка при сканировании {network}: {e}")
         await bot.edit_message_text(
-            translate(get_lang(), 'scan_error', e=e),
+            translate(get_lang(message), 'scan_error', e=e),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
-        await message.answer(f"[SCAN_MINERS] Произошла ошибка: {e}", reply_markup=main_menu_keyboard(lang=get_lang()))
+        await message.answer(f"[SCAN_MINERS] Произошла ошибка: {e}", reply_markup=main_menu_keyboard(lang=get_lang(message)))
         scan_manager.finish_scan()
         await state.finish()
 
 @dp.message_handler(lambda m: m.text == 'Быстрое сканирование сети')
 async def handle_fast_scan(message: Message):
-    await message.answer(translate(get_lang(), 'fast_scan_prompt'), reply_markup=scan_menu_keyboard(lang=get_lang()))
+    await message.answer(translate(get_lang(message), 'fast_scan_prompt'), reply_markup=scan_menu_keyboard(lang=get_lang(message)))
     await FastScanState.waiting_for_network.set()
 
 @dp.message_handler(state=FastScanState.waiting_for_network)
@@ -724,16 +724,16 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
         net = ipaddress.IPv4Network(network, strict=False)
     except Exception as e:
         logging.error(f"[FAST_SCAN] Некорректная сеть: {network}, ошибка: {e}")
-        await message.answer(translate(get_lang(), 'network_format_error'), reply_markup=main_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(message), 'network_format_error'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
         scan_manager.finish_scan()
         await state.finish()
         return
-    progress_msg = await message.answer(translate(get_lang(), 'fast_scanning', network=network))
+    progress_msg = await message.answer(translate(get_lang(message), 'fast_scanning', network=network))
     async def on_progress(done, total):
         percent = int(done / total * 100)
         bar = '█' * (percent // 10) + '-' * (10 - percent // 10)
         await bot.edit_message_text(
-            translate(get_lang(), 'fast_scanning_progress', bar=bar, percent=percent, done=done, total=total),
+            translate(get_lang(message), 'fast_scanning_progress', bar=bar, percent=percent, done=done, total=total),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
@@ -742,12 +742,12 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
         devices = await fast_scan_network(network, on_progress=on_progress)
         logging.info(f"[FAST_SCAN] Завершено fast_scan_network для {network}, найдено устройств: {len(devices)}")
         await bot.edit_message_text(
-            translate(get_lang(), 'fast_scan_completed', count=len(devices)),
+            translate(get_lang(message), 'fast_scan_completed', count=len(devices)),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
         if not devices:
-            await message.answer(translate(get_lang(), 'no_devices_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
+            await message.answer(translate(get_lang(message), 'no_devices_found'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
             scan_manager.finish_scan()
             await state.finish()
             return
@@ -762,11 +762,11 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
         if len(text) > 4000:
             file_path = scan_manager.get_scan_result_file('fast_scan', network, ext='csv')
             if file_path:
-                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(), 'scan_file_sent'))
+                await message.answer_document(open(file_path, 'rb'), caption=translate(get_lang(message), 'scan_file_sent'))
             else:
-                await message.answer(translate(get_lang(), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang()))
+                await message.answer(translate(get_lang(message), 'scan_file_not_found'), reply_markup=main_menu_keyboard(lang=get_lang(message)))
         else:
-            result_msg = await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang()))
+            result_msg = await message.answer(text, reply_markup=main_menu_keyboard(lang=get_lang(message)))
             scan_manager.add_result(result_msg.message_id, {
                 'fast_scan': devices,
                 'type': 'fast_scan',
@@ -779,11 +779,11 @@ async def process_fast_scan_network_input(message: Message, state: FSMContext):
     except Exception as e:
         logging.exception(f"[FAST_SCAN] Ошибка при сканировании {network}: {e}")
         await bot.edit_message_text(
-            translate(get_lang(), 'fast_scan_error', e=e),
+            translate(get_lang(message), 'fast_scan_error', e=e),
             chat_id=progress_msg.chat.id,
             message_id=progress_msg.message_id
         )
-        await message.answer(f"[FAST_SCAN] Произошла ошибка: {e}", reply_markup=main_menu_keyboard(lang=get_lang()))
+        await message.answer(f"[FAST_SCAN] Произошла ошибка: {e}", reply_markup=main_menu_keyboard(lang=get_lang(message)))
         scan_manager.finish_scan()
         await state.finish()
 
@@ -810,7 +810,7 @@ async def handle_statistics(message: Message):
 """
     report = statistics_manager.generate_report()
     await message.answer(status_text, parse_mode='Markdown')
-    await message.answer(report, parse_mode='Markdown', reply_markup=main_menu_keyboard(lang=get_lang()))
+    await message.answer(report, parse_mode='Markdown', reply_markup=main_menu_keyboard(lang=get_lang(message)))
 
 @dp.message_handler(is_menu_button('monitoring_interval_btn'))
 async def handle_monitoring_interval(message: Message):
@@ -928,20 +928,20 @@ async def process_scan_timeout(message: Message, state: FSMContext):
     try:
         timeout = int(message.text.strip())
         if timeout < 1 or timeout > 60:
-            await message.answer(translate(get_lang(), 'scan_timeout_error'))
+            await message.answer(translate(get_lang(message), 'scan_timeout_error'))
             return
         if settings_manager.set_setting('scanning.default_timeout', timeout):
-            await message.answer(translate(get_lang(), 'scan_timeout_set', value=timeout))
+            await message.answer(translate(get_lang(message), 'scan_timeout_set', value=timeout))
         else:
-            await message.answer(translate(get_lang(), 'scan_timeout_save_error'))
+            await message.answer(translate(get_lang(message), 'scan_timeout_save_error'))
     except Exception:
-        await message.answer(translate(get_lang(), 'scan_timeout_input_error'))
+        await message.answer(translate(get_lang(message), 'scan_timeout_input_error'))
     await state.finish()
 
 @dp.message_handler(is_menu_button('scan_max_concurrent_btn'))
 async def handle_scan_max_concurrent(message: Message):
     current = settings_manager.get_setting('scanning.max_concurrent_scans', 3)
-    await message.answer(translate(get_lang(), 'scan_max_concurrent_prompt', value=current), reply_markup=cancel_keyboard(lang=get_lang()))
+    await message.answer(translate(get_lang(message), 'scan_max_concurrent_prompt', value=current), reply_markup=cancel_keyboard(lang=get_lang(message)))
     await ScanSettingsState.waiting_for_max_concurrent.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_max_concurrent)
@@ -949,52 +949,52 @@ async def process_scan_max_concurrent(message: Message, state: FSMContext):
     try:
         value = int(message.text.strip())
         if value < 1 or value > 20:
-            await message.answer(translate(get_lang(), 'scan_max_concurrent_error'))
+            await message.answer(translate(get_lang(message), 'scan_max_concurrent_error'))
             return
         if settings_manager.set_setting('scanning.max_concurrent_scans', value):
-            await message.answer(translate(get_lang(), 'scan_max_concurrent_set', value=value))
+            await message.answer(translate(get_lang(message), 'scan_max_concurrent_set', value=value))
         else:
-            await message.answer(translate(get_lang(), 'scan_max_concurrent_save_error'))
+            await message.answer(translate(get_lang(message), 'scan_max_concurrent_save_error'))
     except Exception:
-        await message.answer(translate(get_lang(), 'scan_max_concurrent_input_error'))
+        await message.answer(translate(get_lang(message), 'scan_max_concurrent_input_error'))
     await state.finish()
 
 @dp.message_handler(is_menu_button('scan_ports_btn'))
 async def handle_scan_ports(message: Message):
     current = settings_manager.get_setting('scanning.default_ports', [80, 22, 443])
-    await message.answer(translate(get_lang(), 'scan_ports_prompt', value=', '.join(map(str, current))), reply_markup=cancel_keyboard(lang=get_lang()))
+    await message.answer(translate(get_lang(message), 'scan_ports_prompt', value=', '.join(map(str, current))), reply_markup=cancel_keyboard(lang=get_lang(message)))
     await ScanSettingsState.waiting_for_default_ports.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_default_ports)
 async def process_scan_ports(message: Message, state: FSMContext):
     ports = parse_ports(message.text)
     if not ports:
-        await message.answer(translate(get_lang(), 'scan_ports_error'), reply_markup=scan_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(message), 'scan_ports_error'), reply_markup=scan_menu_keyboard(lang=get_lang(message)))
         await state.finish()
         return
     if settings_manager.set_setting('scanning.default_ports', ports):
-        await message.answer(translate(get_lang(), 'scan_ports_set', value=', '.join(map(str, ports))), reply_markup=scan_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(message), 'scan_ports_set', value=', '.join(map(str, ports))), reply_markup=scan_menu_keyboard(lang=get_lang(message)))
     else:
-        await message.answer(translate(get_lang(), 'scan_ports_save_error'), reply_markup=scan_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(message), 'scan_ports_save_error'), reply_markup=scan_menu_keyboard(lang=get_lang(message)))
     await state.finish()
 
 @dp.message_handler(is_menu_button('scan_miner_ports_btn'))
 async def handle_miner_ports(message: Message):
     current = settings_manager.get_setting('scanning.miner_ports', [4028, 3333])
-    await message.answer(translate(get_lang(), 'scan_miner_ports_prompt', value=', '.join(map(str, current))), reply_markup=cancel_keyboard(lang=get_lang()))
+    await message.answer(translate(get_lang(message), 'scan_miner_ports_prompt', value=', '.join(map(str, current))), reply_markup=cancel_keyboard(lang=get_lang(message)))
     await ScanSettingsState.waiting_for_miner_ports.set()
 
 @dp.message_handler(state=ScanSettingsState.waiting_for_miner_ports)
 async def process_miner_ports(message: Message, state: FSMContext):
     ports = parse_ports(message.text)
     if not ports:
-        await message.answer(translate(get_lang(), 'scan_miner_ports_error'), reply_markup=scan_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(message), 'scan_miner_ports_error'), reply_markup=scan_menu_keyboard(lang=get_lang(message)))
         await state.finish()
         return
     if settings_manager.set_setting('scanning.miner_ports', ports):
-        await message.answer(translate(get_lang(), 'scan_miner_ports_set', value=', '.join(map(str, ports))), reply_markup=scan_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(message), 'scan_miner_ports_set', value=', '.join(map(str, ports))), reply_markup=scan_menu_keyboard(lang=get_lang(message)))
     else:
-        await message.answer(translate(get_lang(), 'scan_miner_ports_save_error'), reply_markup=scan_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(message), 'scan_miner_ports_save_error'), reply_markup=scan_menu_keyboard(lang=get_lang(message)))
     await state.finish()
 
 @dp.message_handler(is_menu_button('scan_router_ports_btn'))
@@ -1030,14 +1030,14 @@ async def process_scan_ttl(message: Message, state: FSMContext):
     try:
         ttl = int(message.text.strip())
         if ttl < 60 or ttl > 604800:  # 7 дней
-            await message.answer(translate(get_lang(), 'scan_ttl_error'))
+            await message.answer(translate(get_lang(message), 'scan_ttl_error'))
             return
         if settings_manager.set_setting('scanning.results_ttl', ttl):
-            await message.answer(translate(get_lang(), 'scan_ttl_set', value=ttl))
+            await message.answer(translate(get_lang(message), 'scan_ttl_set', value=ttl))
         else:
-            await message.answer(translate(get_lang(), 'scan_ttl_save_error'))
+            await message.answer(translate(get_lang(message), 'scan_ttl_save_error'))
     except Exception:
-        await message.answer(translate(get_lang(), 'scan_ttl_input_error'))
+        await message.answer(translate(get_lang(message), 'scan_ttl_input_error'))
     await state.finish()
 
 def parse_ports(text):
@@ -1083,13 +1083,13 @@ async def process_router_ips(message: Message, state: FSMContext):
     text = message.text.replace('\n', ',').replace(';', ',')
     ips = [ip.strip() for ip in text.split(',') if ip.strip()]
     if not all(validate_ip(ip) for ip in ips):
-        await message.answer(translate(get_lang(), 'scan_router_ips_error'), reply_markup=router_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(message), 'scan_router_ips_error'), reply_markup=router_menu_keyboard(lang=get_lang(message)))
         await state.finish()
         return
     if settings_manager.update_router_ips(ips):
-        await message.answer(translate(get_lang(), 'scan_router_ips_set', value=', '.join(ips)), reply_markup=router_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(message), 'scan_router_ips_set', value=', '.join(ips)), reply_markup=router_menu_keyboard(lang=get_lang(message)))
     else:
-        await message.answer(translate(get_lang(), 'scan_router_ips_save_error'), reply_markup=router_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(message), 'scan_router_ips_save_error'), reply_markup=router_menu_keyboard(lang=get_lang(message)))
     await state.finish()
 
 @dp.message_handler(is_menu_button('router_ports_btn'))
@@ -1125,14 +1125,14 @@ async def process_router_interval(message: Message, state: FSMContext):
     try:
         interval = int(message.text.strip())
         if interval < 10 or interval > 86400:
-            await message.answer(translate(get_lang(), 'scan_router_interval_error'), reply_markup=router_menu_keyboard(lang=get_lang()))
+            await message.answer(translate(get_lang(message), 'scan_router_interval_error'), reply_markup=router_menu_keyboard(lang=get_lang(message)))
             return
         if settings_manager.set_setting('routers.interval', interval):
-            await message.answer(translate(get_lang(), 'scan_router_interval_set', value=interval), reply_markup=router_menu_keyboard(lang=get_lang()))
+            await message.answer(translate(get_lang(message), 'scan_router_interval_set', value=interval), reply_markup=router_menu_keyboard(lang=get_lang(message)))
         else:
-            await message.answer(translate(get_lang(), 'scan_router_interval_save_error'), reply_markup=router_menu_keyboard(lang=get_lang()))
+            await message.answer(translate(get_lang(message), 'scan_router_interval_save_error'), reply_markup=router_menu_keyboard(lang=get_lang(message)))
     except Exception:
-        await message.answer(translate(get_lang(), 'scan_router_interval_input_error'), reply_markup=router_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(get_lang(message), 'scan_router_interval_input_error'), reply_markup=router_menu_keyboard(lang=get_lang(message)))
     await state.finish()
 
 @dp.message_handler(is_menu_button('router_status_btn'))
@@ -1178,14 +1178,14 @@ async def process_interface_progress(message: Message, state: FSMContext):
     elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
         new_value = False
     else:
-        await message.answer(translate(get_lang(), 'input_error'), reply_markup=interface_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
+        await message.answer(translate(get_lang(message), 'input_error'), reply_markup=interface_menu_keyboard(lang=get_lang(message), role=get_user_role(message)))
         await state.finish()
         return
     if settings_manager.set_setting('interface.show_progress', new_value):
         status = 'включён' if new_value else 'выключен'
-        await message.answer(translate(get_lang(), 'interface_progress_set', status=status), reply_markup=interface_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
+        await message.answer(translate(get_lang(message), 'interface_progress_set', status=status), reply_markup=interface_menu_keyboard(lang=get_lang(message), role=get_user_role(message)))
     else:
-        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=interface_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
+        await message.answer(translate(get_lang(message), 'settings_error'), reply_markup=interface_menu_keyboard(lang=get_lang(message), role=get_user_role(message)))
     await state.finish()
 
 @dp.message_handler(is_menu_button('interface_time_btn'))
@@ -1205,14 +1205,14 @@ async def process_interface_time(message: Message, state: FSMContext):
     elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
         new_value = False
     else:
-        await message.answer(translate(lang, 'input_error'), reply_markup=interface_menu_keyboard(lang=lang, role=get_user_role(message)))
+        await message.answer(translate(get_lang(message), 'input_error'), reply_markup=interface_menu_keyboard(lang=get_lang(message), role=get_user_role(message)))
         await state.finish()
         return
     if settings_manager.set_setting('interface.show_time', new_value):
         status = 'включён' if new_value else 'выключен'
-        await message.answer(translate(lang, 'interface_time_set', status=status), reply_markup=interface_menu_keyboard(lang=lang, role=get_user_role(message)))
+        await message.answer(translate(get_lang(message), 'interface_time_set', status=status), reply_markup=interface_menu_keyboard(lang=get_lang(message), role=get_user_role(message)))
     else:
-        await message.answer(translate(lang, 'settings_error'), reply_markup=interface_menu_keyboard(lang=lang, role=get_user_role(message)))
+        await message.answer(translate(get_lang(message), 'settings_error'), reply_markup=interface_menu_keyboard(lang=get_lang(message), role=get_user_role(message)))
     await state.finish()
 
 @dp.message_handler(is_menu_button('interface_compact_btn'))
@@ -1232,14 +1232,14 @@ async def process_interface_compact(message: Message, state: FSMContext):
     elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
         new_value = False
     else:
-        await message.answer(translate(lang, 'input_error'), reply_markup=interface_menu_keyboard(lang=lang, role=get_user_role(message)))
+        await message.answer(translate(get_lang(message), 'input_error'), reply_markup=interface_menu_keyboard(lang=get_lang(message), role=get_user_role(message)))
         await state.finish()
         return
     if settings_manager.set_setting('interface.compact_mode', new_value):
         status = 'включён' if new_value else 'выключен'
-        await message.answer(translate(lang, 'interface_compact_set', status=status), reply_markup=interface_menu_keyboard(lang=lang, role=get_user_role(message)))
+        await message.answer(translate(get_lang(message), 'interface_compact_set', status=status), reply_markup=interface_menu_keyboard(lang=get_lang(message), role=get_user_role(message)))
     else:
-        await message.answer(translate(lang, 'settings_error'), reply_markup=interface_menu_keyboard(lang=lang, role=get_user_role(message)))
+        await message.answer(translate(get_lang(message), 'settings_error'), reply_markup=interface_menu_keyboard(lang=get_lang(message), role=get_user_role(message)))
     await state.finish()
 
 @dp.message_handler(is_menu_button('security_users_btn'))
@@ -1358,14 +1358,14 @@ async def handle_settings_summary(message: Message):
 async def handle_settings_reset(message: Message):
     ok = settings_manager.reset_to_defaults()
     if ok:
-        await message.answer(translate(get_lang(), 'settings_reset'), reply_markup=settings_main_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
+        await message.answer(translate(get_lang(message), 'settings_reset'), reply_markup=settings_main_menu_keyboard(lang=get_lang(message), role=get_user_role(message)))
     else:
-        await message.answer(translate(get_lang(), 'settings_reset_error'), reply_markup=settings_main_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
+        await message.answer(translate(get_lang(message), 'settings_reset_error'), reply_markup=settings_main_menu_keyboard(lang=get_lang(message), role=get_user_role(message)))
 
 @dp.message_handler(is_menu_button('cancel'), state='*')
 async def cancel_any_state(message: Message, state: FSMContext):
     await state.finish()
-    await message.answer('Действие отменено.', reply_markup=settings_main_menu_keyboard(lang=get_lang(), role=get_user_role(message)))
+    await message.answer('Действие отменено.', reply_markup=settings_main_menu_keyboard(lang=get_lang(message), role=get_user_role(message)))
 
 @dp.message_handler(is_menu_button('back_to_main_btn'), state='*')
 async def handle_back_to_main_any(message: Message, state: FSMContext):
@@ -1394,9 +1394,9 @@ async def send_devices_file(message: Message, state: FSMContext):
     file_path = scan_manager.get_result_file(msg_id, ext='csv')
     if file_path and os.path.exists(file_path):
         with open(file_path, 'rb') as f:
-            await message.answer_document(f, caption=translate(get_lang(), 'scan_file_sent'))
+            await message.answer_document(f, caption=translate(get_lang(message), 'scan_file_sent'))
     else:
-        await message.answer(translate(get_lang(), 'scan_file_not_found'))
+        await message.answer(translate(get_lang(message), 'scan_file_not_found'))
     await state.finish()
 
 @dp.message_handler(lambda m: m.text.lower() == 'файл', state=ScanMinersState.waiting_for_file_request)
@@ -1614,14 +1614,14 @@ async def send_ip_list_from_scan_file(message: Message):
                 if ip:
                     ips.add(ip.strip())
         else:
-            await message.answer('Формат файла не поддерживается.', reply_markup=main_menu_keyboard(lang=get_lang()))
+            await message.answer('Формат файла не поддерживается.', reply_markup=main_menu_keyboard(lang=get_lang(message)))
             return
         if ips:
-            await message.answer(','.join(sorted(ips)), reply_markup=main_menu_keyboard(lang=get_lang()))
+            await message.answer(','.join(sorted(ips)), reply_markup=main_menu_keyboard(lang=get_lang(message)))
         else:
-            await message.answer('IP-адреса не найдены в файле.', reply_markup=main_menu_keyboard(lang=get_lang()))
+            await message.answer('IP-адреса не найдены в файле.', reply_markup=main_menu_keyboard(lang=get_lang(message)))
     except Exception as e:
-        await message.answer(f'Ошибка при обработке файла: {e}', reply_markup=main_menu_keyboard(lang=get_lang()))
+        await message.answer(f'Ошибка при обработке файла: {e}', reply_markup=main_menu_keyboard(lang=get_lang(message)))
 
 @dp.message_handler(lambda m: m.reply_to_message is not None)
 async def debug_reply(message: Message):
@@ -1660,23 +1660,23 @@ async def get_ips_from_scan_file(message: Message):
                     if ip:
                         ips.add(ip.strip())
             else:
-                await message.answer('Формат файла не поддерживается.', reply_markup=main_menu_keyboard(lang=get_lang()))
+                await message.answer('Формат файла не поддерживается.', reply_markup=main_menu_keyboard(lang=get_lang(message)))
                 return
             if ips:
-                await message.answer(','.join(sorted(ips)), reply_markup=main_menu_keyboard(lang=get_lang()))
+                await message.answer(','.join(sorted(ips)), reply_markup=main_menu_keyboard(lang=get_lang(message)))
             else:
-                await message.answer('IP-адреса не найдены в файле.', reply_markup=main_menu_keyboard(lang=get_lang()))
+                await message.answer('IP-адреса не найдены в файле.', reply_markup=main_menu_keyboard(lang=get_lang(message)))
         except Exception as e:
-            await message.answer(f'Ошибка при обработке файла: {e}', reply_markup=main_menu_keyboard(lang=get_lang()))
+            await message.answer(f'Ошибка при обработке файла: {e}', reply_markup=main_menu_keyboard(lang=get_lang(message)))
     else:
-        await message.answer('Сделайте /get_ips в reply на файл с результатами сканирования.', reply_markup=main_menu_keyboard(lang=get_lang()))
+        await message.answer('Сделайте /get_ips в reply на файл с результатами сканирования.', reply_markup=main_menu_keyboard(lang=get_lang(message)))
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('get_ips:'))
 async def handle_get_ips_callback(call: CallbackQuery):
     file_name = call.data.split(':', 1)[1]
     file_path = os.path.join('telegram_bot/data/scan_results', file_name)
     if not os.path.exists(file_path):
-        await call.message.answer('Файл не найден.', reply_markup=main_menu_keyboard(lang=get_lang()))
+        await call.message.answer('Файл не найден.', reply_markup=main_menu_keyboard(lang=get_lang(call.message)))
         return
     ips = set()
     try:
@@ -1698,14 +1698,14 @@ async def handle_get_ips_callback(call: CallbackQuery):
                     if ip:
                         ips.add(ip.strip())
         else:
-            await call.message.answer('Формат файла не поддерживается.', reply_markup=main_menu_keyboard(lang=get_lang()))
+            await call.message.answer('Формат файла не поддерживается.', reply_markup=main_menu_keyboard(lang=get_lang(call.message)))
             return
         if ips:
-            await call.message.answer(','.join(sorted(ips)), reply_markup=main_menu_keyboard(lang=get_lang()))
+            await call.message.answer(','.join(sorted(ips)), reply_markup=main_menu_keyboard(lang=get_lang(call.message)))
         else:
-            await call.message.answer('IP-адреса не найдены в файле.', reply_markup=main_menu_keyboard(lang=get_lang()))
+            await call.message.answer('IP-адреса не найдены в файле.', reply_markup=main_menu_keyboard(lang=get_lang(call.message)))
     except Exception as e:
-        await call.message.answer(f'Ошибка при обработке файла: {e}', reply_markup=main_menu_keyboard(lang=get_lang()))
+        await call.message.answer(f'Ошибка при обработке файла: {e}', reply_markup=main_menu_keyboard(lang=get_lang(call.message)))
     await call.answer()
 
 @dp.message_handler(commands=['scanfiles'])
@@ -1714,14 +1714,14 @@ async def handle_scanfiles(message: Message):
     try:
         files = os.listdir(scan_dir)
         if not files:
-            await message.answer(translate(get_lang(), 'no_scan_files'))
+            await message.answer(translate(get_lang(message), 'no_scan_files'))
             return
         kb = InlineKeyboardMarkup()
         for fname in files:
             kb.add(InlineKeyboardButton(fname, callback_data=f'scanips:{fname}'))
-        await message.answer(translate(get_lang(), 'scan_files_list'), reply_markup=kb)
+        await message.answer(translate(get_lang(message), 'scan_files_list'), reply_markup=kb)
     except Exception as e:
-        await message.answer(translate(get_lang(), 'scan_files_error', e=e))
+        await message.answer(translate(get_lang(message), 'scan_files_error', e=e))
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('scanips:'))
 async def handle_scanips_callback(call: CallbackQuery):
@@ -1729,7 +1729,7 @@ async def handle_scanips_callback(call: CallbackQuery):
     scan_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data/scan_results'))
     file_path = os.path.join(scan_dir, filename)
     if not os.path.exists(file_path):
-        await call.message.answer(translate(get_lang(), 'scan_file_not_found'))
+        await call.message.answer(translate(get_lang(call.message), 'scan_file_not_found'))
         await call.answer()
         return
     ips = set()
@@ -1750,15 +1750,15 @@ async def handle_scanips_callback(call: CallbackQuery):
                     if ip:
                         ips.add(ip.strip())
         else:
-            await call.message.answer(translate(get_lang(), 'scan_file_format_error'))
+            await call.message.answer(translate(get_lang(call.message), 'scan_file_format_error'))
             await call.answer()
             return
         if ips:
             await call.message.answer(','.join(sorted(ips)))
         else:
-            await call.message.answer(translate(get_lang(), 'scan_file_no_ips'))
+            await call.message.answer(translate(get_lang(call.message), 'scan_file_no_ips'))
     except Exception as e:
-        await call.message.answer(translate(get_lang(), 'scan_file_read_error', e=e))
+        await call.message.answer(translate(get_lang(call.message), 'scan_file_read_error', e=e))
     await call.answer()
 
 if __name__ == '__main__':
