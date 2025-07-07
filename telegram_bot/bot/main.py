@@ -1002,14 +1002,15 @@ async def handle_router_ports(message: Message):
 @dp.message_handler(state=ScanSettingsState.waiting_for_router_ports)
 async def process_router_ports_settings(message: Message, state: FSMContext):
     ports = parse_ports(message.text)
+    lang = get_lang(message)
     if not ports:
-        await message.answer(translate(get_lang(), 'scan_router_ports_error'), reply_markup=scan_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(lang, 'scan_router_ports_error'), reply_markup=scan_menu_keyboard(lang=lang))
         await state.finish()
         return
     if settings_manager.set_setting('scanning.router_ports', ports):
-        await message.answer(translate(get_lang(), 'scan_router_ports_set', value=', '.join(map(str, ports))), reply_markup=scan_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(lang, 'scan_router_ports_set', value=', '.join(map(str, ports))), reply_markup=scan_menu_keyboard(lang=lang))
     else:
-        await message.answer(translate(get_lang(), 'scan_router_ports_save_error'), reply_markup=scan_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(lang, 'scan_router_ports_save_error'), reply_markup=scan_menu_keyboard(lang=lang))
     await state.finish()
 
 @dp.message_handler(is_menu_button('scan_ttl_btn'))
@@ -1090,14 +1091,15 @@ async def handle_router_ports_btn(message: Message):
 @dp.message_handler(state=RouterSettingsState.waiting_for_ports)
 async def process_router_ports(message: Message, state: FSMContext):
     ports = parse_ports(message.text)
+    lang = get_lang(message)
     if not ports:
-        await message.answer(translate(get_lang(), 'scan_router_ports_error'), reply_markup=router_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(lang, 'scan_router_ports_error'), reply_markup=router_menu_keyboard(lang=lang))
         await state.finish()
         return
     if settings_manager.set_setting('routers.ports', ports):
-        await message.answer(translate(get_lang(), 'scan_router_ports_set', value=', '.join(map(str, ports))), reply_markup=router_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(lang, 'scan_router_ports_set', value=', '.join(map(str, ports))), reply_markup=router_menu_keyboard(lang=lang))
     else:
-        await message.answer(translate(get_lang(), 'scan_router_ports_save_error'), reply_markup=router_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(lang, 'scan_router_ports_save_error'), reply_markup=router_menu_keyboard(lang=lang))
     await state.finish()
 
 @dp.message_handler(is_menu_button('router_interval_btn'))
@@ -1659,7 +1661,8 @@ async def process_asic_ips(message: Message, state: FSMContext):
 async def handle_asic_status_main_menu(message: Message):
     ips = settings_manager.get_setting('asic_miners.ips', [])
     if not ips:
-        await message.answer(translate(get_lang(), 'asic_list_empty'))
+        lang = get_lang(message)
+        await message.answer(translate(lang, 'asic_list_empty'))
         return
     tasks = [get_asic_status(ip) for ip in ips]
     results = await asyncio.gather(*tasks)
@@ -1671,7 +1674,9 @@ async def handle_asic_status_main_menu(message: Message):
             text += f"\n{r['ip']}: онлайн, хешрейт: {r['hashrate']} | аптайм: {uptime} | {status}"
         else:
             text += f"\n{r['ip']}: ❌ оффлайн"
-    await message.answer(text, parse_mode='HTML', reply_markup=main_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    role = get_user_role(message)
+    await message.answer(text, parse_mode='HTML', reply_markup=main_menu_keyboard(lang=lang, role=role))
 
 @dp.message_handler(is_menu_button('scan_menu_btn'))
 async def handle_scan_menu_btn(message: Message):
