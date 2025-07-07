@@ -212,12 +212,11 @@ async def handle_router_status_main_menu(message: Message):
 
 @dp.message_handler(is_menu_button('scan_main_menu_btn'))
 async def handle_scan_main_menu(message: Message):
-    # Проверяем доступ пользователя
     if not check_user_access(message):
         await send_access_denied(message)
         return
-    
-    await message.answer(translate(get_lang(), 'scan_main_menu_msg'), reply_markup=scan_main_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'scan_main_menu_msg'), reply_markup=scan_main_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('settings_main_menu_btn'), state='*')
 async def handle_settings_main_menu_btn(message: Message, state: FSMContext):
@@ -234,9 +233,10 @@ async def handle_scan_network_main_menu(message: Message, state: FSMContext):
     if not check_user_access(message):
         await send_access_denied(message)
         return
+    lang = get_lang(message)
     await message.answer(
-        translate(get_lang(), 'scan_network_prompt'),
-        reply_markup=scan_cancel_or_main_keyboard(lang=get_lang())
+        translate(lang, 'scan_network_prompt'),
+        reply_markup=scan_cancel_or_main_keyboard(lang=lang)
     )
     await ScanDevicesState.waiting_for_network.set()
 
@@ -245,9 +245,10 @@ async def handle_scan_miners_main_menu(message: Message, state: FSMContext):
     if not check_user_access(message):
         await send_access_denied(message)
         return
+    lang = get_lang(message)
     await message.answer(
-        translate(get_lang(), 'scan_miners_prompt'),
-        reply_markup=scan_cancel_or_main_keyboard(lang=get_lang())
+        translate(lang, 'scan_miners_prompt'),
+        reply_markup=scan_cancel_or_main_keyboard(lang=lang)
     )
     await ScanMinersState.waiting_for_network.set()
 
@@ -295,8 +296,9 @@ async def handle_monitoring_settings(message: Message):
 
 @dp.message_handler(is_menu_button('scan_settings_btn'))
 async def handle_scan_settings(message: Message):
+    lang = get_lang(message)
     await message.answer("SETTINGS HANDLER")
-    await message.answer(translate(get_lang(), 'scan_menu_msg'), reply_markup=scan_menu_keyboard(lang=get_lang()))
+    await message.answer(translate(lang, 'scan_menu_msg'), reply_markup=scan_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('notification_settings_btn'))
 async def handle_notification_settings(message: Message):
@@ -304,7 +306,8 @@ async def handle_notification_settings(message: Message):
 
 @dp.message_handler(is_menu_button('router_settings_btn'))
 async def handle_router_settings(message: Message):
-    await message.answer(translate(get_lang(), 'router_menu_msg'), reply_markup=router_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'router_menu_msg'), reply_markup=router_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('interface_settings_btn'))
 async def handle_interface_settings(message: Message):
@@ -333,9 +336,11 @@ async def handle_help_main_menu(message: Message):
 @dp.message_handler(is_menu_button('back_to_main_btn'), state=[ScanDevicesState.waiting_for_network, ScanMinersState.waiting_for_network, FastScanState.waiting_for_network])
 async def scan_back_to_main(message: Message, state: FSMContext):
     await state.finish()
+    lang = get_lang(message)
+    role = get_user_role(message)
     await message.answer(
-        translate(get_lang(), 'main_menu'),
-        reply_markup=main_menu_keyboard(lang=get_lang())
+        translate(lang, 'main_menu'),
+        reply_markup=main_menu_keyboard(lang=lang, role=role)
     )
 
 @dp.message_handler(commands=['help'])
