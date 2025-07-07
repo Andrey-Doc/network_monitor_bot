@@ -274,21 +274,19 @@ async def handle_upload_file_main_menu(message: Message):
 
 @dp.message_handler(is_menu_button('backup_main_menu_btn'))
 async def handle_backup_main_menu(message: Message):
-    # Проверяем доступ пользователя
     if not check_user_access(message):
         await send_access_denied(message)
         return
-    
-    await message.answer(translate(get_lang(), 'backup_menu_msg'), reply_markup=backup_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'backup_menu_msg'), reply_markup=backup_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('export_main_menu_btn'))
 async def handle_export_main_menu(message: Message):
-    # Проверяем доступ пользователя
     if not check_user_access(message):
         await send_access_denied(message)
         return
-    
-    await message.answer(translate(get_lang(), 'export_menu_msg'), reply_markup=export_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'export_menu_msg'), reply_markup=export_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('monitoring_settings_btn'))
 async def handle_monitoring_settings(message: Message):
@@ -303,7 +301,8 @@ async def handle_scan_settings(message: Message):
 
 @dp.message_handler(is_menu_button('notification_settings_btn'))
 async def handle_notification_settings(message: Message):
-    await message.answer(translate(get_lang(), 'notification_menu_msg'), reply_markup=notification_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'notification_menu_msg'), reply_markup=notification_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('router_settings_btn'))
 async def handle_router_settings(message: Message):
@@ -318,22 +317,18 @@ async def handle_interface_settings(message: Message):
 
 @dp.message_handler(is_menu_button('security_settings_btn'))
 async def handle_security_settings(message: Message):
-    await message.answer(translate(get_lang(), 'security_menu_msg'), reply_markup=security_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'security_menu_msg'), reply_markup=security_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('help_main_menu_btn'))
 async def handle_help_main_menu(message: Message):
-    # Проверяем доступ пользователя
     if not check_user_access(message):
         await send_access_denied(message)
         return
-    
     statistics_manager.record_command('help')
     help_text = help_system.get_main_help()
-    await message.answer(
-        help_text,
-        parse_mode='Markdown',
-        reply_markup=help_menu_keyboard(lang=get_lang())
-    )
+    lang = get_lang(message)
+    await message.answer(help_text, parse_mode='Markdown', reply_markup=help_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('back_to_main_btn'), state=[ScanDevicesState.waiting_for_network, ScanMinersState.waiting_for_network, FastScanState.waiting_for_network])
 async def scan_back_to_main(message: Message, state: FSMContext):
@@ -1285,19 +1280,20 @@ async def handle_backup_auto(message: Message):
 @dp.message_handler(state=BackupSettingsState.waiting_for_auto)
 async def process_backup_auto(message: Message, state: FSMContext):
     text = message.text.strip().lower()
+    lang = get_lang(message)
     if text in ['да', 'yes', 'y', 'oui', 'ja', '是']:
         new_value = True
     elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
         new_value = False
     else:
-        await message.answer(translate(get_lang(), 'input_error'), reply_markup=backup_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(lang, 'input_error'), reply_markup=backup_menu_keyboard(lang=lang))
         await state.finish()
         return
     if settings_manager.set_setting('backup.auto', new_value):
         status = 'включено' if new_value else 'выключено'
-        await message.answer(translate(get_lang(), 'backup_auto_set', status=status), reply_markup=backup_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(lang, 'backup_auto_set', status=status), reply_markup=backup_menu_keyboard(lang=lang))
     else:
-        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=backup_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(lang, 'settings_error'), reply_markup=backup_menu_keyboard(lang=lang))
     await state.finish()
 
 @dp.message_handler(is_menu_button('backup_interval_btn'))
@@ -1308,17 +1304,18 @@ async def handle_backup_interval(message: Message):
 
 @dp.message_handler(state=BackupSettingsState.waiting_for_interval)
 async def process_backup_interval(message: Message, state: FSMContext):
+    lang = get_lang(message)
     try:
         interval = int(message.text.strip())
         if interval < 1 or interval > 168:
-            await message.answer(translate(get_lang(), 'backup_interval_error'), reply_markup=backup_menu_keyboard(lang=get_lang()))
+            await message.answer(translate(lang, 'backup_interval_error'), reply_markup=backup_menu_keyboard(lang=lang))
             return
         if settings_manager.set_setting('backup.interval', interval):
-            await message.answer(translate(get_lang(), 'backup_interval_set', value=interval), reply_markup=backup_menu_keyboard(lang=get_lang()))
+            await message.answer(translate(lang, 'backup_interval_set', value=interval), reply_markup=backup_menu_keyboard(lang=lang))
         else:
-            await message.answer(translate(get_lang(), 'backup_interval_save_error'), reply_markup=backup_menu_keyboard(lang=get_lang()))
+            await message.answer(translate(lang, 'backup_interval_save_error'), reply_markup=backup_menu_keyboard(lang=lang))
     except Exception:
-        await message.answer(translate(get_lang(), 'backup_interval_input_error'), reply_markup=backup_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(lang, 'backup_interval_input_error'), reply_markup=backup_menu_keyboard(lang=lang))
     await state.finish()
 
 @dp.message_handler(is_menu_button('backup_max_count_btn'))
@@ -1329,32 +1326,35 @@ async def handle_backup_max_count(message: Message):
 
 @dp.message_handler(state=BackupSettingsState.waiting_for_max_count)
 async def process_backup_max_count(message: Message, state: FSMContext):
+    lang = get_lang(message)
     try:
         value = int(message.text.strip())
         if value < 1 or value > 100:
-            await message.answer(translate(get_lang(), 'backup_max_count_error'))
+            await message.answer(translate(lang, 'backup_max_count_error'))
             return
         if settings_manager.set_setting('backup.max_count', value):
-            await message.answer(translate(get_lang(), 'backup_max_count_set', value=value), reply_markup=backup_menu_keyboard(lang=get_lang()))
+            await message.answer(translate(lang, 'backup_max_count_set', value=value), reply_markup=backup_menu_keyboard(lang=lang))
         else:
-            await message.answer(translate(get_lang(), 'backup_max_count_save_error'), reply_markup=backup_menu_keyboard(lang=get_lang()))
+            await message.answer(translate(lang, 'backup_max_count_save_error'), reply_markup=backup_menu_keyboard(lang=lang))
     except Exception:
-        await message.answer(translate(get_lang(), 'backup_max_count_input_error'), reply_markup=backup_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(lang, 'backup_max_count_input_error'), reply_markup=backup_menu_keyboard(lang=lang))
     await state.finish()
 
 @dp.message_handler(is_menu_button('backup_now_btn'))
 async def handle_backup_now(message: Message):
+    lang = get_lang(message)
     backup_path = settings_manager.create_backup()
     if backup_path and backup_path.endswith('.zip') and os.path.exists(backup_path):
         with open(backup_path, 'rb') as f:
-            await message.answer_document(f, caption=translate(get_lang(), 'backup_created'), reply_markup=backup_menu_keyboard(lang=get_lang()))
+            await message.answer_document(f, caption=translate(lang, 'backup_created'), reply_markup=backup_menu_keyboard(lang=lang))
     else:
-        await message.answer(translate(get_lang(), 'backup_create_error', value=backup_path), reply_markup=backup_menu_keyboard(lang=get_lang()))
+        await message.answer(translate(lang, 'backup_create_error', value=backup_path), reply_markup=backup_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('export_settings_btn'))
 async def handle_export_settings_btn(message: Message):
+    lang = get_lang(message)
     json_str = settings_manager.export_settings()
-    await message.answer_document(('settings_export.json', json_str.encode('utf-8')), caption=translate(get_lang(), 'settings_exported'), reply_markup=export_menu_keyboard(lang=get_lang()))
+    await message.answer_document(('settings_export.json', json_str.encode('utf-8')), caption=translate(lang, 'settings_exported'), reply_markup=export_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('import_settings_btn'))
 async def handle_import_settings_btn(message: Message):
@@ -1363,13 +1363,13 @@ async def handle_import_settings_btn(message: Message):
 
 @dp.message_handler(is_menu_button('export_stats_btn'))
 async def handle_export_stats_btn(message: Message):
-    # Здесь можно реализовать экспорт статистики
-    await message.answer(translate(get_lang(), 'export_stats_msg'), reply_markup=export_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'export_stats_msg'), reply_markup=export_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('export_logs_btn'))
 async def handle_export_logs_btn(message: Message):
-    # Здесь можно реализовать экспорт логов
-    await message.answer(translate(get_lang(), 'export_logs_msg'), reply_markup=export_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'export_logs_msg'), reply_markup=export_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('settings_summary'))
 async def handle_settings_summary(message: Message):
@@ -1402,16 +1402,20 @@ async def cancel_any_state(message: Message, state: FSMContext):
 
 @dp.message_handler(is_menu_button('back_to_main_btn'), state='*')
 async def handle_back_to_main_any(message: Message, state: FSMContext):
-    await message.answer(translate(get_lang(), 'main_menu'), reply_markup=main_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    role = get_user_role(message)
+    await message.answer(translate(lang, 'main_menu'), reply_markup=main_menu_keyboard(lang=lang, role=role))
     # Не завершаем FSM, если оно есть
 
 @dp.message_handler(is_menu_button('help_btn'))
 async def handle_help_btn(message: Message):
-    await message.answer(translate(get_lang(), 'help_menu_msg'), reply_markup=help_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'help_menu_msg'), reply_markup=help_menu_keyboard(lang=lang))
 
 @dp.message_handler(is_menu_button('help_bot_btn'))
 async def handle_help_bot_btn(message: Message):
-    await message.answer(translate(get_lang(), 'help_bot_text'), reply_markup=help_menu_keyboard(lang=get_lang()))
+    lang = get_lang(message)
+    await message.answer(translate(lang, 'help_bot_text'), reply_markup=help_menu_keyboard(lang=lang))
 
 @dp.message_handler(lambda m: m.text.lower() == 'файл', state=ScanDevicesState.waiting_for_file_request)
 async def send_devices_file(message: Message, state: FSMContext):
