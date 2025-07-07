@@ -29,8 +29,19 @@ class BackgroundMonitor:
             settings_manager.get_setting('ROUTER_IPS', []),
             settings_manager.get_setting('ROUTER_PORTS', [])
         )
+        offline_routers = []
         for router in initial_status:
             self.previous_status[router['ip']] = router['status']
+            if router['status'] != 'online':
+                offline_routers.append({
+                    'ip': router['ip'],
+                    'old_status': None,
+                    'new_status': router['status'],
+                    'open_ports': router.get('open_ports', [])
+                })
+        # Если есть offline-роутеры при первом запуске — отправить уведомление
+        if offline_routers:
+            await self._send_status_notification(offline_routers)
         
         self.monitoring_task = asyncio.create_task(self._monitoring_loop(interval))
         
