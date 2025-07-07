@@ -2,8 +2,9 @@ import asyncio
 import socket
 from typing import List, Dict
 from telegram_bot.utils.settings_manager import SettingsManager
+import os
 
-settings_manager = SettingsManager()
+settings_manager = SettingsManager(base_dir=os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data')))
 # Используйте settings_manager.get_setting('...') для получения нужных параметров.
 
 async def check_port(ip: str, port: int, timeout: float = 2.0) -> bool:

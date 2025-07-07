@@ -4,10 +4,11 @@ import json
 import logging
 from typing import List, Dict, Optional
 import ipaddress
+import os
 from telegram_bot.utils.settings_manager import SettingsManager
 
 MINER_PORT = 4028
-settings_manager = SettingsManager()
+settings_manager = SettingsManager(base_dir=os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data')))
 # Используйте settings_manager.get_setting('...') для получения нужных параметров.
 
 async def check_port(ip: str, port: int, timeout: float = 2.0) -> bool:

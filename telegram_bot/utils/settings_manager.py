@@ -12,7 +12,12 @@ import importlib.util
 
 class SettingsManager:
     """Менеджер настроек бота (только settings.json)"""
-    def __init__(self, config_file: str = "data/settings.json"):
+    def __init__(self, config_file: Optional[str] = None, base_dir: Optional[str] = None):
+        if base_dir is None:
+            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data'))
+        self.base_dir = base_dir
+        if not config_file:
+            config_file = os.path.join(self.base_dir, 'settings.json')
         self.config_file = config_file
         self.settings = self._load_settings()
         self._ensure_data_dir()
@@ -201,7 +206,7 @@ class SettingsManager:
             logging.error(f"[SETTINGS] Ошибка импорта настроек: {e}")
             return False
             
-    def create_backup(self, stats_file: str = None) -> str:
+    def create_backup(self, stats_file: Optional[str] = None) -> str:
         """Создаёт резервную копию настроек (и статистики, если указано) в папке data/backups. Возвращает путь к архиву или ошибку."""
         backup_dir = os.path.join(os.path.dirname(self.config_file), 'backups')
         os.makedirs(backup_dir, exist_ok=True)
@@ -230,7 +235,8 @@ class SettingsManager:
     def get_admins(self) -> list:
         """Возвращает список админов из secrets.json"""
         try:
-            with open('data/secrets.json', 'r', encoding='utf-8') as f:
+            secrets_path = os.path.join(self.base_dir, 'secrets.json')
+            with open(secrets_path, 'r', encoding='utf-8') as f:
                 secrets = json.load(f)
             print(f"[DEBUG] admins from secrets.json: {secrets.get('admins', [])}")
             return secrets.get('admins', [])
