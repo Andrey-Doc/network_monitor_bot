@@ -35,11 +35,11 @@ import csv
 
 logging.basicConfig(level=logging.INFO)
 
-UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data'))
-settings_manager = SettingsManager(os.path.join(UPLOAD_DIR, 'settings.json'))
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data'))
+settings_manager = SettingsManager(base_dir=BASE_DIR)
 
 def load_secrets():
-    secrets_path = os.path.join(UPLOAD_DIR, 'secrets.json')
+    secrets_path = os.path.join(BASE_DIR, 'secrets.json')
     with open(secrets_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
@@ -60,7 +60,7 @@ scan_manager = ScanManager(ttl=settings_manager.get_setting('scanning.results_tt
 # Инициализация новых модулей
 background_monitor = BackgroundMonitor(bot, CHAT_ID)
 notification_manager = NotificationManager(bot, CHAT_ID)
-statistics_manager = StatisticsManager(UPLOAD_DIR)
+statistics_manager = StatisticsManager(BASE_DIR)
 help_system = HelpSystem()
 
 # SCAN_RESULTS_TTL: сначала из настроек, потом из config.py
@@ -597,7 +597,7 @@ async def process_csv_file(message: Message):
     if not file.file_name.lower().endswith('.csv'):
         await message.answer(translate(get_lang(), 'csv_format_error'), reply_markup=main_menu_keyboard(lang=get_lang()))
         return
-    file_path = os.path.join(UPLOAD_DIR, file.file_name)
+    file_path = os.path.join(BASE_DIR, file.file_name)
     await message.document.download(destination_file=file_path)
     try:
         df = pd.read_csv(file_path)

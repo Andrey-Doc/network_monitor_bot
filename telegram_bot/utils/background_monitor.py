@@ -4,8 +4,9 @@ from typing import Dict, List
 from telegram_bot.utils.router_monitor import check_routers_status
 from telegram_bot.utils.settings_manager import SettingsManager
 from telegram_bot.bot.translations import translate
+import os
 
-settings_manager = SettingsManager()
+settings_manager = SettingsManager(base_dir=os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data')))
 
 class BackgroundMonitor:
     def __init__(self, bot, chat_id):
@@ -100,13 +101,15 @@ class BackgroundMonitor:
         """Отправляет уведомление об изменении статуса"""
         # Получаем язык (можно доработать под пользователя)
         lang = 'ru'  # или получить из настроек
-        message = translate(lang, 'router_status_change_title') + "\n\n"
+        message = str(translate(lang, 'router_status_change_title') or '') + "\n\n"
         for change in changes:
             emoji = "🟢" if change['new_status'] == 'online' else "🔴"
             old_status = change['old_status'] if change['old_status'] is not None else 'unknown'
-            message += translate(lang, 'router_status_change_line', emoji=emoji, ip=change['ip'], old_status=old_status, new_status=change['new_status']) + "\n"
-            if change['new_status'] == 'online' and change['open_ports']:
-                message += translate(lang, 'router_status_change_ports', ports=', '.join(map(str, change['open_ports']))) + "\n"
+            new_status = change['new_status'] if change['new_status'] is not None else 'unknown'
+            open_ports = change['open_ports'] if change.get('open_ports') is not None else []
+            message += str(translate(lang, 'router_status_change_line', emoji=emoji, ip=change['ip'], old_status=old_status, new_status=new_status) or '') + "\n"
+            if new_status == 'online' and open_ports:
+                message += str(translate(lang, 'router_status_change_ports', ports=', '.join(map(str, open_ports))) or '') + "\n"
             message += "\n"
         try:
             await self.bot.send_message(
