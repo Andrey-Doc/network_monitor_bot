@@ -13,6 +13,24 @@ class ScanManager:
         self._lock = threading.Lock()
         self._results_dir = results_dir or os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data/scan_results'))
         os.makedirs(self._results_dir, exist_ok=True)
+        self._result_map_path = os.path.join(self._results_dir, 'result_map.json')
+        self._result_map = self._load_result_map()
+
+    def _load_result_map(self):
+        if os.path.exists(self._result_map_path):
+            try:
+                with open(self._result_map_path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except Exception:
+                return {}
+        return {}
+
+    def _save_result_map(self):
+        try:
+            with open(self._result_map_path, 'w', encoding='utf-8') as f:
+                json.dump(self._result_map, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
 
     def _network_to_filename(self, scan_type, network):
         # network: '10.1.0.0/21' -> '10.1.0.0_21'
@@ -64,6 +82,10 @@ class ScanManager:
     def add_result(self, msg_id, data):
         with self._lock:
             self._results[msg_id] = {**data, 'timestamp': time.time()}
+            # Сохраняем соответствие msg_id → file_path
+            file_path = os.path.join(self._results_dir, f'result_{msg_id}.csv')
+            self._result_map[str(msg_id)] = file_path
+            self._save_result_map()
             # Не сохраняем result_{msg_id}.* файлы больше!
 
     def _save_devices_csv(self, msg_id, devices):
@@ -105,6 +127,9 @@ class ScanManager:
                     path = os.path.join(self._results_dir, f'result_{k}{ext}')
                     if os.path.exists(path):
                         os.remove(path)
+                # Удаляем из map
+                self._result_map.pop(str(k), None)
+            self._save_result_map()
 
     def get_active_count(self):
         with self._lock:
@@ -123,6 +148,11 @@ class ScanManager:
             return dict(self._results)
 
     def get_result_file(self, msg_id, ext='csv'):
+        # Сначала ищем в map
+        file_path = self._result_map.get(str(msg_id))
+        if file_path and os.path.exists(file_path):
+            return file_path
+        # Старый способ
         path = os.path.join(self._results_dir, f'result_{msg_id}.{ext}')
         return path if os.path.exists(path) else None
 
