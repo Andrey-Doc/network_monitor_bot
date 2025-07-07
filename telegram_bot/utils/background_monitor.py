@@ -26,8 +26,8 @@ class BackgroundMonitor:
         
         # Инициализация начального статуса
         initial_status = await check_routers_status(
-            settings_manager.get_setting('ROUTER_IPS', []),
-            settings_manager.get_setting('ROUTER_PORTS', [])
+            settings_manager.get_setting('routers.ips', []),
+            settings_manager.get_setting('routers.ports', [8080, 80, 22])
         )
         offline_routers = []
         for router in initial_status:
@@ -64,8 +64,8 @@ class BackgroundMonitor:
         while self.is_running:
             try:
                 current_status = await check_routers_status(
-                    settings_manager.get_setting('ROUTER_IPS', []),
-                    settings_manager.get_setting('ROUTER_PORTS', [])
+                    settings_manager.get_setting('routers.ips', []),
+                    settings_manager.get_setting('routers.ports', [8080, 80, 22])
                 )
                 await self._check_status_changes(current_status)
                 await asyncio.sleep(interval)
