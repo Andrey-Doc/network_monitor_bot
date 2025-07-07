@@ -1460,22 +1460,23 @@ async def send_fastscan_file(message: Message, state: FSMContext):
 
 @dp.message_handler(is_menu_button('snmp_router_menu_btn'))
 async def handle_snmp_router_menu(message: Message):
+    lang = get_lang(message)
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_status_btn')))
-    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_settings_btn')))
-    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_community_btn')))
-    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_extended_btn')))
-    kb.row(KeyboardButton(translate(get_lang(), 'back_to_main_btn')))
-    await message.answer(translate(get_lang(), 'snmp_router_menu_msg'), reply_markup=kb)
+    kb.row(KeyboardButton(translate(lang, 'snmp_router_status_btn')))
+    kb.row(KeyboardButton(translate(lang, 'snmp_router_settings_btn')))
+    kb.row(KeyboardButton(translate(lang, 'snmp_router_community_btn')))
+    kb.row(KeyboardButton(translate(lang, 'snmp_router_extended_btn')))
+    kb.row(KeyboardButton(translate(lang, 'back_to_main_btn')))
+    await message.answer(translate(lang, 'snmp_router_menu_msg'), reply_markup=kb)
 
 @dp.message_handler(is_menu_button('snmp_router_status_btn'))
 async def handle_snmp_router_status(message: Message):
+    lang = get_lang(message)
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'snmp_router_menu_btn')))
     snmp_settings = settings_manager.get_setting('snmp_routers', {})
     ips = snmp_settings.get('ips')
     community = snmp_settings.get('community', 'public')
-    print(f"DEBUG SNMP community: {community}")
     if not ips or not isinstance(ips, list) or not ips:
         ips = settings_manager.get_setting('routers.ips', [])
     if not ips:
@@ -1493,33 +1494,36 @@ async def handle_snmp_router_status(message: Message):
 
 @dp.message_handler(is_menu_button('snmp_router_settings_btn'))
 async def handle_snmp_router_settings(message: Message):
+    lang = get_lang(message)
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'snmp_router_menu_btn')))
     await message.answer('Настройки SNMP роутеров: (заглушка)', reply_markup=kb)
 
 @dp.message_handler(is_menu_button('snmp_router_community_btn'))
 async def handle_snmp_router_community(message: Message):
+    lang = get_lang(message)
     if not check_admin(message):
-        await message.answer(translate(get_lang(), 'admin_only'))
+        await message.answer(translate(lang, 'admin_only'))
         return
     current = settings_manager.get_setting('snmp_routers.community', 'public')
-    await message.answer(translate(get_lang(), 'snmp_router_community_prompt', value=current))
+    await message.answer(translate(lang, 'snmp_router_community_prompt', value=current))
     await SnmpRouterSettingsState.waiting_for_community.set()
 
 @dp.message_handler(state=SnmpRouterSettingsState.waiting_for_community)
 async def process_snmp_router_community(message: Message, state: FSMContext):
+    lang = get_lang(message)
     if not check_admin(message):
-        await message.answer(translate(get_lang(), 'admin_only'))
+        await message.answer(translate(lang, 'admin_only'))
         await state.finish()
         return
     value = message.text.strip()
-    print(f"DEBUG set community: {value}")  # debug print
     settings_manager.set_setting('snmp_routers.community', value)
-    await message.answer(translate(get_lang(), 'snmp_router_community_set', value=value))
+    await message.answer(translate(lang, 'snmp_router_community_set', value=value))
     await state.finish()
 
 @dp.message_handler(is_menu_button('snmp_router_extended_btn'))
 async def handle_snmp_router_extended_btn(message: Message, state: FSMContext):
+    lang = get_lang(message)
     snmp_settings = settings_manager.get_setting('snmp_routers', {})
     ips = snmp_settings.get('ips')
     if not ips or not isinstance(ips, list) or not ips:
@@ -1530,13 +1534,14 @@ async def handle_snmp_router_extended_btn(message: Message, state: FSMContext):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     for ip in ips:
         kb.row(KeyboardButton(ip))
-    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_menu_btn')))
-    await message.answer(translate(get_lang(), 'snmp_router_extended_select_prompt'), reply_markup=kb)
+    kb.row(KeyboardButton(translate(lang, 'snmp_router_menu_btn')))
+    await message.answer(translate(lang, 'snmp_router_extended_select_prompt'), reply_markup=kb)
     await SnmpRouterExtendedState.waiting_for_router.set()
     await state.update_data(ips=ips)
 
 @dp.message_handler(state=SnmpRouterExtendedState.waiting_for_router)
 async def handle_snmp_router_extended_select(message: Message, state: FSMContext):
+    lang = get_lang(message)
     data = await state.get_data()
     ips = data.get('ips', [])
     ip = message.text.strip()
@@ -1545,7 +1550,7 @@ async def handle_snmp_router_extended_select(message: Message, state: FSMContext
         return
     snmp_settings = settings_manager.get_setting('snmp_routers', {})
     community = snmp_settings.get('community', 'public')
-    await message.answer(translate(get_lang(), 'snmp_router_extended_loading'))
+    await message.answer(translate(lang, 'snmp_router_extended_loading'))
     info = await async_get_snmp_full_info(ip, community)
     text = f'<b>Расширенный SNMP-запрос для {ip}:</b>'
     text += f"\n  sysName: {info.get('sysName', '-') }"
@@ -1556,131 +1561,14 @@ async def handle_snmp_router_extended_select(message: Message, state: FSMContext
     text += f"\n  ifNumber: {info.get('ifNumber', '-') }"
     interfaces = info.get('interfaces', [])
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row(KeyboardButton(translate(get_lang(), 'snmp_router_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'snmp_router_menu_btn')))
     if interfaces:
         text += f"\n  <b>Интерфейсы (первые 10):</b>"
         for idx, iface in enumerate(interfaces[:10], 1):
             text += f"\n    {idx}. {iface['descr']} | Статус: {iface['status']} | RX: {iface['in_octets']} | TX: {iface['out_octets']}"
         if len(interfaces) > 10:
-            kb.row(KeyboardButton(f'Экспорт интерфейсов {ip}'))
+            kb.row(KeyboardButton('...'))
     await message.answer(text, parse_mode='HTML', reply_markup=kb)
-    await state.finish()
-
-@dp.message_handler(lambda m: m.text.startswith('Экспорт интерфейсов '))
-async def handle_export_interfaces(message: Message):
-    ip = message.text.replace('Экспорт интерфейсов ', '').strip()
-    snmp_settings = settings_manager.get_setting('snmp_routers', {})
-    community = snmp_settings.get('community', 'public')
-    info = await async_get_snmp_full_info(ip, community)
-    interfaces = info.get('interfaces', [])
-    if not interfaces:
-        await message.answer('Нет данных по интерфейсам.')
-        return
-    # Формируем CSV
-    output = io.StringIO()
-    output.write('№;Описание;Статус;RX;TX\n')
-    for idx, iface in enumerate(interfaces, 1):
-        output.write(f'{idx};{iface["descr"]};{iface["status"]};{iface["in_octets"]};{iface["out_octets"]}\n')
-    output.seek(0)
-    await message.answer_document(InputFile(output, filename=f'interfaces_{ip}.csv'), caption=f'Интерфейсы {ip}')
-
-@dp.message_handler(is_menu_button('security_access_control_btn'))
-async def handle_security_access_control(message: Message):
-    current = settings_manager.get_setting('security.access_control_enabled', False)
-    value = 'да' if current else 'нет'
-    await message.answer(translate(get_lang(), 'security_access_control_prompt', value=value), reply_markup=cancel_keyboard(lang=get_lang()))
-    await SecuritySettingsState.waiting_for_access_control.set()
-
-@dp.message_handler(state=SecuritySettingsState.waiting_for_access_control)
-async def process_security_access_control(message: Message, state: FSMContext):
-    text = message.text.strip().lower()
-    if text in ['да', 'yes', 'y', 'oui', 'ja', '是']:
-        new_value = True
-    elif text in ['нет', 'no', 'n', 'non', 'nein', '否']:
-        new_value = False
-    else:
-        await message.answer(translate(get_lang(), 'input_error'), reply_markup=security_menu_keyboard(lang=get_lang()))
-        await state.finish()
-        return
-    if settings_manager.set_setting('security.access_control_enabled', new_value):
-        status = translate(get_lang(), 'access_control_enabled') if new_value else translate(get_lang(), 'access_control_disabled')
-        await message.answer(translate(get_lang(), 'security_access_control_set', status=status), reply_markup=security_menu_keyboard(lang=get_lang()))
-    else:
-        await message.answer(translate(get_lang(), 'settings_error'), reply_markup=security_menu_keyboard(lang=get_lang()))
-    await state.finish()
-
-@dp.message_handler(commands=['role'])
-async def handle_show_role(message: Message):
-    role = get_user_role(message)
-    if role == 'admin':
-        await message.answer(translate(get_lang(), 'role_admin'))
-    elif role == 'operator':
-        await message.answer(translate(get_lang(), 'role_operator'))
-    else:
-        await message.answer(translate(get_lang(), 'role_none'))
-
-@dp.message_handler(is_menu_button('back_to_settings_btn'), state='*')
-async def handle_back_to_settings(message: Message, state: FSMContext):
-    await state.finish()
-    await message.answer(
-        translate(get_lang(), 'settings_menu_msg'),
-        reply_markup=settings_main_menu_keyboard(lang=get_lang(), role=get_user_role(message))
-    )
-
-@dp.message_handler(is_menu_button('asic_ips_btn'))
-async def handle_asic_ips(message: Message):
-    if not check_admin(message):
-        await message.answer(translate(get_lang(), 'admin_only'))
-        return
-    current = settings_manager.get_setting('asic_miners.ips', [])
-    await message.answer(
-        translate(get_lang(), 'asic_ips_prompt', value=', '.join(current)),
-        reply_markup=cancel_keyboard(lang=get_lang())
-    )
-    await AsicSettingsState.waiting_for_ips.set()
-
-@dp.message_handler(state=AsicSettingsState.waiting_for_ips)
-async def process_asic_ips(message: Message, state: FSMContext):
-    if not check_admin(message):
-        await message.answer(translate(get_lang(), 'admin_only'))
-        await state.finish()
-        return
-    text = message.text.replace('\n', ',').replace(';', ',')
-    ips = [ip.strip() for ip in text.split(',') if ip.strip()]
-    if not all(validate_ip(ip) for ip in ips):
-        await message.answer(translate(get_lang(), 'asic_ips_error'), reply_markup=main_menu_keyboard(lang=get_lang()))
-        await state.finish()
-        return
-    if settings_manager.set_setting('asic_miners.ips', ips):
-        await message.answer(translate(get_lang(), 'asic_ips_set', value=', '.join(ips)), reply_markup=main_menu_keyboard(lang=get_lang()))
-    else:
-        await message.answer(translate(get_lang(), 'asic_ips_save_error'), reply_markup=main_menu_keyboard(lang=get_lang()))
-    await state.finish()
-
-@dp.message_handler(is_menu_button('asic_status_main_menu_btn'))
-async def handle_asic_status_main_menu(message: Message):
-    ips = settings_manager.get_setting('asic_miners.ips', [])
-    if not ips:
-        lang = get_lang(message)
-        await message.answer(translate(lang, 'asic_list_empty'))
-        return
-    tasks = [get_asic_status(ip) for ip in ips]
-    results = await asyncio.gather(*tasks)
-    text = "🛠️ <b>Статус асик-майнеров:</b>\n"
-    for r in results:
-        if r['status'] == 'online':
-            status = "✅ Хеширует" if r['is_hashing'] else "⚠️ Не хеширует"
-            uptime = r.get('uptime', '-')
-            text += f"\n{r['ip']}: онлайн, хешрейт: {r['hashrate']} | аптайм: {uptime} | {status}"
-        else:
-            text += f"\n{r['ip']}: ❌ оффлайн"
-    lang = get_lang(message)
-    role = get_user_role(message)
-    await message.answer(text, parse_mode='HTML', reply_markup=main_menu_keyboard(lang=lang, role=role))
-
-@dp.message_handler(is_menu_button('scan_menu_btn'))
-async def handle_scan_menu_btn(message: Message):
-    await message.answer(translate(get_lang(), 'scan_menu_msg'), reply_markup=scan_menu_keyboard(lang=get_lang()))
 
 @dp.message_handler(lambda m: m.reply_to_message is not None)
 async def resend_scan_result_file(message: Message):
