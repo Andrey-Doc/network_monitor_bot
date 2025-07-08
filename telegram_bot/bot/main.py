@@ -1808,8 +1808,9 @@ async def handle_asic_status_main_menu(message: Message):
             if status:
                 hashrate = status.get('hashrate') or status.get('GHS 5s') or status.get('SUMMARY', [{}])[0].get('GHS 5s') or '-'
                 uptime = status.get('uptime') or status.get('SUMMARY', [{}])[0].get('Elapsed') or '-'
+                uptime_str = format_uptime(uptime) if uptime not in (None, '-', '') else '-'
                 online = status.get('status', 'offline') == 'online' or status.get('is_hashing')
-                text = f"{ip}: {'🟢' if online else '🔴'}, hashrate: {hashrate} GH/s, uptime: {uptime}"
+                text = f"{ip}: {'🟢' if online else '🔴'}, hashrate: {hashrate} GH/s, uptime: {uptime_str}"
             else:
                 text = f"{ip}: нет ответа"
         except Exception as e:
@@ -1899,6 +1900,22 @@ async def handle_get_ips_file_callback(call: CallbackQuery):
     except Exception as e:
         await call.message.answer(translate(lang, 'file_processing_error', e=e))
     await call.answer()
+
+def format_uptime(uptime):
+    try:
+        uptime = int(float(uptime))
+        days = uptime // 86400
+        hours = (uptime % 86400) // 3600
+        minutes = (uptime % 3600) // 60
+        parts = []
+        if days > 0:
+            parts.append(f"{days}д")
+        if hours > 0 or days > 0:
+            parts.append(f"{hours}ч")
+        parts.append(f"{minutes}м")
+        return ' '.join(parts)
+    except Exception:
+        return str(uptime)
 
 if __name__ == '__main__':
     executor.start_polling(
