@@ -1800,13 +1800,16 @@ async def handle_asic_status_main_menu(message: Message):
     if not asic_ips:
         await message.answer(translate(lang, 'asic_list_empty'), reply_markup=main_menu_keyboard(lang=lang, role=role))
         return
-    await message.answer(translate(lang, 'checking_routers'), reply_markup=main_menu_keyboard(lang=lang, role=role))
+    await message.answer(translate(lang, 'checking_asics'), reply_markup=main_menu_keyboard(lang=lang, role=role))
     results = []
     for ip in asic_ips:
         try:
             status = await get_asic_status(ip)
             if status:
-                text = f"{ip}: {status.get('STATUS', [{}])[0].get('Msg', '-')}, hashrate: {status.get('SUMMARY', [{}])[0].get('GHS 5s', '-')} GH/s"
+                hashrate = status.get('hashrate') or status.get('GHS 5s') or status.get('SUMMARY', [{}])[0].get('GHS 5s') or '-'
+                uptime = status.get('uptime') or status.get('SUMMARY', [{}])[0].get('Elapsed') or '-'
+                online = status.get('status', 'offline') == 'online' or status.get('is_hashing')
+                text = f"{ip}: {'🟢' if online else '🔴'}, hashrate: {hashrate} GH/s, uptime: {uptime}"
             else:
                 text = f"{ip}: нет ответа"
         except Exception as e:
