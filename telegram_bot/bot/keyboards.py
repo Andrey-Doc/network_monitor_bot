@@ -7,11 +7,23 @@ def main_menu_keyboard(lang=None, role=None):
     kb.row(KeyboardButton(translate(lang, 'router_status_main_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'snmp_router_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'scan_main_menu_btn')))
-    kb.row(KeyboardButton(translate(lang, 'asic_status_main_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'asic_main_menu_btn')))
     # Кнопка "Настройки" для операторов и админов
     if role in ('admin', 'operator'):
         kb.row(KeyboardButton(translate(lang, 'settings_main_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'help_btn')))
+    return kb
+
+# Новое главное меню для асиков
+
+def asic_main_menu_keyboard(lang=None, role=None):
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.row(KeyboardButton(translate(lang, 'asic_status_main_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'asic_history_btn')))
+    kb.row(KeyboardButton(translate(lang, 'asic_ips_btn')))
+    kb.row(KeyboardButton(translate(lang, 'asic_manual_scan_btn')))
+    kb.row(KeyboardButton(translate(lang, 'asic_export_report_btn')))
+    kb.add(KeyboardButton(translate(lang, 'back_to_main_btn')))
     return kb
 
 def settings_menu_keyboard(lang=None):
