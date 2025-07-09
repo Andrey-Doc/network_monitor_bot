@@ -772,7 +772,7 @@ If you have questions, type /help or use the "Help" button in the main menu.''',
         'no_ips_found': 'IP-Adressen nicht im Datei gefunden.',
         'file_processing_error': 'Fehler beim Verarbeiten der Datei: {e}',
         'scan_file_not_found_try_last': 'Result not found for this network. Sending the latest miners file.',
-        'checking_asics': 'Проверка асиков...',
+        'checking_asics': 'Checking ASICs...',
     },
     'nl': {
         'welcome': 'Hallo! Ik ben een bot voor monitoring en scannen.\n\nKies een actie:',
