@@ -149,7 +149,11 @@ class AsicSettingsState(StatesGroup):
 def is_menu_button(key):
     def inner(m):
         lang = get_lang(m)
-        return m.text == translate(lang, key)
+        btn_text = translate(lang, key)
+        result = m.text == btn_text or m.text == key
+        # Логируем для отладки
+        print(f"[is_menu_button] key={key!r}, lang={lang!r}, btn_text={btn_text!r}, m.text={m.text!r}, result={result}")
+        return result
     return inner
 
 def get_user_role(message: Message) -> str:
