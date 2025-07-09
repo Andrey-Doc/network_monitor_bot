@@ -1917,6 +1917,11 @@ def format_uptime(uptime):
     except Exception:
         return str(uptime)
 
+@dp.message_handler(is_menu_button('snmp_router_menu_btn'), state=SnmpRouterExtendedState.waiting_for_router)
+async def snmp_router_extended_back_to_menu(message: Message, state: FSMContext):
+    await state.finish()
+    await handle_snmp_router_menu(message)
+
 if __name__ == '__main__':
     executor.start_polling(
         dp, 
