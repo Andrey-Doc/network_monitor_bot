@@ -1533,6 +1533,11 @@ async def handle_snmp_router_extended_btn(message: Message, state: FSMContext):
     await SnmpRouterExtendedState.waiting_for_router.set()
     await state.update_data(ips=ips)
 
+@dp.message_handler(is_menu_button('snmp_router_menu_btn'), state=SnmpRouterExtendedState.waiting_for_router)
+async def snmp_router_extended_back_to_menu(message: Message, state: FSMContext):
+    await state.finish()
+    await handle_snmp_router_menu(message)
+
 @dp.message_handler(state=SnmpRouterExtendedState.waiting_for_router)
 async def handle_snmp_router_extended_select(message: Message, state: FSMContext):
     lang = get_lang(message)
@@ -1920,11 +1925,6 @@ def format_uptime(uptime):
         return ' '.join(parts)
     except Exception:
         return str(uptime)
-
-@dp.message_handler(is_menu_button('snmp_router_menu_btn'), state=SnmpRouterExtendedState.waiting_for_router)
-async def snmp_router_extended_back_to_menu(message: Message, state: FSMContext):
-    await state.finish()
-    await handle_snmp_router_menu(message)
 
 if __name__ == '__main__':
     executor.start_polling(
