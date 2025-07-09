@@ -7,7 +7,7 @@ from .keyboards import (
     interface_menu_keyboard, security_menu_keyboard, backup_menu_keyboard,
     export_menu_keyboard, help_menu_keyboard, cancel_keyboard,
     scan_main_menu_keyboard, scan_cancel_or_main_keyboard,
-    asic_ips_cancel_keyboard, asic_main_menu_keyboard
+    asic_ips_cancel_keyboard
 )
 from ..utils.router_monitor import check_routers_status
 from ..utils.miner_scan import scan_network_for_miners, scan_miners_from_list, get_asic_status
@@ -1925,24 +1925,6 @@ def format_uptime(uptime):
         return ' '.join(parts)
     except Exception:
         return str(uptime)
-
-@dp.message_handler(is_menu_button('asic_main_menu_btn'))
-async def handle_asic_main_menu(message: Message):
-    lang = get_lang(message)
-    role = get_user_role(message)
-    await message.answer('Меню асиков:', reply_markup=asic_main_menu_keyboard(lang=lang, role=role))
-
-@dp.message_handler(is_menu_button('asic_history_btn'))
-async def handle_asic_history(message: Message):
-    await message.answer('История асиков (в разработке).')
-
-@dp.message_handler(is_menu_button('asic_manual_scan_btn'))
-async def handle_asic_manual_scan(message: Message):
-    await message.answer('Ручное сканирование асиков (в разработке).')
-
-@dp.message_handler(is_menu_button('asic_export_report_btn'))
-async def handle_asic_export_report(message: Message):
-    await message.answer('Экспорт отчёта по асикам (в разработке).')
 
 if __name__ == '__main__':
     executor.start_polling(
