@@ -102,6 +102,7 @@ def scan_main_menu_keyboard(lang=None):
     kb.row(KeyboardButton(translate(lang, 'scan_network_main_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'scan_miners_main_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'fast_scan_main_menu_btn')))
+    kb.row(KeyboardButton(translate(lang, 'scan_files_main_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'upload_file_main_menu_btn')))
     kb.row(KeyboardButton(translate(lang, 'back_to_main_btn')))
     return kb

@@ -1926,6 +1926,10 @@ def format_uptime(uptime):
     except Exception:
         return str(uptime)
 
+@dp.message_handler(is_menu_button('scan_files_main_menu_btn'))
+async def handle_scan_files_main_menu(message: Message):
+    await handle_scanfiles(message)
+
 if __name__ == '__main__':
     executor.start_polling(
         dp, 
