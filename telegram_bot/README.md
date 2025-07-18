@@ -504,7 +504,8 @@ Create the file `telegram_bot/data/secrets.json` with the following content:
 
 ## 4. Run the bot
 ```bash
-python3 telegram_bot/run_bot.py
+python3 -m telegram_bot.run_bot 
+python -m telegram_bot.bot.main
 ```
 
 ## 5. User management
