@@ -15,10 +15,13 @@ cd telegram_bot
 ### 2. Install dependencies
 It is recommended to use a virtual environment:
 ```bash
-python3 -m venv venv
+python3.10 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+sudo apt install python3.10 python3.10-venv python3.10-dev nmap
 
 ### 3. Configure secrets and parameters
 Create the file `telegram_bot/data/secrets.json` with the following content:
