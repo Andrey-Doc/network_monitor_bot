@@ -1,8 +1,9 @@
 aiogram==2.25.1
-python-nmap
+python-nmap==0.7.1
 pandas==2.0.3
-ping3
-asyncio
+numpy==1.24.4
+ping3==5.1.5
 aiofiles==23.2.1
 python-dotenv==1.0.0
-pysnmp 
+pysnmp==4.4.12
+pyasn1==0.4.8
