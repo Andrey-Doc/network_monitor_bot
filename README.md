@@ -26,10 +26,7 @@ Create the file `telegram_bot/data/secrets.json` with the following content:
 {
   "TELEGRAM_BOT_TOKEN": "<your_bot_token>",
   "CHAT_ID": <your_chat_id>,
-  "admins": [<your_chat_id>],
-  "ROUTER_IPS": ["192.168.1.1"],
-  "ROUTER_PORTS": [80, 22],
-  "SCAN_RESULTS_TTL": 3600
+  "admins": [<your_chat_id>]
 }
 ```
 - `TELEGRAM_BOT_TOKEN` — your Telegram bot token (get it from @BotFather)
@@ -57,7 +54,13 @@ python3 telegram_bot/run_bot.py
 ### 7. Settings
 - All parameters (intervals, IPs, ports, language, etc.) can be changed via the settings menu in Telegram.
 - You must be an admin to change settings.
+```
 
+### 8. Docker compose
+- Create file external_data/secrets.json (look step 3)
+```bash
+docker compose up
+```
 ---
 
 ## Features
