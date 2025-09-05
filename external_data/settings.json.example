@@ -67,7 +67,7 @@
     "max_count": 10
   },
   "snmp_routers": {
-    "community": "kont"
+    "community": "public"
   },
   "asic_miners": {
     "ips": [
