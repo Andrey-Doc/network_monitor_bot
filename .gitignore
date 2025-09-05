@@ -27,3 +27,4 @@ Thumbs.db
 # Временные файлы
 *.tmp
 *.temp
+.env
