@@ -57,7 +57,7 @@ python3 telegram_bot/run_bot.py
 ```
 
 ### 8. Docker compose
-- Create file external_data/secrets.json (look step 3)
+ - Create file external_data/secrets.json (look step 3)
 ```bash
 docker compose up
 ```
@@ -87,7 +87,7 @@ docker compose up
 - [ ] API for external systems
 - [ ] Database integration
 - [ ] Plugin system
-
+- [x] Docker/docker compose
 ---
 
 ## License
