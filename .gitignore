@@ -9,8 +9,8 @@ bot.log
 
 # Данные и настройки (исключаем)
 /data/
-/external_data/
-
+secrets.json
+settings.json
 # Но добавляем шаблоны конфигов (если нужно)
 !/external_data/secrets.json.example
 !/external_data/settings.json.example
