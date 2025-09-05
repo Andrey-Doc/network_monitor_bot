@@ -1,8 +1,8 @@
 {
   "routers": {
     "ips": [
-      "ip routers",
-      "ip routers"
+#      "ip routers",
+#      "ip routers"
     ],
     "ports": [
       8080,
@@ -58,7 +58,7 @@
     "token": "",
     "access_control_enabled": true,
     "operators": [
-      
+#chat id operators      
     ]
   },
   "backup": {
