@@ -8,6 +8,7 @@ __pycache__/
 bot.log
 
 # Данные и настройки (исключаем)
+scan_results/
 /data/
 secrets.json
 settings.json
