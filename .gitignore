@@ -1,0 +1,29 @@
+# Python кэш
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Логи
+*.log
+bot.log
+
+# Данные и настройки (исключаем)
+/data/
+/external_data/
+
+# Но добавляем шаблоны конфигов (если нужно)
+!/external_data/secrets.json.example
+!/external_data/settings.json.example
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+
+# Временные файлы
+*.tmp
+*.temp

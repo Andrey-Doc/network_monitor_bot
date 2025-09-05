@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  telegram-bot:
+    build: .
+    container_name: telegram-network-bot
+    restart: unless-stopped
+    volumes:
+      # Монтируем внешние файлы конфигурации
+      - ./external_data/settings.json:/app/telegram_bot/data/settings.json
+      - ./external_data/secrets.json:/app/telegram_bot/data/secrets.json
+      # Монтируем директории для данных
+      - ./external_data/scan_results:/app/data/scan_results
+      # Монтируем файл логов
+      - ./external_data/bot.log:/app/bot.log
+    environment:
+      - PYTHONPATH=/app
+      - CREATE_MISSING_CONFIGS=true  # Добавляем флаг для создания отсутствующих файлов
+    networks:
+      - bot-network
+
+networks:
+  bot-network:
+    driver: bridge
